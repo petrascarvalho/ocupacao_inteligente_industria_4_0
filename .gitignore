@@ -1,0 +1,26 @@
+# Ambiente virtual Python
+.venv/
+
+# Materiais de referência (PDFs do curso, notebooks didáticos e repositórios clonados)
+referencias/
+
+# Cache do Python e do Jupyter
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# Variáveis de ambiente e credenciais
+.env
+.env.*
+*.pem
+*.key
+credentials*.json
+secrets*.json
+
+# Configurações pessoais de ferramentas e do editor
+.claude/
+.vscode/
+
+# Arquivos do sistema operacional
+Thumbs.db
+desktop.ini
