@@ -27,7 +27,7 @@ Os arquivos são redistribuídos neste repositório nos termos da licença CC BY
 | Data de aquisição | 25/11/2026, 21:01 (UTC−03:00) |
 | Conferência adicional | O pacote é idêntico, byte a byte, ao disponibilizado na página oficial (`https://archive.ics.uci.edu/static/public/357/occupancy+detection.zip`) |
 
-## Arquivos originais (`data/raw/`)
+## Arquivos originais (`dados/brutos/`)
 
 | Arquivo | Tamanho (bytes) | Registros | SHA-256 |
 |---|---:|---:|---|
@@ -42,6 +42,6 @@ Os arquivos são redistribuídos neste repositório nos termos da licença CC BY
 
 ## Preservação
 
-- Os arquivos de `data/raw/` são mantidos exatamente como foram distribuídos pela fonte e não devem ser editados.
-- O arquivo `.gitattributes` da raiz do repositório desativa a conversão de quebras de linha nesta pasta (`data/raw/** -text`) e trata arquivos `.zip` como binários, de modo que os hashes SHA-256 acima permaneçam válidos em qualquer clone.
-- Para conferir a integridade de um arquivo: `sha256sum data/raw/<arquivo>` (Linux/Git Bash) ou `Get-FileHash data\raw\<arquivo> -Algorithm SHA256` (PowerShell).
+- Os arquivos de `dados/brutos/` são mantidos exatamente como foram distribuídos pela fonte e não devem ser editados.
+- O arquivo `.gitattributes` da raiz do repositório desativa a conversão de quebras de linha nesta pasta (`dados/brutos/** -text`) e trata arquivos `.zip` como binários, de modo que os hashes SHA-256 acima permaneçam válidos em qualquer clone.
+- Para conferir a integridade de um arquivo: `sha256sum dados/brutos/<arquivo>` (Linux/Git Bash) ou `Get-FileHash dados\brutos\<arquivo> -Algorithm SHA256` (PowerShell).
