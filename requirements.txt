@@ -1,0 +1,19 @@
+# Ocupação Inteligente — Indústria 4.0
+# Dependências diretas com as versões verificadas no ambiente virtual do projeto.
+# Versão do Python utilizada e testada: 3.14.4 (Windows, 64 bits).
+# Os metadados destes pacotes exigem Python 3.12 ou superior (scipy 1.18.1).
+
+# Manipulação e análise de dados
+pandas==3.0.2
+numpy==2.4.4
+
+# Visualização
+matplotlib==3.10.9
+seaborn==0.13.2
+
+# Machine Learning (scipy também é usado pelo pandas no cálculo da correlação de Spearman)
+scikit-learn==1.8.0
+scipy==1.18.1
+
+# Execução do notebook no VS Code / Jupyter
+ipykernel==7.2.0
