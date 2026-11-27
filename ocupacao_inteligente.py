@@ -11,22 +11,24 @@
 #
 # ### Problema de negócio
 #
-# **Contexto do enunciado:** prever se salas técnicas e escritórios estão ocupados ou vazios a partir de sensores
-# ambientais IoT, para automatizar o desligamento de climatização (HVAC) e iluminação e reduzir custos energéticos.
+# O projeto tem como objetivo investigar a utilização de dados provenientes de sensores ambientais IoT para identificar
+# a ocupação de salas técnicas e escritórios.
 #
-# **Pontos a apresentar:** problema a ser resolvido, benefício esperado e caráter experimental do projeto.
+# A identificação da presença ou ausência de pessoas poderá subsidiar estratégias de automação predial, permitindo
+# avaliar possibilidades de acionamento e desligamento de sistemas de iluminação e climatização de acordo com a
+# utilização dos ambientes.
 #
-# *[Contextualização a ser redigida pelo estudante]*
+# A proposta está inserida no contexto da Indústria 4.0, utilizando técnicas de Ciência de Dados e Machine Learning para
+# apoiar decisões relacionadas à eficiência energética.
+#
+# O desenvolvimento possui caráter experimental e não contempla, nesta etapa, integração física com sistemas de
+# automação ou comprovação de redução efetiva do consumo energético.
 #
 # ### Variável alvo
 #
 # | Variável | Tipo | Valores |
 # |---|---|---|
 # | `Occupancy` | Binária (`int64`) | 0 = desocupado; 1 = ocupado |
-#
-# **Pontos a apresentar:** tipo de problema de aprendizado (classificação binária) e modelos previstos (KNN e Árvore de Decisão).
-#
-# *[Descrição a ser redigida pelo estudante]*
 #
 # ### Base de dados, fonte e licença
 #
@@ -39,8 +41,6 @@
 # | Arquivo preservado e não utilizado | `datatraining.txt` (8.143) |
 # | Base consolidada | 12.417 registros e 7 colunas |
 # | Atribuição e hashes SHA-256 | `dados/README.md` |
-#
-# *[Descrição a ser redigida pelo estudante]*
 
 # %% [markdown]
 # ### BLOCO 01 — Importação das bibliotecas
@@ -55,11 +55,6 @@
 # | Machine Learning | `train_test_split`, `StandardScaler`, `Pipeline`, `DecisionTreeClassifier`, `KNeighborsClassifier`, métricas |
 #
 # Versões no ambiente `.venv`: Python 3.14.4, pandas 3.0.2, NumPy 2.4.4, Matplotlib 3.10.9, Seaborn 0.13.2, scikit-learn 1.8.0.
-#
-# **Perguntas orientadoras:** por que centralizar as importações? Qual a função de cada grupo? Por que os recursos de
-# Machine Learning já são importados, se serão usados apenas nas Fases 4 a 7?
-#
-# *[Justificativa a ser redigida pelo estudante]*
 
 # %%
 # BLOCO 01 — Importação das bibliotecas
@@ -97,11 +92,6 @@ from sklearn.metrics import accuracy_score, classification_report, confusion_mat
 # | Tamanho padrão das figuras | `(10, 5)` polegadas |
 #
 # Mesma configuração do exemplo didático do enunciado (p. 3).
-#
-# **Perguntas orientadoras:** qual o efeito de definir as configurações visuais uma única vez no início? Por que o padrão
-# visual é importante para a leitura dos gráficos?
-#
-# *[Justificativa a ser redigida pelo estudante]*
 
 # %%
 # BLOCO 02 — Configurações visuais
@@ -131,10 +121,6 @@ print(plt.rcParams["figure.figsize"])
 #
 # Conceitos: o item 5.1 do enunciado proíbe caminhos absolutos; `os.makedirs(..., exist_ok=True)` cria as pastas sem erro
 # quando já existem; o Git não versiona pastas vazias.
-#
-# **Perguntas orientadoras:** por que caminhos relativos garantem a execução pelo avaliador? Por que criar as pastas no próprio código?
-#
-# *[Justificativa a ser redigida pelo estudante]*
 
 # %%
 # BLOCO 03 — Caminhos relativos e diretórios
@@ -187,11 +173,6 @@ print("Arquivo tratado:", os.path.exists(caminho_tratado))
 # | Origem | URL oficial da UCI indicada no enunciado |
 # | Última execução | "Arquivos originais já disponíveis!" |
 # | Integridade | SHA-256 dos arquivos brutos idênticos aos registrados em `dados/README.md` |
-#
-# **Perguntas orientadoras:** por que verificar os arquivos brutos, e não o CSV consolidado? Por que extrair apenas os
-# arquivos ausentes? Qual a diferença em relação ao exemplo do professor?
-#
-# *[Justificativa a ser redigida pelo estudante]*
 
 # %%
 # BLOCO 04 — Download condicional e extração dos dados
@@ -239,10 +220,19 @@ else:
 # Conceito: a primeira coluna dos arquivos `.txt` é uma numeração sem nome no cabeçalho, que o pandas utiliza
 # automaticamente como índice.
 #
-# **Perguntas orientadoras:** por que utilizar `datatest.txt` e `datatest2.txt`? Por que manter `datatraining.txt` fora da
-# consolidação? Qual a diferença em relação ao exemplo do enunciado, que lê apenas `datatest.txt`?
+# **Justificativa técnica:**
 #
-# *[Justificativa a ser redigida pelo estudante]*
+# Para a construção da base consolidada, foram utilizados os arquivos `datatest.txt` e `datatest2.txt`, que apresentam
+# estruturas compatíveis e totalizam 12.417 registros.
+#
+# A utilização dos dois arquivos amplia a quantidade de observações em relação ao exemplo inicial do enunciado,
+# permitindo uma análise exploratória sobre uma amostra maior.
+#
+# O arquivo `datatraining.txt` foi preservado em sua estrutura original, sem inclusão na consolidação adotada neste
+# projeto.
+#
+# A denominação original dos arquivos não determina a divisão de treinamento e teste utilizada nesta aplicação, que será
+# realizada posteriormente sobre a base consolidada, conforme a metodologia exigida no enunciado.
 
 # %%
 # BLOCO 05 — Leitura dos arquivos brutos
@@ -264,11 +254,6 @@ print("Arquivo datatest2.txt carregado com sucesso!")
 # |---|---|---|
 # | `datatest.txt` | (2665, 7) | `date`, `Temperature`, `Humidity`, `Light`, `CO2`, `HumidityRatio`, `Occupancy` |
 # | `datatest2.txt` | (9752, 7) | Mesmas colunas, na mesma ordem |
-#
-# **Perguntas orientadoras:** por que inspecionar cada base antes de uni-las? O que a compatibilidade das colunas garante
-# para a consolidação?
-#
-# *[Justificativa a ser redigida pelo estudante]*
 
 # %%
 # BLOCO 06 — Inspeção individual dos dados brutos
@@ -301,9 +286,18 @@ print(df2.head())
 #
 # Conceito: os índices herdados dos arquivos `.txt` se repetem entre as bases; `ignore_index=True` gera um índice novo e único.
 #
-# **Perguntas orientadoras:** o que é uma concatenação vertical? Que problema o `ignore_index=True` evita?
+# **Justificativa técnica:**
 #
-# *[Justificativa a ser redigida pelo estudante]*
+# A consolidação foi realizada por meio da concatenação vertical dos DataFrames, reunindo os registros dos dois arquivos
+# em uma única estrutura de dados.
+#
+# A utilização do parâmetro `ignore_index=True` permite gerar um novo índice sequencial, evitando a manutenção dos
+# índices repetidos provenientes dos arquivos individuais.
+#
+# Esse procedimento preserva as observações originais e facilita as etapas posteriores de inspeção, análise
+# exploratória, tratamento e modelagem.
+#
+# A compatibilidade estrutural dos arquivos e a quantidade final de registros são verificadas no bloco seguinte.
 
 # %%
 # BLOCO 07 — Consolidação dos DataFrames
@@ -328,10 +322,6 @@ print(df.head())
 # | Dimensões esperadas (12417, 7) | True |
 #
 # Conceito: `assert` interrompe a execução quando a condição é falsa, impedindo a exportação de uma base inconsistente.
-#
-# **Perguntas orientadoras:** o que cada validação garante? Por que validar antes de exportar o CSV?
-#
-# *[Justificativa a ser redigida pelo estudante]*
 
 # %%
 # BLOCO 08 — Validação da consolidação
@@ -386,9 +376,21 @@ print("Validação da consolidação concluída com sucesso!")
 #
 # Conceito: `check_exact=True` compara os valores sem tolerância numérica, comprovando a preservação da precisão original.
 #
-# **Perguntas orientadoras:** por que `index=False`? Por que recarregar o arquivo exportado? O que o `check_exact=True` comprova?
+# **Justificativa técnica:**
 #
-# *[Justificativa a ser redigida pelo estudante]*
+# A exportação da base consolidada para CSV permite disponibilizar uma estrutura única e reproduzível para as etapas
+# posteriores do projeto.
+#
+# O parâmetro `index=False` evita que o índice gerado durante a concatenação seja armazenado como uma coluna adicional
+# no arquivo.
+#
+# Após a exportação, a base é novamente carregada e comparada com o DataFrame consolidado por meio do método
+# `assert_frame_equal`, utilizando o parâmetro `check_exact=True`.
+#
+# Essa validação verifica a equivalência exata dos DataFrames conforme os tipos e valores representados no ambiente de
+# execução, contribuindo para a identificação de alterações indevidas durante o processo de exportação e carregamento.
+#
+# A precisão numérica é preservada, sem aplicação de arredondamento intencional aos dados armazenados.
 
 # %%
 # BLOCO 09 — Exportação e carregamento do CSV
@@ -429,8 +431,6 @@ print("ETL de consolidação inicial concluído com sucesso!")
 # - Identificar possíveis problemas de qualidade dos dados.
 # - Investigar as relações entre as variáveis e a variável alvo `Occupancy`.
 #
-# *[Contextualização a ser redigida pelo estudante]*
-#
 # ### Caracterização da base de dados
 #
 # | Item | Informação |
@@ -458,16 +458,18 @@ print("ETL de consolidação inicial concluído com sucesso!")
 #
 # ### Contribuição para a modelagem preditiva
 #
-# Conceitos a serem fundamentados pelo estudante:
+# A análise exploratória constitui uma etapa fundamental para compreender as características da base de dados antes da
+# implementação dos modelos preditivos.
 #
-# - Escalonamento das variáveis para o KNN.
-# - Divisão estratificada entre treino e teste.
-# - Diferenças de escala entre os sensores.
-# - Correlação entre as variáveis preditoras.
-# - Limitações decorrentes da natureza temporal dos dados.
-# - Preparação para a Fase 2 — Data Prep.
+# A investigação das distribuições, das escalas das variáveis, da proporção das classes e das correlações permite
+# identificar aspectos que deverão ser considerados durante a preparação dos dados e a escolha das estratégias de
+# modelagem.
 #
-# *[Justificativa a ser redigida pelo estudante]*
+# Essas informações contribuirão para fundamentar a divisão estratificada dos dados, a aplicação do escalonamento ao KNN
+# e a interpretação dos resultados dos modelos.
+#
+# A análise também permite identificar limitações iniciais e orientar as verificações que serão realizadas na etapa de
+# Data Prep.
 
 # %%
 # BLOCO 11 — Dimensões e estrutura dos dados
@@ -703,6 +705,13 @@ print(intervalos.value_counts().head(10))
 print("\nMaior intervalo:", intervalos.max())
 print("Índice do maior intervalo:", intervalos.idxmax())
 
+# Verificação da unicidade dos registros temporais
+print("\nUnicidade dos registros temporais:")
+print("Total de registros:", len(datas))
+print("Timestamps distintos:", datas.nunique())
+print("Todos os timestamps são únicos:", datas.is_unique)
+print("Timestamps repetidos:", datas.duplicated().sum())
+
 # Confirmação da preservação do tipo original
 print("\nTipo original preservado:")
 print(df_consolidado["date"].dtype)
@@ -723,46 +732,68 @@ print(df_consolidado["date"].dtype)
 # | `Temperature`, `Humidity`, `Light`, `CO2`, `HumidityRatio` | `float64` |
 # | `Occupancy` | `int64` |
 #
-# **Pontos para interpretação:** os tipos são adequados para a análise? Que tratamento a coluna `date` exige antes da modelagem?
+# **Interpretação:**
 #
-# *[Interpretação a ser redigida pelo estudante]*
+# A base consolidada apresenta 12.417 registros distribuídos em sete colunas, sem valores ausentes identificados. As
+# cinco variáveis ambientais possuem formato numérico `float64`, enquanto a variável alvo `Occupancy` apresenta valores
+# inteiros, representando as classes de ocupação.
+#
+# A variável `date` encontra-se originalmente em formato textual, sendo necessária a avaliação de sua estrutura temporal
+# antes da modelagem.
+#
+# A ausência de valores nulos indica uma condição inicial favorável, porém não elimina a necessidade de investigar
+# duplicidades, inconsistências e possíveis valores discrepantes durante a etapa de tratamento dos dados.
 #
 # ### 17.2 — Estatísticas descritivas
 #
 # **Evidências (BLOCO 13 — `describe()`):**
 #
-# | Variável | Média | Mediana (50%) | Desvio padrão | Mínimo | Máximo |
-# |---|---:|---:|---:|---:|---:|
-# | Temperature (°C) | 21,094510 | 20,790000 | 1,037511 | 19,500000 | 24,408333 |
-# | Humidity (%) | 28,917947 | 28,600000 | 4,125142 | 21,865000 | 39,500000 |
-# | Light (lux) | 138,125947 | 0,000000 | 219,801233 | 0,000000 | 1.697,250000 |
-# | CO2 (ppm) | 745,644624 | 632,000000 | 296,497310 | 427,500000 | 2.076,500000 |
-# | HumidityRatio (kg/kg) | 0,0044682086 | 0,0045113541 | 0,0005954957 | 0,0032747640 | 0,0057686083 |
+# | Variável | Média | Q1 (25%) | Mediana (50%) | Q3 (75%) | Desvio padrão | Mínimo | Máximo |
+# |---|---:|---:|---:|---:|---:|---:|---:|
+# | Temperature (°C) | 21,094510 | 20,390000 | 20,790000 | 21,675000 | 1,037511 | 19,500000 | 24,408333 |
+# | Humidity (%) | 28,917947 | 25,390000 | 28,600000 | 31,790000 | 4,125142 | 21,865000 | 39,500000 |
+# | Light (lux) | 138,125947 | 0,000000 | 0,000000 | 392,000000 | 219,801233 | 0,000000 | 1.697,250000 |
+# | CO2 (ppm) | 745,644624 | 527,500000 | 632,000000 | 857,000000 | 296,497310 | 427,500000 | 2.076,500000 |
+# | HumidityRatio (kg/kg) | 0,0044682086 | 0,0039880226 | 0,0045113541 | 0,0049417554 | 0,0005954957 | 0,0032747640 | 0,0057686083 |
 #
 # Valores apresentados com seis casas decimais, conforme a saída do `describe()`; `HumidityRatio` com dez casas para preservar a precisão. Os dados não foram arredondados.
 #
-# **Pontos para interpretação:**
+# **Interpretação:**
 #
-# - Diferença de escala e amplitude entre as variáveis (ex.: `HumidityRatio` na ordem de 0,004 e `CO2` na ordem de centenas a milhares).
-# - Relação entre média e mediana em cada variável, especialmente em `Light` e `CO2`.
-# - Significado de `Light` apresentar mediana igual a 0 lux.
+# As estatísticas descritivas demonstram diferenças relevantes nas escalas e na dispersão das variáveis ambientais.
 #
-# *[Interpretação a ser redigida pelo estudante]*
+# A temperatura apresenta média de 21,09 °C e desvio padrão de 1,04 °C, indicando uma concentração relativamente elevada
+# das observações. A umidade relativa apresenta média de 28,92%, próxima à mediana de 28,60%.
+#
+# A luminosidade possui mediana igual a zero e média de 138,13 lux, indicando que pelo menos metade das observações
+# apresenta luminosidade igual a zero, enquanto os valores mais elevados influenciam a média.
+#
+# O CO2 apresenta média de 745,64 ppm e mediana de 632 ppm, sugerindo uma distribuição assimétrica à direita.
+#
+# A razão de umidade apresenta valores na ordem dos milésimos, enquanto luminosidade e CO2 alcançam valores superiores a
+# mil unidades em suas respectivas escalas.
+#
+# Essas diferenças justificam a aplicação do escalonamento das variáveis destinadas ao KNN, evitando que determinadas
+# características exerçam influência desproporcional no cálculo das distâncias.
 #
 # ### 17.3 — Distribuição das variáveis ambientais
 #
 # **Evidência:** `resultados/graficos/eda_01_histogramas.png` (BLOCO 14 — cinco histogramas com 30 intervalos).
 #
-# **Pontos para interpretação em cada histograma:**
+# **Interpretação:**
 #
-# - `Temperature`: formato da distribuição e região de maior concentração.
-# - `Humidity`: quantidade de picos e amplitude.
-# - `Light`: concentração de registros próximos de 0 lux e existência de um segundo agrupamento de valores.
-# - `CO2`: simetria da distribuição e presença de valores elevados.
-# - `HumidityRatio`: formato da distribuição em comparação com `Humidity`.
-# - Indícios de valores discrepantes a serem verificados com boxplots na Fase 2.
+# A distribuição das variáveis ambientais apresenta comportamentos distintos, refletindo diferentes condições
+# registradas pelos sensores:
 #
-# *[Interpretação a ser redigida pelo estudante]*
+# - `Temperature`: valores concentrados entre aproximadamente 20 °C e 21 °C, com cauda mais longa em direção às temperaturas mais altas (até cerca de 24,4 °C), caracterizando uma leve assimetria à direita.
+# - `Humidity`: distribuição dispersa entre aproximadamente 22% e 39,5%, com mais de um pico de frequência (próximos de 25%, 30% e 35%), sem uma concentração única predominante.
+# - `Light`: elevada concentração de registros próximos de zero e um agrupamento adicional de observações entre aproximadamente 400 e 550 lux, com poucas ocorrências acima de 800 lux, possivelmente associado a diferentes condições de utilização do ambiente.
+# - `CO2`: indícios de assimetria positiva, com maior concentração entre aproximadamente 450 e 600 ppm, agrupamentos menores próximos de 750 ppm e 1.500 ppm e ocorrência esporádica de concentrações mais elevadas, até cerca de 2.076 ppm.
+# - `HumidityRatio`: distribuição irregular, com mais de um pico de frequência, comportamento que deve ser analisado considerando sua relação com `Humidity`.
+#
+# Os valores extremos identificados não devem ser classificados automaticamente como erros, pois podem representar
+# condições ambientais legítimas. A investigação de possíveis outliers será aprofundada na etapa de Data Prep,
+# utilizando boxplots e o intervalo interquartil.
 #
 # ### 17.4 — Distribuição da variável alvo
 #
@@ -774,13 +805,19 @@ print(df_consolidado["date"].dtype)
 # | 1 — Ocupado | 3.021 | 24,33% |
 # | Total | 12.417 | 100% |
 #
-# **Pontos para interpretação:**
+# **Interpretação:**
 #
-# - As classes estão balanceadas?
-# - Qual seria a acurácia de referência de um modelo que sempre previsse a classe majoritária?
-# - Como esse resultado se relaciona com o uso de `stratify=y` na Fase 4?
+# A distribuição da variável alvo apresenta desbalanceamento entre as classes. Dos 12.417 registros, 9.396 correspondem
+# a ambientes desocupados (75,67%), enquanto 3.021 correspondem a ambientes ocupados (24,33%).
 #
-# *[Interpretação a ser redigida pelo estudante]*
+# Um classificador que previsse exclusivamente a classe majoritária alcançaria uma acurácia de referência de
+# aproximadamente 75,67%, sem identificar corretamente nenhuma observação da classe ocupada.
+#
+# Esse cenário demonstra a importância da utilização da divisão estratificada entre treino e teste, preservando
+# aproximadamente as proporções originais das classes.
+#
+# Além da acurácia, serão consideradas a matriz de confusão, a precisão, o recall e o F1-score, permitindo uma avaliação
+# mais abrangente do desempenho dos modelos, especialmente em relação à classe minoritária.
 #
 # ### 17.5 — Correlação entre as variáveis
 #
@@ -799,13 +836,22 @@ print(df_consolidado["date"].dtype)
 # - `Humidity` × `HumidityRatio`: 0,8919.
 # - `Temperature` × `Light`: 0,7248.
 #
-# **Pontos para interpretação:**
+# **Interpretação:**
 #
-# - Intensidade e sentido da associação linear de cada variável com `Occupancy`.
-# - Redundância entre preditoras fortemente correlacionadas.
-# - Limitações da correlação de Pearson: mede apenas associação linear e não indica causalidade.
+# A matriz de correlação de Pearson evidencia que a luminosidade apresenta a maior associação linear positiva com a
+# variável `Occupancy`, com coeficiente de 0,9197.
 #
-# *[Interpretação a ser redigida pelo estudante]*
+# A temperatura apresenta correlação positiva de 0,5764, seguida pelo CO2, com 0,3710, e pela razão de umidade, com
+# 0,2420. A umidade relativa apresenta uma associação linear negativa próxima de zero (-0,0427).
+#
+# Entre as variáveis preditoras, destacam-se as correlações entre `Humidity` e `HumidityRatio` (0,8919) e entre
+# `Temperature` e `Light` (0,7248), indicando possível redundância de informações.
+#
+# Entretanto, a correlação de Pearson não estabelece relações de causalidade e não determina isoladamente a importância
+# de uma variável para os modelos preditivos.
+#
+# Dessa forma, as cinco variáveis ambientais serão inicialmente preservadas, permitindo que seu desempenho conjunto seja
+# avaliado durante a modelagem.
 #
 # ### 17.6 — Avaliação da variável temporal
 #
@@ -823,41 +869,71 @@ print(df_consolidado["date"].dtype)
 # | Intervalos de 61 segundos | 2.485 |
 # | Maior intervalo | 7 dias, 4 horas e 5 minutos |
 # | Índice da descontinuidade | 2665 (início dos registros de `datatest2.txt`) |
+# | Timestamps distintos | 12.417 |
+# | Todos os timestamps são únicos | True |
+# | Timestamps repetidos | 0 |
 #
 # A coluna `date` foi preservada em sua forma original; a conversão para `datetime` foi realizada apenas em uma variável temporária.
 #
-# **Pontos para interpretação:**
+# **Interpretação:**
 #
-# - Decisão sobre a utilização ou a exclusão de `date` entre os preditores, com justificativa.
-# - Dependência entre observações consecutivas registradas em intervalos de aproximadamente um minuto.
-# - Efeito da descontinuidade entre os períodos dos dois arquivos.
+# A avaliação exploratória da coluna `date` identificou registros compreendidos entre 2 e 18 de fevereiro de 2015,
+# organizados em ordem cronológica e sem datas inválidas.
 #
-# *[Interpretação a ser redigida pelo estudante]*
+# As observações apresentam intervalos predominantemente próximos de um minuto, com uma descontinuidade de sete dias,
+# quatro horas e cinco minutos entre os períodos correspondentes aos dois arquivos consolidados.
+#
+# A verificação de unicidade confirmou que os 12.417 timestamps são distintos, sem repetições temporais. Esse resultado
+# não descarta, por si só, a existência de registros com medições idênticas em instantes diferentes, aspecto a ser
+# considerado na verificação de duplicidades da etapa de Data Prep.
+#
+# A coluna temporal será preservada para fins de rastreabilidade e identificação das observações, mas não será utilizada
+# diretamente como variável preditora nos modelos numéricos.
+#
+# Considerando a proximidade temporal entre registros consecutivos, existe a possibilidade de dependência entre as
+# observações. A divisão aleatória dos dados pode, portanto, produzir estimativas otimistas de desempenho.
+#
+# Será mantida a divisão estratificada de 80% para treinamento e 20% para teste, conforme a metodologia estabelecida no
+# projeto, registrando-se a dependência temporal como uma limitação potencial da avaliação.
 #
 # ### 17.7 — Implicações para a modelagem preditiva
 #
-# Pontos técnicos a serem fundamentados:
+# Os resultados da análise exploratória direcionam as estratégias de preparação dos dados e modelagem preditiva.
 #
-# - **StandardScaler para o KNN:** relação com as diferenças de escala registradas em 17.2.
-# - **Árvore de Decisão sem escalonamento:** motivo da insensibilidade à escala.
-# - **Divisão estratificada:** relação com a proporção das classes registrada em 17.4.
-# - **Desbalanceamento:** impacto na interpretação dos resultados.
-# - **Redundância entre preditoras:** correlações registradas em 17.5.
-# - **Dependência temporal:** efeito da divisão aleatória sobre registros consecutivos (17.6).
-# - **Acurácia como métrica isolada:** limitações diante do desbalanceamento.
+# As diferenças de escala entre as variáveis ambientais justificam a utilização do `StandardScaler` para o KNN, uma vez
+# que esse algoritmo utiliza distâncias entre observações para realizar a classificação.
 #
-# *[Interpretação a ser redigida pelo estudante]*
+# A Árvore de Decisão será treinada sem escalonamento, pois sua estrutura utiliza divisões baseadas em limiares
+# individuais das variáveis.
+#
+# A divisão estratificada será utilizada para preservar aproximadamente a distribuição das classes nos conjuntos de
+# treinamento e teste.
+#
+# O escalonamento será ajustado exclusivamente sobre os dados de treinamento e posteriormente aplicado aos dados de
+# teste, evitando o vazamento de informações (Data Leakage) associado ao cálculo dos parâmetros de escala.
+#
+# O desempenho dos modelos será investigado por meio da comparação entre diferentes configurações de hiperparâmetros,
+# analisando as acurácias de treinamento e teste para identificar possíveis ocorrências de overfitting.
+#
+# As métricas complementares permitirão avaliar a capacidade de classificação das duas classes, considerando o
+# desbalanceamento identificado.
+#
+# A possível redundância entre preditoras e a dependência temporal serão consideradas na interpretação dos resultados e
+# das limitações dos modelos.
 #
 # ### 17.8 — Conclusão da análise exploratória
 #
-# Resultados que deverão fundamentar a conclusão:
+# A análise exploratória permitiu compreender a estrutura da base consolidada, as características estatísticas dos
+# sensores ambientais e suas associações com a variável alvo.
 #
-# - Base com 12.417 registros, 7 colunas e nenhum valor ausente (17.1).
-# - Diferenças de escala entre as variáveis ambientais (17.2).
-# - Padrões das distribuições observados nos histogramas (17.3).
-# - Proporção de 75,67% e 24,33% entre as classes (17.4).
-# - `Light` com a maior correlação com `Occupancy` (0,9197) (17.5).
-# - Coluna `date` válida, contínua dentro de cada arquivo e com uma descontinuidade entre os períodos (17.6).
-# - Pontos a serem verificados na Fase 2 — Data Prep: duplicidades, valores ausentes e outliers.
+# Foram identificadas diferenças relevantes de escala, desbalanceamento entre as classes e uma forte associação linear
+# entre luminosidade e ocupação.
 #
-# *[Conclusão a ser redigida pelo estudante]*
+# A base não apresentou valores ausentes na inspeção inicial, porém ainda necessita de verificações relacionadas à
+# duplicidade, à presença de valores discrepantes e à adequação dos tipos de dados.
+#
+# Os resultados obtidos estabelecem a fundamentação técnica para as próximas etapas de tratamento, engenharia de
+# atributos, escalonamento e modelagem preditiva.
+#
+# A próxima fase será dedicada à preparação dos dados (Data Prep), buscando preservar a integridade das informações e
+# garantir condições adequadas para o treinamento dos modelos de Machine Learning.
