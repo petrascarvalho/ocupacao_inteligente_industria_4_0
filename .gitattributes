@@ -1,2 +1,2 @@
-data/raw/** -text
+dados/brutos/** -text
 *.zip binary

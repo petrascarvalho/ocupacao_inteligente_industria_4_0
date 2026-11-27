@@ -24,3 +24,6 @@ secrets*.json
 # Arquivos do sistema operacional
 Thumbs.db
 desktop.ini
+
+# Arquivos auxiliares e temporários dos dados (não publicar)
+dados/temporarios/
