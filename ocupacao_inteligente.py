@@ -118,10 +118,13 @@ print(plt.rcParams["figure.figsize"])
 # | `caminho_datatest2` | `dados/brutos/datatest2.txt` |
 # | `caminho_csv` | `dados/consolidados/occupancy.csv` |
 # | `caminho_tratado` | `dados/tratados/occupancy_tratado.csv` (gerado na Fase 2) |
+# | `pasta_features` | `dados/features` |
+# | `caminho_features` | `dados/features/occupancy_features.csv` (gerado na Fase 3) |
 # | `pasta_graficos` / `pasta_metricas` | `resultados/graficos` / `resultados/metricas` |
 #
 # Conceitos: o item 5.1 do enunciado proíbe caminhos absolutos; `os.makedirs(..., exist_ok=True)` cria as pastas sem erro
-# quando já existem; o Git não versiona pastas vazias.
+# quando já existem; o Git não versiona pastas vazias. O arquivo de features só existe após a primeira execução do
+# BLOCO 35; antes disso, sua verificação retorna `False`.
 
 # %%
 # BLOCO 03 — Caminhos relativos e diretórios
@@ -130,6 +133,7 @@ print(plt.rcParams["figure.figsize"])
 pasta_brutos = "dados/brutos"
 pasta_consolidados = "dados/consolidados"
 pasta_tratados = "dados/tratados"
+pasta_features = "dados/features"
 pasta_graficos = "resultados/graficos"
 pasta_metricas = "resultados/metricas"
 
@@ -137,6 +141,7 @@ pasta_metricas = "resultados/metricas"
 os.makedirs(pasta_brutos, exist_ok=True)
 os.makedirs(pasta_consolidados, exist_ok=True)
 os.makedirs(pasta_tratados, exist_ok=True)
+os.makedirs(pasta_features, exist_ok=True)
 os.makedirs(pasta_graficos, exist_ok=True)
 os.makedirs(pasta_metricas, exist_ok=True)
 
@@ -151,6 +156,9 @@ caminho_csv = "dados/consolidados/occupancy.csv"
 # Definindo o caminho do arquivo tratado
 caminho_tratado = "dados/tratados/occupancy_tratado.csv"
 
+# Definindo o caminho do arquivo com a nova variável (Feature Engineering)
+caminho_features = "dados/features/occupancy_features.csv"
+
 # Validando o diretório de trabalho
 print("Diretório atual:", os.getcwd())
 
@@ -160,6 +168,7 @@ print("Arquivo datatest:", os.path.exists(caminho_datatest))
 print("Arquivo datatest2:", os.path.exists(caminho_datatest2))
 print("Arquivo consolidado:", os.path.exists(caminho_csv))
 print("Arquivo tratado:", os.path.exists(caminho_tratado))
+print("Arquivo de features:", os.path.exists(caminho_features))
 
 
 # %% [markdown]
@@ -1582,3 +1591,572 @@ print("SHA-256:", hash_tratado)
 # A próxima etapa é a Fase 3 — Feature Engineering, que criará uma nova variável numérica a partir de combinações
 # matemáticas das variáveis existentes. O escalonamento, a divisão treino/teste e a modelagem serão realizados nas
 # fases seguintes, respeitando a ordem que evita o vazamento de informações.
+
+
+###############################################################################################################################################################
+# %% [markdown]
+# # FASE 3 — Engenharia de Atributos (Feature Engineering)
+# ## BLOCO 29 — Contextualização da engenharia de atributos
+#
+# ### Conceito
+#
+# Feature Engineering é a criação ou transformação de atributos a partir das variáveis existentes, com o objetivo de
+# representar os dados de uma forma que facilite o aprendizado dos modelos. O conceito é apresentado no material
+# didático MUS01 (slide 49) como etapa da preparação dos dados para Machine Learning.
+#
+# ### Objetivo no projeto
+#
+# O enunciado exige a criação de pelo menos uma nova coluna numérica, obtida por operação matemática entre colunas
+# existentes, com verificação de valores ausentes antes do cálculo e validação da execução. Nesta fase é criada uma
+# única variável derivada, que será avaliada posteriormente pelos modelos KNN e Árvore de Decisão.
+#
+# ### Variável selecionada
+#
+# $$\text{CO2\_Light\_Ratio} = \frac{\text{CO2}}{\text{Light} + 1}$$
+#
+# | Critério | Justificativa |
+# |---|---|
+# | Requisito do enunciado | É uma das combinações sugeridas no documento oficial do projeto |
+# | Sensores envolvidos | Combina a concentração de CO2 (ppm) com a luminosidade (lux) em um único índice |
+# | Constante `+1` | Evita divisão por zero nas 7.612 leituras de `Light` iguais a zero |
+# | Ausência do alvo | `Occupancy` não participa do cálculo |
+# | Cálculo por registro | Cada valor depende apenas do próprio registro, sem estatísticas globais da base |
+#
+# A variável é tratada como um **índice experimental**: não possui significado físico validado e não há garantia
+# antecipada de ganho preditivo.
+#
+# ### Nova representação, não nova informação
+#
+# A nova coluna é uma função determinística de `CO2` e `Light`, que continuam disponíveis na base. Ela não acrescenta
+# medições independentes; apenas reorganiza a informação existente em uma forma que pode, ou não, ser mais útil para
+# os classificadores. Por isso, a fase investiga também a possível redundância com os sensores originais.
+#
+# ### Limitações conceituais
+#
+# - A constante `+1` é arbitrária e influencia principalmente as leituras de baixa luminosidade.
+# - A razão é muito sensível a variações de `Light` próximas de zero.
+# - Valores elevados do índice não comprovam ocupação; associação não implica causalidade.
+# - A comparação entre as candidatas foi realizada na base completa antes da divisão treino/teste, sem uso do alvo.
+
+# %% [markdown]
+# ### BLOCO 30 — Criação da base de Feature Engineering
+#
+# **Justificativa técnica:** a cópia independente (`copy(deep=True)`) mantém `df_tratado` e `df_consolidado`
+# inalterados, preservando as bases das fases anteriores como referência para a validação da integridade.
+
+# %%
+# BLOCO 30 — Criação da base de Feature Engineering
+
+# Cópia independente da base tratada
+df_features = df_tratado.copy(deep=True)
+
+print("Dimensões iniciais:", df_features.shape)
+print("Registros:", len(df_features))
+print("Colunas:", df_features.shape[1])
+print(df_features.dtypes)
+
+# Igualdade inicial dos valores
+pd.testing.assert_frame_equal(df_features, df_tratado, check_exact=True)
+print("\nBase de Feature Engineering idêntica à base tratada:", df_features.equals(df_tratado))
+
+# Independência dos objetos (não compartilham a mesma memória)
+print("Objetos distintos:", df_features is not df_tratado)
+print("Memória compartilhada em CO2:",
+      np.shares_memory(df_features["CO2"].to_numpy(), df_tratado["CO2"].to_numpy()))
+
+# %% [markdown]
+# ### BLOCO 31 — Criação da variável `CO2_Light_Ratio`
+#
+# As verificações com `assert` são executadas **antes** do cálculo e interrompem a execução caso as colunas da fórmula
+# apresentem alguma inconsistência.
+#
+# **Comportamento da fórmula** (contínua para `Light ≥ 0`):
+#
+# | Situação | Denominador | Efeito no índice |
+# |---|---|---|
+# | `Light = 0` | 1 | O índice é exatamente igual ao valor de `CO2` |
+# | `Light` próxima de zero (0 a poucos lux) | Entre 1 e alguns poucos | Queda acentuada: com `Light = 1`, o índice já corresponde à metade de `CO2` |
+# | `Light` elevada (centenas de lux) | Aproximadamente `Light` | Índice pequeno, aproximadamente `CO2 / Light` |
+#
+# A taxa de variação em relação à luminosidade é −CO2 / (Light + 1)², de maior intensidade em `Light = 0` e cada vez
+# menor à medida que a luminosidade aumenta. Não há descontinuidade: a função é definida e contínua em todo o domínio
+# observado.
+
+# %%
+# BLOCO 31 — Criação da variável CO2_Light_Ratio
+
+colunas_formula = ["CO2", "Light"]
+
+# Verificações anteriores ao cálculo
+verificacoes_formula = pd.DataFrame({
+    "Ausentes": df_features[colunas_formula].isna().sum(),
+    "Infinitos": np.isinf(df_features[colunas_formula]).sum(),
+    "Negativos": (df_features[colunas_formula] < 0).sum(),
+    "Tipo": df_features[colunas_formula].dtypes.astype(str),
+})
+print("Verificações das colunas da fórmula:")
+print(verificacoes_formula)
+
+denominador = df_features["Light"] + 1
+print("\nLeituras de Light iguais a zero:", (df_features["Light"] == 0).sum())
+print("Denominadores iguais a zero:", (denominador == 0).sum())
+print("Menor denominador:", denominador.min())
+
+# Condições bloqueantes
+assert set(colunas_formula).issubset(df_features.columns), "CO2 ou Light ausente na base."
+assert all(pd.api.types.is_float_dtype(df_features[coluna]) for coluna in colunas_formula), "Tipo não numérico."
+assert df_features[colunas_formula].isna().sum().sum() == 0, "Existem valores ausentes em CO2 ou Light."
+assert np.isinf(df_features[colunas_formula]).sum().sum() == 0, "Existem valores infinitos em CO2 ou Light."
+assert (df_features["Light"] >= 0).all(), "Existem leituras negativas de Light."
+assert (denominador != 0).all(), "Existem denominadores iguais a zero."
+print("\nVerificações anteriores ao cálculo aprovadas.")
+
+# Criação da nova variável por operação vetorizada
+df_features["CO2_Light_Ratio"] = df_features["CO2"] / denominador
+
+# Confirmações após o cálculo
+colunas_originais = list(df_tratado.columns)
+print("\nTipo da nova variável:", df_features["CO2_Light_Ratio"].dtype)
+print("Dimensões após a criação:", df_features.shape)
+print("Ausentes na nova variável:", df_features["CO2_Light_Ratio"].isna().sum())
+print("Infinitos na nova variável:", np.isinf(df_features["CO2_Light_Ratio"]).sum())
+print("Colunas originais inalteradas:", df_features[colunas_originais].equals(df_tratado))
+print("Primeiro valor armazenado:", repr(float(df_features.loc[0, "CO2_Light_Ratio"])))
+print(df_features[["CO2", "Light", "CO2_Light_Ratio"]].head())
+
+# Demonstração ilustrativa do efeito da luminosidade (CO2 hipotético de 600 ppm)
+luminosidades_exemplo = pd.Series([0, 0.5, 1, 5, 50, 500], name="Light")
+print("\nIlustração com CO2 = 600 ppm (valores hipotéticos, fora da base):")
+print(pd.DataFrame({"Light": luminosidades_exemplo, "CO2_Light_Ratio": 600 / (luminosidades_exemplo + 1)}))
+
+# %% [markdown]
+# ### BLOCO 32 — Inspeção estatística da nova variável
+#
+# A inspeção apresenta as estatísticas descritivas da nova variável, compara os registros com luminosidade igual a
+# zero e positiva e mede a associação com as variáveis de origem. **`Occupancy` não é utilizada nesta comparação.**
+
+# %%
+# BLOCO 32.1 — Estatísticas descritivas da nova variável
+
+nova_variavel = df_features["CO2_Light_Ratio"]
+
+resumo_nova_variavel = pd.Series({
+    "Tipo": str(nova_variavel.dtype),
+    "Observações": nova_variavel.count(),
+    "Média": nova_variavel.mean(),
+    "Desvio padrão": nova_variavel.std(),
+    "Mínimo": nova_variavel.min(),
+    "Primeiro quartil (Q1)": nova_variavel.quantile(0.25),
+    "Mediana": nova_variavel.median(),
+    "Terceiro quartil (Q3)": nova_variavel.quantile(0.75),
+    "Máximo": nova_variavel.max(),
+    "Amplitude": nova_variavel.max() - nova_variavel.min(),
+    "Assimetria": nova_variavel.skew(),
+    "Zeros": (nova_variavel == 0).sum(),
+    "Valores distintos": nova_variavel.nunique(),
+    "Ausentes": nova_variavel.isna().sum(),
+    "Infinitos": np.isinf(nova_variavel).sum(),
+})
+print(resumo_nova_variavel.to_string())
+
+# %%
+# BLOCO 32.2 — Comparação entre luminosidade igual a zero e positiva
+
+mascara_light_zero = df_features["Light"] == 0
+mascara_light_positiva = df_features["Light"] > 0
+assert mascara_light_zero.sum() + mascara_light_positiva.sum() == len(df_features), "Grupos incompletos."
+
+tabela_grupos_light = pd.DataFrame({
+    "Light = 0": nova_variavel[mascara_light_zero].describe(),
+    "Light > 0": nova_variavel[mascara_light_positiva].describe(),
+}).T
+tabela_grupos_light.insert(1, "Percentual (%)", [
+    round(mascara_light_zero.mean() * 100, 2),
+    round(mascara_light_positiva.mean() * 100, 2),
+])
+print(tabela_grupos_light.to_string())
+
+# Comparação exata: com Light = 0, o denominador é 1 e o índice deve ser igual ao CO2
+pd.testing.assert_series_equal(
+    nova_variavel[mascara_light_zero],
+    df_features.loc[mascara_light_zero, "CO2"],
+    check_exact=True,
+    check_names=False,
+)
+print("\nCom Light = 0, CO2_Light_Ratio é exatamente igual a CO2:",
+      (nova_variavel[mascara_light_zero] == df_features.loc[mascara_light_zero, "CO2"]).all())
+
+# %%
+# BLOCO 32.3 — Correlação com as variáveis de origem (sem Occupancy)
+
+tabela_correlacoes = pd.DataFrame({
+    "Pearson com CO2_Light_Ratio": [
+        nova_variavel.corr(df_features[coluna], method="pearson") for coluna in colunas_formula
+    ],
+    "Spearman com CO2_Light_Ratio": [
+        nova_variavel.corr(df_features[coluna], method="spearman") for coluna in colunas_formula
+    ],
+}, index=pd.Index(colunas_formula, name="Variável original"))
+print(tabela_correlacoes.round(4))
+
+# %% [markdown]
+# ### BLOCO 33 — Visualização da nova variável
+#
+# Os dois histogramas utilizam 50 intervalos. No gráfico logarítmico, os 51 limites são espaçados geometricamente entre
+# o mínimo e o máximo exatos da variável. A escala logarítmica é aplicada **somente à visualização**: a coluna
+# `CO2_Light_Ratio` não é transformada.
+
+# %%
+# BLOCO 33 — Histogramas da nova variável
+
+valor_minimo = nova_variavel.min()
+valor_maximo = nova_variavel.max()
+
+# A escala logarítmica exige valores estritamente positivos
+assert (nova_variavel > 0).all(), "Existem valores não positivos; a escala logarítmica não é aplicável."
+
+# Limites dos intervalos (50 intervalos = 51 limites)
+limites_lineares = np.linspace(valor_minimo, valor_maximo, 51)
+limites_log = np.logspace(np.log10(valor_minimo), np.log10(valor_maximo), 51)
+limites_log[0] = valor_minimo
+limites_log[-1] = valor_maximo
+
+fig, (eixo_linear, eixo_log) = plt.subplots(1, 2, figsize=(15, 5))
+
+frequencias_lineares, _, _ = eixo_linear.hist(nova_variavel, bins=limites_lineares, edgecolor="black")
+eixo_linear.set_title("Escala linear")
+eixo_linear.set_xlabel("Índice experimental CO2/Luz — CO2 / (Light + 1)")
+eixo_linear.set_ylabel("Frequência")
+
+frequencias_log, _, _ = eixo_log.hist(nova_variavel, bins=limites_log, edgecolor="black")
+eixo_log.set_xscale("log")
+eixo_log.set_title("Escala logarítmica no eixo horizontal (somente visualização)")
+eixo_log.set_xlabel("Índice experimental CO2/Luz — CO2 / (Light + 1)")
+eixo_log.set_ylabel("Frequência")
+
+plt.suptitle("Distribuição da nova variável CO2_Light_Ratio", fontsize=16)
+plt.tight_layout()
+
+# Exportação antes da exibição
+caminho_figura = f"{pasta_graficos}/fe_01_distribuicao_nova_variavel.png"
+plt.savefig(caminho_figura, dpi=300, bbox_inches="tight")
+print("Figura salva em:", caminho_figura)
+
+plt.show()
+
+# Conferência dos limites e das frequências
+assert len(limites_lineares) == 51 and len(limites_log) == 51, "Quantidade de limites incorreta."
+assert limites_lineares[0] == valor_minimo and limites_lineares[-1] == valor_maximo, "Extremos lineares incorretos."
+assert limites_log[0] == valor_minimo and limites_log[-1] == valor_maximo, "Extremos logarítmicos incorretos."
+assert frequencias_lineares.sum() == len(df_features), "O histograma linear não representa todos os registros."
+assert frequencias_log.sum() == len(df_features), "O histograma logarítmico não representa todos os registros."
+
+tabela_histogramas = pd.DataFrame({
+    "Escala linear": [
+        len(limites_lineares) - 1,
+        len(limites_lineares),
+        int(frequencias_lineares.sum()),
+        int((frequencias_lineares == 0).sum()),
+        int(frequencias_lineares.max()),
+    ],
+    "Escala logarítmica": [
+        len(limites_log) - 1,
+        len(limites_log),
+        int(frequencias_log.sum()),
+        int((frequencias_log == 0).sum()),
+        int(frequencias_log.max()),
+    ],
+}, index=["Intervalos", "Limites", "Soma das frequências", "Intervalos vazios", "Maior frequência"])
+print(tabela_histogramas)
+
+# Frequências por intervalo da escala logarítmica
+tabela_frequencias_log = pd.DataFrame({
+    "Limite inferior": limites_log[:-1],
+    "Limite superior": limites_log[1:],
+    "Frequência": frequencias_log.astype(int),
+})
+print("\nFrequências por intervalo (escala logarítmica):")
+print(tabela_frequencias_log.to_string())
+
+# %% [markdown]
+# ### BLOCO 34 — Validação da integridade da base de Feature Engineering
+#
+# As verificações com `assert` impedem a exportação caso a nova base apresente alguma inconsistência em relação à base
+# tratada. A coluna derivada é recalculada de forma independente e comparada com `check_exact=True`.
+
+# %%
+# BLOCO 34 — Validação da integridade
+
+colunas_numericas_features = colunas_numericas + ["CO2_Light_Ratio"]
+
+tabela_integridade = pd.DataFrame({
+    "Base tratada": [
+        len(df_tratado),
+        df_tratado.shape[1],
+        df_tratado.isna().sum().sum(),
+        np.isinf(df_tratado[colunas_numericas]).sum().sum(),
+        df_tratado["date"].nunique(),
+        (df_tratado["Occupancy"] == 0).sum(),
+        (df_tratado["Occupancy"] == 1).sum(),
+    ],
+    "Base de Feature Engineering": [
+        len(df_features),
+        df_features.shape[1],
+        df_features.isna().sum().sum(),
+        np.isinf(df_features[colunas_numericas_features]).sum().sum(),
+        df_features["date"].nunique(),
+        (df_features["Occupancy"] == 0).sum(),
+        (df_features["Occupancy"] == 1).sum(),
+    ],
+}, index=["Registros", "Colunas", "Valores ausentes", "Valores infinitos",
+          "Timestamps distintos", "Classe 0", "Classe 1"])
+tabela_integridade["Diferença"] = (
+    tabela_integridade["Base de Feature Engineering"] - tabela_integridade["Base tratada"]
+)
+print(tabela_integridade)
+
+# Dimensões e colunas
+assert len(df_tratado) == 12417 and len(df_features) == 12417, "Quantidade de registros divergente."
+assert df_tratado.shape[1] == 7, "A base tratada não possui sete colunas."
+assert df_features.shape[1] == 8, "A base de Feature Engineering não possui oito colunas."
+colunas_acrescentadas = [coluna for coluna in df_features.columns if coluna not in df_tratado.columns]
+assert colunas_acrescentadas == ["CO2_Light_Ratio"], "Colunas acrescentadas divergentes."
+assert list(df_features.columns[:7]) == colunas_originais, "Ordem das colunas originais alterada."
+
+# Preservação integral das sete colunas originais, dos timestamps e do alvo
+pd.testing.assert_frame_equal(df_features[colunas_originais], df_tratado, check_exact=True)
+pd.testing.assert_series_equal(df_features["date"], df_tratado["date"], check_exact=True)
+pd.testing.assert_series_equal(df_features["Occupancy"], df_tratado["Occupancy"], check_exact=True)
+assert (df_features["Occupancy"] == 0).sum() == 9396, "Quantidade de desocupados divergente."
+assert (df_features["Occupancy"] == 1).sum() == 3021, "Quantidade de ocupados divergente."
+
+# Ausentes, infinitos e tipo da variável derivada
+assert df_features.isna().sum().sum() == 0, "Existem valores ausentes."
+assert np.isinf(df_features[colunas_numericas_features]).sum().sum() == 0, "Existem valores infinitos."
+assert df_features["CO2_Light_Ratio"].dtype == "float64", "A variável derivada não é float64."
+
+# Igualdade exata com o recálculo independente da fórmula
+recalculo_formula = df_tratado["CO2"] / (df_tratado["Light"] + 1)
+pd.testing.assert_series_equal(df_features["CO2_Light_Ratio"], recalculo_formula, check_exact=True, check_names=False)
+
+# Preservação da precisão numérica em relação à base consolidada
+pd.testing.assert_frame_equal(
+    df_features[colunas_numericas], df_consolidado[colunas_numericas], check_exact=True
+)
+
+# Preservação das bases anteriores
+pd.testing.assert_frame_equal(df_tratado, df_tratado_recarregado, check_exact=True)
+pd.testing.assert_frame_equal(df_consolidado, pd.read_csv(caminho_csv), check_exact=True)
+assert df_tratado.shape == (12417, 7) and df_consolidado.shape == (12417, 7), "Bases anteriores alteradas."
+
+print("\nValidação da integridade concluída com sucesso!")
+
+# %% [markdown]
+# ### BLOCO 35 — Exportação e validação da base de Feature Engineering
+#
+# A exportação segue o padrão da Fase 2: `index=False`, coluna `date` no formato `%Y-%m-%d %H:%M:%S` e nenhuma
+# formatação das casas decimais. Após a recarga, `date` é convertida novamente para `datetime` e a equivalência é
+# verificada com `check_exact=True`.
+#
+# **Precisão na leitura:** a divisão produz valores com até 17 algarismos significativos. O pandas grava cada valor com
+# a representação textual mais curta que reconstrói exatamente o `float64`, mas o conversor padrão de `read_csv`
+# (`float_precision="high"`) pode diferir do valor original no último bit. Por isso, a recarga utiliza
+# `float_precision="round_trip"`, que reconstrói exatamente os valores gravados. Nenhum arredondamento é aplicado e a
+# comparação permanece exata.
+
+# %%
+# BLOCO 35 — Exportação e validação da base de Feature Engineering
+
+df_features.to_csv(caminho_features, index=False, date_format="%Y-%m-%d %H:%M:%S")
+print("Base de Feature Engineering exportada:", caminho_features)
+
+# Diagnóstico: divergências da nova variável com o conversor padrão de ponto flutuante
+recarga_padrao = pd.read_csv(caminho_features)
+divergencias_padrao = recarga_padrao["CO2_Light_Ratio"] != df_features["CO2_Light_Ratio"]
+diferenca_relativa_padrao = (
+    (recarga_padrao["CO2_Light_Ratio"] - df_features["CO2_Light_Ratio"]).abs() / df_features["CO2_Light_Ratio"]
+).max()
+print("Valores divergentes com o conversor padrão:", divergencias_padrao.sum())
+print("Maior diferença relativa com o conversor padrão:", diferenca_relativa_padrao)
+
+# Recarga com reconstrução exata dos valores e conversão da coluna temporal
+df_features_recarregado = pd.read_csv(caminho_features, float_precision="round_trip")
+df_features_recarregado["date"] = pd.to_datetime(
+    df_features_recarregado["date"], format="%Y-%m-%d %H:%M:%S", errors="coerce"
+)
+
+print("Dimensões:", df_features_recarregado.shape)
+print(df_features_recarregado.dtypes)
+print("Valores ausentes:", df_features_recarregado.isna().sum().sum())
+print(df_features_recarregado["Occupancy"].value_counts().sort_index())
+
+# Equivalência exata entre a base em memória e a base recarregada
+pd.testing.assert_frame_equal(df_features, df_features_recarregado, check_exact=True)
+print("\nBase recarregada idêntica à base de Feature Engineering.")
+
+# Tamanho e SHA-256 do arquivo exportado
+with open(caminho_features, "rb") as arquivo:
+    hash_features = hashlib.sha256(arquivo.read()).hexdigest()
+
+print("Tamanho do arquivo (bytes):", os.path.getsize(caminho_features))
+print("SHA-256:", hash_features)
+
+# %% [markdown]
+# ## BLOCO 36 — Interpretação e conclusão da Feature Engineering
+#
+# ### 36.1 — Justificativa da variável escolhida
+#
+# Foi criada a variável `CO2_Light_Ratio = CO2 / (Light + 1)`, uma das combinações sugeridas no enunciado. Ela reúne,
+# em um único índice, dois sensores que respondem à presença de pessoas por mecanismos diferentes: a concentração de
+# CO2 acumula-se com a respiração dos ocupantes, enquanto a luminosidade depende da iluminação artificial e da luz
+# natural. A razão entre eles produz uma representação em que leituras de CO2 com ambiente escuro resultam em valores
+# altos e leituras com ambiente iluminado resultam em valores baixos. A construção não utiliza `Occupancy`, é calculada
+# registro a registro e não depende de estatísticas globais. A escolha não pressupõe superioridade preditiva em
+# relação às demais candidatas investigadas.
+#
+# ### 36.2 — Comportamento matemático
+#
+# A constante `+1` torna o denominador estritamente positivo (menor denominador observado: 1,0), eliminando a divisão
+# por zero sem excluir registros. Quando `Light = 0`, o índice é exatamente igual a `CO2`; à medida que a luminosidade
+# aumenta, o índice diminui de forma contínua, com variação mais intensa nos primeiros lux. A ilustração do BLOCO 31,
+# com CO2 hipotético de 600 ppm, mostra essa sensibilidade: o índice passa de 600 (0 lux) para 300 (1 lux), 100 (5
+# lux) e cerca de 1,20 (500 lux).
+#
+# Na base real, porém, não há leituras de `Light` entre 0 e 4,67 lux: a menor luminosidade positiva é 4,67 lux.
+# Assim, a faixa de maior sensibilidade da fórmula não é ocupada por observações reais, e o salto do índice ocorre
+# entre o grupo `Light = 0` e as leituras positivas. Para `Light > 0`, o denominador é de pelo menos 5,67, e a
+# constante `+1` altera o índice, no máximo, em cerca de 18% em relação a `CO2 / Light`, influência que se reduz nas
+# luminosidades elevadas. A constante permanece arbitrária: outro valor modificaria a escala do índice nas leituras de
+# baixa luminosidade.
+#
+# ### 36.3 — Estatísticas descritivas e distribuição
+#
+# | Estatística | Valor |
+# |---|---:|
+# | Tipo | `float64` |
+# | Observações | 12.417 |
+# | Média | 426,134753 |
+# | Desvio padrão | 403,140840 |
+# | Mínimo | 0,560430 |
+# | Primeiro quartil (Q1) | 2,999126 |
+# | Mediana | 503,000000 |
+# | Terceiro quartil (Q3) | 596,333333 |
+# | Máximo | 2.076,500000 |
+# | Amplitude | 2.075,939570 |
+# | Assimetria | 0,822262 |
+# | Zeros / distintos / ausentes / infinitos | 0 / 6.989 / 0 / 0 |
+#
+# Evidência visual: `resultados/graficos/fe_01_distribuicao_nova_variavel.png`.
+#
+# A distribuição não é contínua ao longo da amplitude: os valores formam dois agrupamentos separados. Os registros com
+# luz ocupam a faixa de 0,56 a 263,29, e os registros sem luz ocupam a faixa de 427,50 a 2.076,50. Não há nenhuma
+# observação entre 263,29 e 427,50. Por isso, a média (426,13) cai justamente nessa faixa vazia e não representa um
+# valor típico. O salto entre Q1 (3,00) e a mediana (503,00) indica a mesma separação.
+#
+# - **Escala linear:** os 50 intervalos somam 12.417 registros; 8 intervalos ficaram vazios. O primeiro intervalo (0,56
+#   a 42,08) concentra 4.558 registros, comprimindo quase todo o grupo com luz em uma única barra. O grupo sem luz
+#   reproduz a forma da distribuição de `CO2`, com maior concentração entre aproximadamente 500 e 600.
+# - **Escala logarítmica (somente visualização):** os 50 intervalos também somam 12.417 registros; 3 intervalos
+#   ficaram vazios, todos entre 208,00 e 401,39. O agrupamento com luz fica visível, com maior concentração entre 1,77
+#   e 2,46 (1.430 registros em dois intervalos). O intervalo de maior frequência (473,09 a 557,60, com 2.527 registros)
+#   pertence ao grupo sem luz.
+#
+# A existência de dois agrupamentos decorre da estrutura da fórmula combinada com o excesso de zeros em `Light`, e
+# não de uma propriedade física independente. A assimetria positiva (0,8223) resume uma distribuição heterogênea e
+# não deve ser lida isoladamente.
+#
+# ### 36.4 — Influência das leituras de luminosidade igual a zero
+#
+# | Grupo | Registros | Percentual | Média | Mediana | Mínimo | Máximo |
+# |---|---:|---:|---:|---:|---:|---:|
+# | `Light = 0` | 7.612 | 61,30% | 689,649896 | 569,333333 | 427,500000 | 2.076,500000 |
+# | `Light > 0` | 4.805 | 38,70% | 8,678507 | 2,299843 | 0,560430 | 263,294118 |
+#
+# Nos 7.612 registros com `Light = 0`, a comparação exata confirmou que `CO2_Light_Ratio` é igual a `CO2` (`True`).
+# Nesses casos, a nova variável não acrescenta nenhuma diferença em relação ao sensor original: ela repete o valor
+# de CO2. A transformação só modifica efetivamente os 4.805 registros com luminosidade positiva, cujo índice é baixo
+# (mediana de 2,30; 75% abaixo de 4,55). Como o menor valor do grupo sem luz (427,50) é maior que o maior valor do
+# grupo com luz (263,29), o índice separa completamente os dois grupos de luminosidade. Essa separação, porém, já está
+# disponível na própria variável `Light`.
+#
+# ### 36.5 — Correlação e possível redundância
+#
+# | Variável original | Pearson com `CO2_Light_Ratio` | Spearman com `CO2_Light_Ratio` |
+# |---|---:|---:|
+# | CO2 | 0,2419 | 0,0686 |
+# | Light | −0,6607 | −0,8633 |
+#
+# Pearson mede associação linear; Spearman mede associação monotônica, calculada sobre as posições (postos) dos
+# valores. A associação com `Light` é negativa e forte em Spearman (−0,8633), maior em módulo que em Pearson
+# (−0,6607): quanto maior a luminosidade, menor tende a ser o índice, mas essa relação não é linear, coerente com a
+# forma da divisão. Com `CO2`, as duas correlações globais são fracas (0,2419 e 0,0686). Esse resultado não significa
+# independência, pois o índice é exatamente igual a CO2 em 61,30% dos registros; a associação global é reduzida
+# porque, nos registros com luz, o índice tende a acompanhar mais a variação de `Light` do que a de `CO2`.
+#
+# Há, portanto, redundância parcial: o índice reproduz `CO2` no grupo sem luz e acompanha `Light` de forma monotônica
+# inversa no conjunto da base. Nenhum dos coeficientes é próximo de ±1, de modo que a variável não é uma cópia de um
+# único sensor. As correlações foram calculadas sem `Occupancy` e não indicam causalidade nem importância preditiva;
+# o efeito sobre a classificação só poderá ser avaliado nos modelos.
+#
+# ### 36.6 — Implicações para KNN e Árvore de Decisão
+#
+# - **Escala no KNN:** o KNN classifica pela distância entre registros. O índice tem desvio padrão de 403,14, enquanto
+#   `Temperature` tem 1,04 e `HumidityRatio` tem 0,0006 (BLOCO 13). Sem padronização, o índice, `CO2` e `Light`
+#   dominariam a distância euclidiana, e as demais variáveis teriam influência desprezível.
+# - **StandardScaler:** na configuração prevista para o KNN, o `StandardScaler` será ajustado somente no conjunto de
+#   treinamento (`fit_transform`) e aplicado ao teste (`transform`), colocando todos os atributos na mesma escala.
+# - **Redundância no KNN:** como o índice repete parte da informação de `CO2` e `Light`, incluí-lo junto aos sensores
+#   originais aumenta o peso dessa informação no cálculo da distância. Isso pode ajudar ou prejudicar a classificação.
+# - **Árvore de Decisão:** a árvore divide os dados por limiares em um atributo de cada vez, e os limiares não dependem
+#   da escala. Por isso, o escalonamento não é necessário. Qualquer limiar entre 263,29 e 427,50 no índice separa os
+#   mesmos registros que um limiar em `Light` entre 0 e 4,67 lux, o que mostra que, nesse ponto, a árvore não ganha
+#   informação nova.
+# - **Sem garantia de melhoria:** a contribuição da variável será verificada apenas pelo desempenho dos modelos nas
+#   fases seguintes.
+#
+# ### 36.7 — Prevenção de Data Leakage
+#
+# | Tipo de operação | Aprende parâmetros dos dados? | Momento adequado |
+# |---|---|---|
+# | Transformação determinística por registro (`CO2 / (Light + 1)`) | Não | Pode ser aplicada antes da divisão |
+# | Transformações com parâmetros (padronização, imputação, limites IQR) | Sim | Ajuste somente no treino |
+# | Seleção de atributos pelo desempenho | Sim, indiretamente | Somente com dados de treino ou validação |
+# | Ajuste de hiperparâmetros | Sim, indiretamente | Somente com dados de treino ou validação |
+#
+# A nova variável é calculada com os valores do próprio registro, sem média, desvio padrão ou qualquer informação de
+# outros registros, e sem `Occupancy`. Por isso, criá-la antes da divisão treino/teste não transfere informações do
+# teste para o treino.
+#
+# Há, contudo, limitações metodológicas a registrar. As três candidatas avaliadas foram comparadas na base completa
+# antes da divisão, ainda que sem o alvo. A EDA também analisou as associações entre os sensores e `Occupancy` na base
+# completa. Essas análises orientaram decisões do projeto com dados que, depois, farão parte do conjunto de teste.
+# Além disso, o split aleatório exigido aproxima registros temporalmente vizinhos entre treino e teste. Por esses
+# motivos, não é possível afirmar que o processo esteja completamente livre de vieses de avaliação.
+#
+# ### 36.8 — Integridade, exportação e limitações
+#
+# | Indicador | Base tratada | Base de Feature Engineering | Diferença |
+# |---|---:|---:|---:|
+# | Registros | 12.417 | 12.417 | 0 |
+# | Colunas | 7 | 8 | 1 |
+# | Valores ausentes | 0 | 0 | 0 |
+# | Valores infinitos | 0 | 0 | 0 |
+# | Timestamps distintos | 12.417 | 12.417 | 0 |
+# | Classe 0 | 9.396 | 9.396 | 0 |
+# | Classe 1 | 3.021 | 3.021 | 0 |
+#
+# Todas as verificações `assert` foram aprovadas. Foi acrescentada somente a coluna `CO2_Light_Ratio` (`float64`). As
+# sete colunas originais, os timestamps e `Occupancy` permaneceram idênticos aos da base tratada (`check_exact=True`).
+# A coluna derivada coincide exatamente com o recálculo independente da fórmula, e `df_tratado` e `df_consolidado`
+# foram preservados.
+#
+# A base foi exportada para `dados/features/occupancy_features.csv` (990.635 bytes). Na recarga com o conversor padrão
+# do pandas, 850 valores da nova variável divergiram no último bit (diferença relativa máxima de 2,43 × 10⁻¹⁶), embora
+# o texto gravado no arquivo represente exatamente cada valor. A leitura com `float_precision="round_trip"` reconstruiu
+# todos os valores, e a comparação com `check_exact=True` foi aprovada sem arredondamento e sem tolerância. Nenhum
+# registro foi excluído.
+#
+# **Limitações:** a constante `+1` é arbitrária; o índice é muito sensível à luminosidade próxima de zero, embora essa
+# faixa não esteja ocupada na base atual; há redundância parcial com `CO2` e `Light`; o índice não tem interpretação
+# física validada; e o ganho preditivo ainda não foi comprovado. A divisão treino/teste, o escalonamento e o
+# treinamento dos modelos serão realizados nas fases seguintes.
