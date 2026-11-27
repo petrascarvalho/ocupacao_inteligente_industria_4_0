@@ -1,4 +1,3 @@
-
 # %% [markdown]
 # # PROJETO DE INTEGRAÇÃO DE DADOS COM IA
 # ## Ocupação Inteligente — Indústria 4.0
@@ -43,6 +42,12 @@
 # | Atribuição e hashes SHA-256 | `dados/README.md` |
 
 # %% [markdown]
+# # PREPARAÇÃO INICIAL E ETL (BLOCOS 01 A 09)
+#
+# Esta seção prepara o ambiente e consolida a base de dados. Ela antecede as sete fases avaliativas do enunciado
+# (EDA, Data Prep, Feature Engineering, divisão dos dados, escalonamento, hiperparâmetros e avaliação final) e não
+# altera sua numeração.
+#
 # ### BLOCO 01 — Importação das bibliotecas
 #
 # **Evidências:**
@@ -91,8 +96,11 @@ from sklearn.metrics import accuracy_score, classification_report, confusion_mat
 # |---|---|
 # | Estilo do Seaborn | `whitegrid` |
 # | Tamanho padrão das figuras | `(10, 5)` polegadas |
+# | Exibição dos DataFrames | Todas as colunas, largura de 200 caracteres, sem quebra da tabela |
 #
-# Mesma configuração do exemplo didático do enunciado (p. 3).
+# Mesma configuração gráfica do exemplo didático do enunciado (p. 3). As opções de exibição do pandas evitam que
+# tabelas como a do `describe()` sejam truncadas com `...` na execução em terminal; elas alteram somente a apresentação,
+# não a precisão armazenada nem os valores dos dados.
 
 # %%
 # BLOCO 02 — Configurações visuais
@@ -102,6 +110,11 @@ sns.set_theme(style="whitegrid")
 
 # Definindo o tamanho padrão dos gráficos
 plt.rcParams["figure.figsize"] = (10, 5)
+
+# Configurando a exibição dos DataFrames (somente apresentação)
+pd.set_option("display.max_columns", None)
+pd.set_option("display.width", 200)
+pd.set_option("display.expand_frame_repr", False)
 
 print(plt.rcParams["figure.figsize"])
 
@@ -116,6 +129,7 @@ print(plt.rcParams["figure.figsize"])
 # | `zip_path` | `dados/brutos/occupancy_data.zip` |
 # | `caminho_datatest` | `dados/brutos/datatest.txt` |
 # | `caminho_datatest2` | `dados/brutos/datatest2.txt` |
+# | `caminho_datatraining` | `dados/brutos/datatraining.txt` (somente leitura no BLOCO 06.1; fora da consolidação) |
 # | `caminho_csv` | `dados/consolidados/occupancy.csv` |
 # | `caminho_tratado` | `dados/tratados/occupancy_tratado.csv` (gerado na Fase 2) |
 # | `pasta_features` | `dados/features` |
@@ -149,6 +163,7 @@ os.makedirs(pasta_metricas, exist_ok=True)
 zip_path = "dados/brutos/occupancy_data.zip"
 caminho_datatest = "dados/brutos/datatest.txt"
 caminho_datatest2 = "dados/brutos/datatest2.txt"
+caminho_datatraining = "dados/brutos/datatraining.txt"
 
 # Definindo o caminho do arquivo consolidado
 caminho_csv = "dados/consolidados/occupancy.csv"
@@ -166,6 +181,7 @@ print("Diretório atual:", os.getcwd())
 print("Arquivo ZIP:", os.path.exists(zip_path))
 print("Arquivo datatest:", os.path.exists(caminho_datatest))
 print("Arquivo datatest2:", os.path.exists(caminho_datatest2))
+print("Arquivo datatraining:", os.path.exists(caminho_datatraining))
 print("Arquivo consolidado:", os.path.exists(caminho_csv))
 print("Arquivo tratado:", os.path.exists(caminho_tratado))
 print("Arquivo de features:", os.path.exists(caminho_features))
@@ -230,19 +246,26 @@ else:
 # Conceito: a primeira coluna dos arquivos `.txt` é uma numeração sem nome no cabeçalho, que o pandas utiliza
 # automaticamente como índice.
 #
-# **Justificativa técnica:**
+# **Composição da base — fatos, escolhas e inferências:**
 #
-# Para a construção da base consolidada, foram utilizados os arquivos `datatest.txt` e `datatest2.txt`, que apresentam
-# estruturas compatíveis e totalizam 12.417 registros.
+# | Tipo | Conteúdo |
+# |---|---|
+# | Fato documentado (UCI) | O pacote contém três arquivos, 20.560 registros no total, descritos como conjuntos "for training and testing", sem atribuição explícita de papel a cada arquivo |
+# | Fato documentado (enunciado, p. 3) | O exemplo do professor lê somente `datatest.txt`; a Fase 4 exige a divisão 80/20 estratificada da base utilizada |
+# | Escolha metodológica deste projeto | Consolidar `datatest.txt` e `datatest2.txt` (12.417 registros) e manter `datatraining.txt` fora da base |
+# | Inferência pelos nomes dos arquivos | No estudo original, `datatraining` teria sido o conjunto de treino e os dois `datatest` os conjuntos de teste |
 #
-# A utilização dos dois arquivos amplia a quantidade de observações em relação ao exemplo inicial do enunciado,
-# permitindo uma análise exploratória sobre uma amostra maior.
+# A consolidação dos dois arquivos `datatest` é uma escolha deste projeto, distinta do protocolo original de avaliação
+# do conjunto de dados; ela não é uma exigência do enunciado. O critério que levou a manter `datatraining.txt` fora da
+# consolidação não foi registrado quando a decisão foi tomada e, por isso, não é reconstruído aqui.
 #
-# O arquivo `datatraining.txt` foi preservado em sua estrutura original, sem inclusão na consolidação adotada neste
-# projeto.
+# A ampliação em relação ao exemplo do enunciado aumenta a quantidade de observações disponíveis para a análise. Os
+# nomes originais dos arquivos não determinam a divisão treino/teste desta aplicação, que será realizada na Fase 4 sobre
+# a base consolidada.
 #
-# A denominação original dos arquivos não determina a divisão de treinamento e teste utilizada nesta aplicação, que será
-# realizada posteriormente sobre a base consolidada, conforme a metodologia exigida no enunciado.
+# O arquivo `datatraining.txt` permanece preservado e não é incorporado à base. O BLOCO 06.1 apenas lê seus períodos e
+# proporções de classe para documentar a composição; ele poderá ser usado, ao final, em uma avaliação complementar
+# claramente identificada, sem substituir a divisão exigida.
 
 # %%
 # BLOCO 05 — Leitura dos arquivos brutos
@@ -281,6 +304,49 @@ print("DATASET 02 - datatest2.txt")
 print("Dimensões:", df2.shape)
 print("Colunas:", df2.columns)
 print(df2.head())
+
+
+# %% [markdown]
+# ### BLOCO 06.1 — Inventário temporal dos três arquivos originais
+#
+# Leitura somente para documentação da composição da base. `datatraining.txt` não é concatenado, tratado ou utilizado
+# em nenhuma análise de modelagem.
+
+# %%
+# BLOCO 06.1 — Inventário temporal dos três arquivos originais
+
+# Leitura somente para inventário (não incorporado à base consolidada)
+df_inventario_training = pd.read_csv(caminho_datatraining)
+
+arquivos_originais = {
+    "datatest.txt": df1,
+    "datatraining.txt": df_inventario_training,
+    "datatest2.txt": df2,
+}
+
+linhas_inventario = []
+for nome, dados in arquivos_originais.items():
+    datas_arquivo = pd.to_datetime(dados["date"], format="%Y-%m-%d %H:%M:%S")
+    linhas_inventario.append({
+        "Arquivo": nome,
+        "Registros": len(dados),
+        "Início": datas_arquivo.min(),
+        "Fim": datas_arquivo.max(),
+        "Ocupados": int(dados["Occupancy"].sum()),
+        "Ocupados (%)": round(dados["Occupancy"].mean() * 100, 2),
+        "Na base consolidada": nome != "datatraining.txt",
+    })
+
+tabela_inventario = pd.DataFrame(linhas_inventario).set_index("Arquivo")
+print(tabela_inventario)
+print("\nTotal do pacote original:", tabela_inventario["Registros"].sum())
+print("Total da base consolidada:", tabela_inventario.loc[tabela_inventario["Na base consolidada"], "Registros"].sum())
+
+# Intervalos entre o fim de um arquivo e o início do seguinte (ordem cronológica)
+print("\nFim de datatest.txt -> início de datatraining.txt:",
+      tabela_inventario.loc["datatraining.txt", "Início"] - tabela_inventario.loc["datatest.txt", "Fim"])
+print("Fim de datatraining.txt -> início de datatest2.txt:",
+      tabela_inventario.loc["datatest2.txt", "Início"] - tabela_inventario.loc["datatraining.txt", "Fim"])
 
 
 # %% [markdown]
@@ -429,7 +495,6 @@ print("Validação concluída: os DataFrames são equivalentes!")
 print("ETL de consolidação inicial concluído com sucesso!")
 
 
-###############################################################################################################################################################
 # %% [markdown]
 # # FASE 1 — Análise Exploratória dos Dados (EDA)
 # ## BLOCO 10 — Contextualização da análise exploratória
@@ -465,6 +530,7 @@ print("ETL de consolidação inicial concluído com sucesso!")
 # | 15 | Distribuição da variável alvo (quantidade e percentual) |
 # | 16 | Matriz de correlação de Pearson |
 # | 16.1 | Avaliação exploratória da coluna `date` |
+# | 16.2 | Dependência temporal entre observações consecutivas |
 #
 # ### Contribuição para a modelagem preditiva
 #
@@ -481,20 +547,40 @@ print("ETL de consolidação inicial concluído com sucesso!")
 # A análise também permite identificar limitações iniciais e orientar as verificações que serão realizadas na etapa de
 # Data Prep.
 
+# %% [markdown]
+# ### BLOCO 11 — Dimensões e estrutura dos dados
+#
+# Apresenta a quantidade de linhas e colunas (`shape`), os nomes das colunas e os primeiros registros da base consolidada.
+
 # %%
 # BLOCO 11 — Dimensões e estrutura dos dados
 print("Dimensões:", df_consolidado.shape)
 print("Colunas:", df_consolidado.columns)
 print(df_consolidado.head())
 
+# %% [markdown]
+# ### BLOCO 12 — Inspeção dos tipos de dados
+#
+# `info()` mostra a quantidade de valores não nulos e o tipo de cada coluna; `dtypes` confirma os tipos usados nas análises.
+
 # %%
 # BLOCO 12 — Inspeção dos tipos de dados
 df_consolidado.info()
 print(df_consolidado.dtypes)
 
+# %% [markdown]
+# ### BLOCO 13 — Estatística descritiva
+#
+# `describe()` resume as colunas numéricas: contagem, média, desvio padrão, mínimo, quartis e máximo.
+
 # %%
 # BLOCO 13 — Estatística descritiva
 print(df_consolidado.describe())
+
+# %% [markdown]
+# ### BLOCO 14 — Histogramas das variáveis ambientais
+#
+# Cinco histogramas com 30 intervalos mostram a forma da distribuição de cada sensor, com as unidades nos eixos.
 
 # %%
 # BLOCO 14 — Histogramas das variáveis numéricas
@@ -552,6 +638,11 @@ plt.savefig(
 
 # Exibição dos histogramas
 plt.show()
+
+# %% [markdown]
+# ### BLOCO 15 — Distribuição da variável alvo
+#
+# Gráfico de barras com a quantidade e o percentual de cada classe de `Occupancy`, para avaliar o desbalanceamento.
 
 # %%
 # BLOCO 15 — Distribuição da variável alvo
@@ -634,6 +725,11 @@ plt.savefig(
 )
 plt.show()
 
+# %% [markdown]
+# ### BLOCO 16 — Matriz de correlação de Pearson
+#
+# Mapa de calor da correlação linear entre as variáveis numéricas, incluindo `Occupancy`, na escala de −1 a 1.
+
 # %%
 # BLOCO 16 — Matriz de correlação de Pearson
 
@@ -682,6 +778,12 @@ plt.savefig(
 # Exibição do gráfico
 plt.show()
 
+# %% [markdown]
+# ### BLOCO 16.1 — Avaliação exploratória da coluna `date`
+#
+# A coluna é convertida para `datetime` somente em uma variável temporária, para verificar formato, período, ordem,
+# intervalos e unicidade, sem alterar `df_consolidado`.
+
 # %%
 # BLOCO 16.1 — Avaliação exploratória da coluna date
 # Verificação do tipo original
@@ -725,6 +827,68 @@ print("Timestamps repetidos:", datas.duplicated().sum())
 # Confirmação da preservação do tipo original
 print("\nTipo original preservado:")
 print(df_consolidado["date"].dtype)
+
+# %% [markdown]
+# ### BLOCO 16.2 — Dependência temporal entre observações consecutivas
+#
+# A base é dividida em segmentos temporais contínuos, separados por interrupções superiores a 2 minutos. Dentro de cada
+# segmento, os intervalos regulares são de 59 a 61 segundos; assim, o lag 1 por posição corresponde a aproximadamente
+# um minuto. Na base completa, o lag 1 por posição também compara o último registro de `datatest.txt` com o primeiro de
+# `datatest2.txt`, separados por mais de sete dias; por isso, as medidas são apresentadas também restritas às transições
+# dentro dos segmentos. A análise é descritiva e utiliza `Occupancy` na base completa, sem orientar a escolha de
+# atributos ou de hiperparâmetros.
+
+# %%
+# BLOCO 16.2 — Dependência temporal entre observações consecutivas
+
+# Interrupções na sequência temporal (intervalos acima de 2 minutos)
+limite_continuidade = pd.Timedelta(minutes=2)
+interrupcoes = intervalos[intervalos > limite_continuidade]
+print("Interrupções acima de 2 minutos:", len(interrupcoes))
+print(interrupcoes)
+
+# Segmentos temporais contínuos e transições dentro do mesmo segmento
+segmentos = (intervalos > limite_continuidade).cumsum()
+transicao_mesmo_segmento = segmentos.eq(segmentos.shift())
+
+resumo_segmentos = pd.DataFrame({
+    "Registros": segmentos.value_counts().sort_index(),
+    "Início": datas.groupby(segmentos).min(),
+    "Fim": datas.groupby(segmentos).max(),
+})
+print("\nSegmentos temporais contínuos:")
+print(resumo_segmentos)
+
+# Autocorrelação de lag 1 das variáveis ambientais
+autocorrelacoes = pd.DataFrame({
+    "Lag 1 por posição (base completa)": [
+        df_consolidado[coluna].autocorr(lag=1) for coluna in colunas_numericas
+    ],
+    "Lag 1 dentro dos segmentos": [
+        df_consolidado[coluna][transicao_mesmo_segmento].corr(
+            df_consolidado[coluna].shift(1)[transicao_mesmo_segmento]
+        )
+        for coluna in colunas_numericas
+    ],
+}, index=colunas_numericas)
+print("\nAutocorrelação de lag 1:")
+print(autocorrelacoes.round(4))
+
+# Permanência da classe entre registros consecutivos
+ocupacao = df_consolidado["Occupancy"]
+mudanca_classe = ocupacao.ne(ocupacao.shift())
+transicoes_totais = len(df_consolidado) - 1
+transicoes_validas = int(transicao_mesmo_segmento.sum())
+mudancas_validas = int((mudanca_classe & transicao_mesmo_segmento).sum())
+
+print("\nTransições entre registros consecutivos (base completa):", transicoes_totais)
+print("Transições dentro dos segmentos contínuos:", transicoes_validas)
+print("Mudanças de classe na base completa:", int(mudanca_classe.iloc[1:].sum()))
+print("Mudanças de classe dentro dos segmentos:", mudancas_validas)
+print("Transições dentro dos segmentos com a mesma classe (%):",
+      round((transicoes_validas - mudancas_validas) / transicoes_validas * 100, 2))
+print("\nMudanças de classe por segmento:")
+print((mudanca_classe & transicao_mesmo_segmento).groupby(segmentos).sum())
 
 # %% [markdown]
 # ## BLOCO 17 — Interpretação dos resultados da EDA
@@ -796,7 +960,7 @@ print(df_consolidado["date"].dtype)
 # registradas pelos sensores:
 #
 # - `Temperature`: valores concentrados entre aproximadamente 20 °C e 21 °C, com cauda mais longa em direção às temperaturas mais altas (até cerca de 24,4 °C), caracterizando uma leve assimetria à direita.
-# - `Humidity`: distribuição dispersa entre aproximadamente 22% e 39,5%, com mais de um pico de frequência (próximos de 25%, 30% e 35%), sem uma concentração única predominante.
+# - `Humidity`: distribuição dispersa entre aproximadamente 22% e 39,5%, com vários agrupamentos; os picos mais evidentes ficam em torno de 25%, entre 30% e 31% e em torno de 36% (intervalos de aproximadamente 0,6 ponto percentual), sem uma concentração única predominante.
 # - `Light`: elevada concentração de registros próximos de zero e um agrupamento adicional de observações entre aproximadamente 400 e 550 lux, com poucas ocorrências acima de 800 lux, possivelmente associado a diferentes condições de utilização do ambiente.
 # - `CO2`: indícios de assimetria positiva, com maior concentração entre aproximadamente 450 e 600 ppm, agrupamentos menores próximos de 750 ppm e 1.500 ppm e ocorrência esporádica de concentrações mais elevadas, até cerca de 2.076 ppm.
 # - `HumidityRatio`: distribuição irregular, com mais de um pico de frequência, comportamento que deve ser analisado considerando sua relação com `Humidity`.
@@ -900,11 +1064,45 @@ print(df_consolidado["date"].dtype)
 # A coluna temporal será preservada para fins de rastreabilidade e identificação das observações, mas não será utilizada
 # diretamente como variável preditora nos modelos numéricos.
 #
-# Considerando a proximidade temporal entre registros consecutivos, existe a possibilidade de dependência entre as
-# observações. A divisão aleatória dos dados pode, portanto, produzir estimativas otimistas de desempenho.
+# **Composição temporal (BLOCO 06.1):**
 #
-# Será mantida a divisão estratificada de 80% para treinamento e 20% para teste, conforme a metodologia estabelecida no
-# projeto, registrando-se a dependência temporal como uma limitação potencial da avaliação.
+# | Arquivo | Registros | Período (2015) | Ocupados | Na base |
+# |---|---:|---|---:|---|
+# | `datatest.txt` | 2.665 | 02/02 14:19 a 04/02 10:43 | 972 (36,47%) | Sim |
+# | `datatraining.txt` | 8.143 | 04/02 17:51 a 10/02 09:33 | 1.729 (21,23%) | Não |
+# | `datatest2.txt` | 9.752 | 11/02 14:48 a 18/02 09:19 | 2.049 (21,01%) | Sim |
+#
+# A descontinuidade de 7 dias, 4 horas e 5 minutos entre os dois arquivos consolidados contém o período de
+# observações de `datatraining.txt`, que não faz parte da base. Esse período não ocupa todo o intervalo: há 7 horas e
+# 8 minutos entre o fim de `datatest.txt` e o início de `datatraining.txt`, e 1 dia, 5 horas e 15 minutos entre o fim
+# de `datatraining.txt` e o início de `datatest2.txt`. A proporção de ocupados também difere entre os arquivos
+# consolidados (36,47% e 21,01%).
+#
+# **Dependência temporal (BLOCO 16.2):**
+#
+# | Indicador | Resultado |
+# |---|---|
+# | Interrupções acima de 2 minutos | 1 (fronteira entre os arquivos) |
+# | Segmentos contínuos | 2 (2.665 e 9.752 registros) |
+# | Autocorrelação de lag 1 dentro dos segmentos | 0,9952 (`Light`) a 0,9995 (`Temperature`) |
+# | Autocorrelação de lag 1 por posição, base completa | 0,9951 a 0,9993 |
+# | Transições dentro dos segmentos | 12.415 de 12.416 |
+# | Mudanças de classe dentro dos segmentos | 74 (26 e 48) |
+# | Transições com a mesma classe | 99,40% |
+#
+# As medições de cada sensor variam muito pouco de um minuto para o seguinte, e a classe permanece a mesma em 99,40%
+# das transições. Registros vizinhos são, portanto, quase redundantes. Como o lag 1 por posição na base completa inclui
+# a fronteira de mais de sete dias, a medida restrita aos segmentos é a referência adequada; os dois cálculos produzem
+# valores muito próximos porque essa fronteira corresponde a uma única transição.
+#
+# Em uma divisão aleatória, a maior parte dos registros de teste tende a ter vizinhos temporais no treino. Como
+# aproximação simplificada, supondo que cada registro tenha dois vizinhos elegíveis e que cada um seja enviado ao teste
+# de forma independente com probabilidade de 20%, a chance de pelo menos um vizinho ficar no treino seria
+# 1 − 0,2² = 0,96. Esse valor é uma estimativa teórica, não uma medição; o percentual real será calculado após a divisão
+# da Fase 4. Essa proximidade pode produzir estimativas otimistas de desempenho.
+#
+# Será mantida a divisão estratificada de 80% para treinamento e 20% para teste, conforme o enunciado, registrando-se a
+# dependência temporal como limitação da avaliação e complementando-a nas fases seguintes.
 #
 # ### 17.7 — Implicações para a modelagem preditiva
 #
@@ -949,7 +1147,6 @@ print(df_consolidado["date"].dtype)
 # garantir condições adequadas para o treinamento dos modelos de Machine Learning.
 
 
-###############################################################################################################################################################
 # %% [markdown]
 # # FASE 2 — Limpeza e Tratamento de Dados (Data Prep)
 # ## BLOCO 18 — Contextualização da preparação dos dados
@@ -990,10 +1187,6 @@ print(df_consolidado["date"].dtype)
 
 # Cópia independente da base consolidada
 df_tratado = df_consolidado.copy(deep=True)
-
-# Registro das dimensões iniciais para comparação posterior
-registros_iniciais = len(df_tratado)
-colunas_iniciais = df_tratado.shape[1]
 
 print("Dimensões iniciais:", df_tratado.shape)
 print("Colunas:", list(df_tratado.columns))
@@ -1079,6 +1272,23 @@ print("\nExemplos de medições iguais em horários diferentes:")
 exemplos = df_tratado[df_tratado.duplicated(subset=colunas_numericas, keep=False)]
 print(exemplos.sort_values(colunas_numericas).head(6))
 
+# Caracterização dos registros envolvidos nas repetições
+print("\nRegistros envolvidos por classe de Occupancy:")
+print(exemplos["Occupancy"].value_counts().sort_index())
+print("Registros envolvidos com Light igual a zero:", (exemplos["Light"] == 0).sum())
+
+# Intervalo entre a primeira e a última ocorrência de cada medição repetida
+intervalo_repeticoes = (
+    pd.to_datetime(exemplos["date"], format="%Y-%m-%d %H:%M:%S")
+    .groupby([exemplos[coluna] for coluna in colunas_numericas])
+    .agg(lambda serie: serie.max() - serie.min())
+)
+print("\nIntervalos nos três grupos dos exemplos acima:")
+print(intervalo_repeticoes.loc[exemplos.sort_values(colunas_numericas).head(6)
+                               .set_index(colunas_numericas).index.unique()].to_string())
+print("\nIntervalo entre ocorrências em todos os", len(intervalo_repeticoes), "grupos repetidos:")
+print(intervalo_repeticoes.describe()[["min", "50%", "max"]])
+
 # %%
 # BLOCO 20.4 — Validação após o tratamento de duplicidades
 
@@ -1147,9 +1357,10 @@ else:
 # **Esta seção é uma simulação.** Como a base real não possui valores ausentes, a imputação é demonstrada em uma cópia
 # temporária e independente (`df_simulacao`), sem qualquer efeito sobre `df_tratado` ou sobre o CSV exportado.
 #
-# **Critério de escolha:** a média é adequada para distribuições aproximadamente simétricas; a mediana é preferível em
-# distribuições assimétricas, por ser resistente a valores extremos. A assimetria (*skewness*) calculada abaixo
-# fundamenta a escolha das variáveis.
+# **Critério de escolha:** a média é adequada quando a distribuição não tem cauda longa e a média fica próxima da
+# mediana; a mediana é preferível em distribuições assimétricas, por ser resistente a valores extremos. A escolha
+# considera em conjunto a assimetria (*skewness*), a diferença entre média e mediana (também expressa em desvios padrão)
+# e a forma dos histogramas do BLOCO 14. Nenhum desses indicadores é usado isoladamente como critério absoluto.
 #
 # Em uma situação real de modelagem, a estatística de imputação deve ser calculada exclusivamente sobre o conjunto de
 # treinamento e depois aplicada ao conjunto de teste, evitando Data Leakage.
@@ -1161,6 +1372,21 @@ else:
 assimetria = df_tratado[colunas_numericas].skew()
 print("Assimetria (skewness) das variáveis ambientais:")
 print(assimetria.round(4))
+
+# Comparação entre média e mediana (sensibilidade a valores extremos)
+tabela_tendencia_central = pd.DataFrame({
+    "Média": df_tratado[colunas_numericas].mean(),
+    "Mediana": df_tratado[colunas_numericas].median(),
+})
+tabela_tendencia_central["Média − mediana"] = (
+    tabela_tendencia_central["Média"] - tabela_tendencia_central["Mediana"]
+)
+tabela_tendencia_central["Diferença em desvios padrão"] = (
+    tabela_tendencia_central["Média − mediana"] / df_tratado[colunas_numericas].std()
+)
+tabela_tendencia_central["Assimetria"] = assimetria
+print("\nMédia, mediana e assimetria:")
+print(tabela_tendencia_central.to_string())
 
 # Cópia temporária e independente para a simulação
 df_simulacao = df_tratado[["Humidity", "CO2"]].copy(deep=True)
@@ -1483,11 +1709,24 @@ print("SHA-256:", hash_tratado)
 #
 # Não existem linhas integralmente duplicadas nem observações registradas no mesmo instante; por isso, nenhum registro
 # foi removido. As 571 repetições encontradas ao desconsiderar `date` correspondem a medições ambientais iguais em
-# instantes diferentes (por exemplo, leituras idênticas registradas com cerca de 20 minutos de diferença na madrugada de
-# 14/02/2015, com o ambiente desocupado). Em nenhum caso a mesma combinação de medições aparece associada a classes
-# diferentes. Essas repetições são compatíveis com um ambiente estável e com a resolução dos sensores, representando
-# observações físicas legítimas; removê-las reduziria artificialmente a amostra e alteraria a frequência real dessas
-# condições.
+# instantes diferentes, distribuídas em 461 grupos de medições idênticas que envolvem 1.032 registros.
+#
+# | Característica dos 1.032 registros envolvidos | Resultado |
+# |---|---:|
+# | Desocupados (`Occupancy = 0`) | 1.028 |
+# | Ocupados (`Occupancy = 1`) | 4 |
+# | Com `Light` igual a zero | 987 |
+# | Intervalo entre a primeira e a última ocorrência de cada grupo | de 59 segundos a 9 dias e 6 horas (mediana de 6 minutos) |
+#
+# Os três grupos exibidos como exemplo ocorreram na manhã de 14/02/2015, com o ambiente desocupado, com intervalos de
+# 8 minutos e 59 segundos, 13 minutos e 20 minutos e 1 segundo entre as leituras iguais; esses valores descrevem apenas
+# os exemplos e não o conjunto das repetições. Em nenhum caso a mesma combinação de medições aparece associada a classes
+# diferentes.
+#
+# As repetições concentram-se em registros desocupados e sem iluminação, situação em que as condições do ambiente
+# variam pouco. Isso é compatível com um ambiente estável e com a resolução de registro dos sensores, mas não comprova,
+# por si só, o funcionamento correto dos equipamentos. Como cada registro corresponde a um instante distinto, as
+# repetições foram mantidas: removê-las reduziria a amostra e alteraria a frequência real dessas condições.
 #
 # ### 28.3 — Tratamento de valores ausentes
 #
@@ -1502,12 +1741,34 @@ print("SHA-256:", hash_tratado)
 # | Humidity | 0,3008 | 50 | Média | 28,918288 % | 0 | 3,1983 % |
 # | CO2 | 1,3851 | 50 | Mediana | 632,0 ppm | 0 | 192,6317 ppm |
 #
-# A média foi aplicada a `Humidity`, cuja assimetria próxima de zero indica distribuição aproximadamente simétrica. A
-# mediana foi aplicada a `CO2`, cuja assimetria positiva elevada faria a média ser deslocada pelos valores altos.
-# `Temperature`, inicialmente considerada para a média, apresentou assimetria de 1,1041 e, por isso, não foi utilizada
-# como exemplo de distribuição simétrica. A simulação utilizou semente fixa (42) e não alterou `df_tratado` (0 ausentes
-# após a demonstração). Em um cenário real, a estatística de imputação deve ser calculada apenas sobre o conjunto de
-# treinamento.
+# | Variável | Média | Mediana | Média − mediana | Diferença em desvios padrão | Assimetria |
+# |---|---:|---:|---:|---:|---:|
+# | Temperature | 21,094510 | 20,790000 | 0,304510 | 0,2935 | 1,1041 |
+# | Humidity | 28,917947 | 28,600000 | 0,317947 | 0,0771 | 0,3008 |
+# | Light | 138,125947 | 0,000000 | 138,125947 | 0,6284 | 1,3173 |
+# | CO2 | 745,644624 | 632,000000 | 113,644624 | 0,3833 | 1,3851 |
+# | HumidityRatio | 0,0044682086 | 0,0045113541 | −0,0000431455 | −0,0725 | −0,1458 |
+#
+# **Humidity (média):** a média e a mediana diferem em apenas 0,08 desvio padrão, a assimetria é baixa (0,3008) e o
+# histograma não apresenta cauda longa nem valores isolados. A distribuição, porém, não é normal nem perfeitamente
+# simétrica: apresenta vários agrupamentos (em torno de 25%, entre 30% e 31% e em torno de 36%). Nessas condições, a
+# média e a mediana produzem valores próximos (28,92% e 28,60%), e a média foi adotada para demonstrar didaticamente
+# essa estratégia.
+#
+# **CO2 (mediana):** a média supera a mediana em 113,64 ppm (0,38 desvio padrão), a assimetria é a maior entre as
+# variáveis (1,3851) e o histograma mostra cauda longa à direita, com 992 potenciais outliers acima de 1.351,25 ppm
+# (BLOCO 25). A média é deslocada por esses valores altos; a mediana, resistente a eles, representa melhor o valor
+# típico.
+#
+# `HumidityRatio` tem a menor assimetria absoluta (−0,1458), mas é uma grandeza derivada da temperatura e da umidade
+# relativa; `Humidity` foi escolhida por ser uma medição direta do sensor. `Temperature`, considerada inicialmente para
+# a média, foi descartada como exemplo por sua assimetria de 1,1041. `Light` não foi usada na simulação, pois 61,30% dos
+# seus valores são zero e a mediana coincide com o mínimo.
+#
+# Os erros absolutos médios medem a distância entre o valor imputado e os valores reais ocultados nesta simulação
+# específica; eles não demonstram que a estratégia escolhida seja a melhor em qualquer cenário. A simulação utilizou
+# semente fixa (42) e não alterou `df_tratado` (0 ausentes após a demonstração). Em um cenário real, a estatística de
+# imputação deve ser calculada apenas sobre o conjunto de treinamento.
 #
 # ### 28.4 — Adequação dos tipos de dados
 #
@@ -1556,10 +1817,23 @@ print("SHA-256:", hash_tratado)
 # 100% nem valores infinitos; as cinco variáveis permanecem numéricas. Os valores extremos encontram-se em faixas
 # compatíveis com ambientes internos (luz natural intensa, maior concentração de pessoas ou ventilação reduzida).
 #
-# **Decisão:** nenhuma observação foi removida, truncada ou substituída. Os potenciais outliers são fisicamente
-# plausíveis e concentram proporções de ocupação superiores à média da base, indicando que carregam informação
-# relevante para a classificação. Os limites IQR foram calculados com finalidade exploratória; caso venham a ser usados
-# em alguma transformação do modelo, deverão ser ajustados exclusivamente sobre o conjunto de treinamento.
+# **Decisão:** nenhuma observação foi removida, truncada ou substituída. A decisão se fundamenta em quatro pontos:
+#
+# 1. Nenhum valor violou os critérios de plausibilidade física aplicados no BLOCO 25.2.
+# 2. Não há evidência suficiente de erro de medição: em `Temperature` e `CO2`, os valores sinalizados formam caudas
+#    contínuas das distribuições; em `Light`, os 7 valores acima de 980 lux são poucos e afastados, mas compatíveis com
+#    luz natural intensa.
+# 3. Os valores extremos podem representar condições ambientais legítimas, como luz natural intensa, maior número de
+#    pessoas ou ventilação reduzida.
+# 4. Remover essas observações eliminaria variações reais do ambiente que o modelo precisa representar.
+#
+# A plausibilidade física indica apenas que os valores são possíveis; ela não comprova a exatidão dos sensores.
+#
+# Como evidência descritiva secundária, os registros sinalizados apresentam proporções de ocupação superiores à da
+# base (44,69% em `Temperature`, 100% nos 7 casos de `Light` e 30,95% em `CO2`, contra 24,33%). Essa associação foi
+# observada na base completa, antes da divisão treino/teste, e não foi usada como fundamento da decisão. Os limites IQR
+# foram calculados com finalidade exploratória; caso venham a ser usados em alguma transformação do modelo, deverão ser
+# ajustados exclusivamente sobre o conjunto de treinamento.
 #
 # ### 28.7 — Validação da base tratada
 #
@@ -1593,7 +1867,6 @@ print("SHA-256:", hash_tratado)
 # fases seguintes, respeitando a ordem que evita o vazamento de informações.
 
 
-###############################################################################################################################################################
 # %% [markdown]
 # # FASE 3 — Engenharia de Atributos (Feature Engineering)
 # ## BLOCO 29 — Contextualização da engenharia de atributos
@@ -1601,8 +1874,10 @@ print("SHA-256:", hash_tratado)
 # ### Conceito
 #
 # Feature Engineering é a criação ou transformação de atributos a partir das variáveis existentes, com o objetivo de
-# representar os dados de uma forma que facilite o aprendizado dos modelos. O conceito é apresentado no material
-# didático MUS01 (slide 49) como etapa da preparação dos dados para Machine Learning.
+# representar os dados de uma forma que facilite o aprendizado dos modelos. No material didático MUS01, a Feature
+# Engineering aparece como uma etapa do "Pipeline básico de Machine Learning" (slide 49: criar novas variáveis a partir
+# das existentes), posterior à limpeza e ao pré-processamento (slide 48) e anterior à divisão do dataset em treino e
+# teste (slide 50).
 #
 # ### Objetivo no projeto
 #
@@ -2130,8 +2405,15 @@ print("SHA-256:", hash_features)
 # Há, contudo, limitações metodológicas a registrar. As três candidatas avaliadas foram comparadas na base completa
 # antes da divisão, ainda que sem o alvo. A EDA também analisou as associações entre os sensores e `Occupancy` na base
 # completa. Essas análises orientaram decisões do projeto com dados que, depois, farão parte do conjunto de teste.
-# Além disso, o split aleatório exigido aproxima registros temporalmente vizinhos entre treino e teste. Por esses
-# motivos, não é possível afirmar que o processo esteja completamente livre de vieses de avaliação.
+# Além disso, o split aleatório exigido aproxima registros temporalmente vizinhos entre treino e teste: no BLOCO 16.2,
+# a classe permanece a mesma em 99,40% das transições entre registros consecutivos. Por esses motivos, não é possível
+# afirmar que o processo esteja completamente livre de vieses de avaliação.
+#
+# Quanto à composição da base, a consolidação dos dois arquivos `datatest` é uma escolha deste projeto, distinta do
+# protocolo original de avaliação do conjunto de dados (BLOCO 05). O arquivo `datatraining.txt` não participou da EDA,
+# do tratamento, da Feature Engineering nem da escolha da variável; apenas seus períodos e proporções de classe foram
+# lidos no BLOCO 06.1. Ele poderá servir a uma avaliação complementar ao final, entendida como avaliação em outro
+# período do mesmo conjunto de dados e do mesmo ambiente, e não como validação externa em ambiente independente.
 #
 # ### 36.8 — Integridade, exportação e limitações
 #
