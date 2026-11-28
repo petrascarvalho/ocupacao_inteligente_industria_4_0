@@ -56,8 +56,8 @@
 # |---|---|
 # | Padrão do Python | `os`, `zipfile`, `urllib.request`, `hashlib` |
 # | Análise e manipulação | `pandas`, `numpy` |
-# | Visualização | `matplotlib.pyplot`, `seaborn` |
-# | Machine Learning | `train_test_split`, `StandardScaler`, `Pipeline`, `DecisionTreeClassifier`, `KNeighborsClassifier`, métricas |
+# | Visualização | `matplotlib.pyplot`, `matplotlib.dates`, `seaborn` |
+# | Machine Learning | `train_test_split`, `StratifiedKFold`, `TimeSeriesSplit`, `cross_validate`, `StandardScaler`, `Pipeline`, `DecisionTreeClassifier`, `KNeighborsClassifier`, métricas, `check_is_fitted` |
 #
 # Versões no ambiente `.venv`: Python 3.14.4, pandas 3.0.2, NumPy 2.4.4, Matplotlib 3.10.9, Seaborn 0.13.2, scikit-learn 1.8.0.
 
@@ -76,15 +76,18 @@ import numpy as np
 
 # Visualização de dados
 import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 import seaborn as sns
 
 # Machine Learning
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, StratifiedKFold, TimeSeriesSplit, cross_validate
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+from sklearn.metrics import (accuracy_score, balanced_accuracy_score, classification_report, confusion_matrix,
+                             f1_score)
+from sklearn.utils.validation import check_is_fitted
 
 
 # %% [markdown]
@@ -136,7 +139,11 @@ print(plt.rcParams["figure.figsize"])
 # | `caminho_features` | `dados/features/occupancy_features.csv` (gerado na Fase 3) |
 # | `caminho_grafico_split` | `resultados/graficos/split_01_divisao_treino_teste.png` (gerado na Fase 4) |
 # | `caminho_grafico_scaler` | `resultados/graficos/scaler_01_padronizacao_atributos.png` (gerado na Fase 5) |
-# | `pasta_graficos` / `pasta_metricas` | `resultados/graficos` / `resultados/metricas` |
+# | `caminho_grafico_hiperparametros` | `resultados/graficos/modelagem_01_comparacao_hiperparametros.png` (Fase 6) |
+# | `caminho_grafico_feature_engineering` | `resultados/graficos/modelagem_02_impacto_feature_engineering.png` (Fase 6) |
+# | `caminho_grafico_validacao_temporal` | `resultados/graficos/modelagem_03_validacao_temporal.png` (Fase 6) |
+# | `caminho_cv_hiperparametros` / `caminho_cv_feature_engineering` / `caminho_cv_temporal` | `resultados/modelagem/cv_hiperparametros.csv`, `cv_feature_engineering.csv` e `cv_temporal.csv` (Fase 6) |
+# | `pasta_graficos` / `pasta_metricas` / `pasta_modelagem` | `resultados/graficos` / `resultados/metricas` / `resultados/modelagem` |
 #
 # Conceitos: o item 5.1 do enunciado proíbe caminhos absolutos; `os.makedirs(..., exist_ok=True)` cria as pastas sem erro
 # quando já existem; o Git não versiona pastas vazias. O arquivo de features só existe após a primeira execução do
@@ -152,6 +159,7 @@ pasta_tratados = "dados/tratados"
 pasta_features = "dados/features"
 pasta_graficos = "resultados/graficos"
 pasta_metricas = "resultados/metricas"
+pasta_modelagem = "resultados/modelagem"
 
 # Criando os diretórios, caso não existam
 os.makedirs(pasta_brutos, exist_ok=True)
@@ -160,6 +168,7 @@ os.makedirs(pasta_tratados, exist_ok=True)
 os.makedirs(pasta_features, exist_ok=True)
 os.makedirs(pasta_graficos, exist_ok=True)
 os.makedirs(pasta_metricas, exist_ok=True)
+os.makedirs(pasta_modelagem, exist_ok=True)
 
 # Definindo os caminhos dos arquivos brutos
 zip_path = "dados/brutos/occupancy_data.zip"
@@ -181,6 +190,14 @@ caminho_grafico_split = f"{pasta_graficos}/split_01_divisao_treino_teste.png"
 
 # Definindo o caminho do gráfico da padronização dos atributos (Fase 5)
 caminho_grafico_scaler = f"{pasta_graficos}/scaler_01_padronizacao_atributos.png"
+
+# Definindo os caminhos dos gráficos e dos resultados tabulares da modelagem (Fase 6)
+caminho_grafico_hiperparametros = f"{pasta_graficos}/modelagem_01_comparacao_hiperparametros.png"
+caminho_grafico_feature_engineering = f"{pasta_graficos}/modelagem_02_impacto_feature_engineering.png"
+caminho_grafico_validacao_temporal = f"{pasta_graficos}/modelagem_03_validacao_temporal.png"
+caminho_cv_hiperparametros = f"{pasta_modelagem}/cv_hiperparametros.csv"
+caminho_cv_feature_engineering = f"{pasta_modelagem}/cv_feature_engineering.csv"
+caminho_cv_temporal = f"{pasta_modelagem}/cv_temporal.csv"
 
 # Validando o diretório de trabalho
 print("Diretório atual:", os.getcwd())
@@ -3969,3 +3986,1580 @@ print(tabela_resumo_fase5.to_string())
 #
 # Os conjuntos estão prontos para a Fase 6, na qual serão treinados o KNN (com `Pipeline`) e a Árvore de Decisão,
 # seguindo as regras do BLOCO 59. Nenhum classificador foi instanciado ou treinado nesta fase.
+
+# %% [markdown]
+# # FASE 6 — Hiperparâmetros e Pipeline
+# ## BLOCO 61 — Contextualização do ajuste de hiperparâmetros
+#
+# ### Requisitos do enunciado e materiais do curso
+#
+# | Fonte | Exigência ou conteúdo |
+# |---|---|
+# | Enunciado, Fase 6 (p. 5) | KNN: variar `n_neighbors` (K) em, no mínimo, 3 valores ímpares (ex.: K = 3, 5, 7) e registrar a acurácia **no treino e no teste** |
+# | Enunciado, Fase 6 (p. 5) | Árvore de Decisão: variar `max_depth` em, no mínimo, 3 limites (ex.: 3, 5 e None) e registrar a acurácia **no treino e no teste** |
+# | Enunciado, Fase 6 (p. 5) | Célula de texto identificando em quais configurações ocorreu overfitting (alta acurácia no treino acompanhada de queda no teste) e qual configuração garantiu maior estabilidade |
+# | Rubrica, critério 9 (p. 9) | Pontuação total: ao menos 3 variações de parâmetros para cada modelo e os pontos de sobreajuste apontados no texto; avaliar apenas com os dados de treino é pontuação parcial |
+# | Enunciado, Fase 7 (p. 5) e rubrica, critério 10 (p. 9) | Acurácia final do melhor KNN e da melhor Árvore exclusivamente no teste, comparação e conclusão (fase seguinte, não implementada aqui) |
+# | `knn.ipynb` | Compara K = 1, 5 e 25: K muito pequeno gera fronteiras irregulares (overfitting) e K muito grande gera fronteiras genéricas (underfitting); recomenda K ímpar em problemas binários e o `StandardScaler` antes do KNN |
+# | `ArvoreDecisao_RandomForest (1).ipynb` | `max_depth` limita a profundidade para evitar overfitting; `random_state` garante reprodutibilidade |
+# | `03_pipeline_exemplo.ipynb` | `Pipeline(StandardScaler, KNeighborsClassifier(n_neighbors=5))` avaliado com `cross_val_score` e `KFold(n_splits=5, shuffle=True, random_state=42)`; o scaler aprende apenas com o treino de cada fold |
+# | MUS01, slides 62 e 63 | Underfitting (viés): modelo simplista demais; overfitting (variância): modelo sensível demais a ruídos e pequenas variações |
+# | MUS01, slides 52, 95 e 96 | Acurácia ou matriz de confusão na classificação; em bases desbalanceadas a acurácia pode ser ilusória (paradoxo da acurácia) |
+#
+# O enunciado indica valores **de exemplo**, não valores obrigatórios; todos eles estão incluídos na busca. São
+# **complementos metodológicos deste projeto**, e não exigências do professor: a seleção por validação cruzada
+# estratificada no treino, o F1-score da classe ocupada e a balanced accuracy, a comparação com e sem
+# `CO2_Light_Ratio`, a medição da proximidade temporal nos folds e a validação temporal complementar.
+#
+# ### Conceitos
+#
+# - **Aprendizado supervisionado e classificação binária:** o modelo aprende com registros rotulados (`X_train` e
+#   `y_train`) a prever uma classe entre duas possíveis: 0 (desocupado) ou 1 (ocupado).
+# - **Parâmetros × hiperparâmetros:** parâmetros são aprendidos no ajuste (a média e o desvio do scaler, os atributos
+#   e limiares de cada divisão da árvore); hiperparâmetros são definidos antes do ajuste e controlam a complexidade
+#   do modelo (K no KNN, `max_depth` na árvore).
+# - **KNN:** armazena os registros de treino e classifica um novo registro pela votação majoritária dos K vizinhos
+#   mais próximos, segundo a distância euclidiana `d(a, b) = √Σ_j (x_aj − x_bj)²` calculada sobre os atributos
+#   padronizados (BLOCO 56). K pequeno acompanha detalhes locais e é mais sensível a ruídos; K grande suaviza a
+#   fronteira e pode ignorar padrões locais. Valores ímpares evitam empate na votação entre duas classes.
+# - **Árvore de Decisão:** divide os dados por perguntas sucessivas do tipo `atributo ≤ limiar`, escolhendo em cada
+#   nó a divisão que mais reduz a impureza de Gini. `max_depth` limita o número de perguntas do caminho mais longo;
+#   com `None`, a árvore cresce até separar completamente os registros de treino (ou até não haver divisão possível).
+# - **Generalização, overfitting e underfitting:** generalizar é acertar registros não usados no ajuste. Overfitting
+#   é um desempenho muito melhor no treino do que em dados novos (o modelo memoriza particularidades); underfitting é
+#   um desempenho insuficiente já no treino (o modelo é simples demais). Uma pequena diferença entre treino e
+#   avaliação é esperada e não caracteriza, sozinha, overfitting.
+# - **Validação cruzada:** o treino é dividido em 5 partes (*folds*); cada parte serve uma vez de validação enquanto
+#   as outras quatro ajustam o modelo. A média e a variabilidade dos 5 resultados estimam o desempenho sem usar o teste.
+# - **Pipeline e Data Leakage:** o `Pipeline` encadeia `StandardScaler` e `KNeighborsClassifier`; a cada ajuste, o
+#   scaler aprende a média e o desvio somente com os dados recebidos no `fit` (o treino de cada fold), e a validação
+#   é apenas transformada. Escalonar antes da validação cruzada faria estatísticas da validação participarem da
+#   preparação (vazamento de dados).
+#
+# ### Protocolo desta fase
+#
+# 1. Hiperparâmetros e atributos são escolhidos **somente com o treino oficial**, pela validação cruzada.
+# 2. A seleção é registrada e congelada antes de qualquer consulta ao teste.
+# 3. Como o enunciado exige a acurácia de teste de cada configuração, o teste é consultado depois, no BLOCO 73, como
+#    resultado descritivo que não altera a seleção. Por isso, a Fase 7 não será a primeira consulta ao teste.
+#
+# **Limitação da validação cruzada aleatória nesta base:** os registros são medições consecutivas, a cada minuto,
+# quase idênticas às vizinhas (BLOCO 16.2). Ao sortear os folds, a maioria dos registros de validação terá um vizinho
+# temporal imediato na parte de ajuste, e a validação cruzada herda o otimismo já medido para o teste (BLOCO 44). Os
+# BLOCOS 70 e 71 medem esse efeito e o comparam com uma validação que respeita a ordem do tempo.
+
+# %% [markdown]
+# ### BLOCO 62 — Verificação dos conjuntos oficiais
+#
+# São usados os conjuntos da Fase 4 (nenhum novo split): `X_train` e `X_test` não escalonados, que alimentam o
+# `Pipeline` do KNN e a Árvore, e os conjuntos padronizados da Fase 5, que não são usados no treinamento desta fase. As
+# assinaturas SHA-256 calculadas aqui (valores e índices) servem de referência para conferir, no BLOCO 77, que nenhum
+# conjunto foi alterado. O marcador `teste_consultado_fase6` registra se o teste já foi consultado.
+
+# %%
+# BLOCO 62 — Verificação dos conjuntos oficiais
+
+# Conjuntos oficiais da Fase 4: nenhum novo split é realizado nesta fase
+assert X_train.shape == (9933, 6) and X_test.shape == (2484, 6), "Dimensões de X_train/X_test divergentes."
+assert y_train.shape == (9933,) and y_test.shape == (2484,), "Dimensões de y_train/y_test divergentes."
+assert list(X_train.columns) == list(X_test.columns) == atributos_preditores, "Ordem dos atributos alterada."
+assert (X_train.dtypes == "float64").all() and (X_test.dtypes == "float64").all(), "Atributo diferente de float64."
+assert y_train.value_counts().sort_index().tolist() == [7516, 2417], "Classes do treino alteradas."
+assert y_test.value_counts().sort_index().tolist() == [1880, 604], "Classes do teste alteradas."
+assert X_train.index.equals(y_train.index) and X_test.index.equals(y_test.index), "Índices de X e y divergentes."
+assert X_train.index.intersection(X_test.index).empty, "Registros em comum entre treino e teste."
+assert "date" not in X_train.columns and variavel_alvo not in X_train.columns, "Coluna indevida nos atributos."
+
+# Conjuntos idênticos às referências do BLOCO 50 (dados não escalonados e alvos)
+pd.testing.assert_frame_equal(X_train, X_train_referencia, check_exact=True)
+pd.testing.assert_frame_equal(X_test, X_test_referencia, check_exact=True)
+pd.testing.assert_series_equal(y_train, y_train_referencia, check_exact=True)
+pd.testing.assert_series_equal(y_test, y_test_referencia, check_exact=True)
+pd.testing.assert_frame_equal(rastreio_temporal, rastreio_temporal_referencia, check_exact=True)
+pd.testing.assert_frame_equal(df_features, df_features_referencia, check_exact=True)
+
+# Conjuntos escalonados da Fase 5 reproduzidos pelo scaler oficial (somente transform, sem novo ajuste)
+pd.testing.assert_frame_equal(
+    pd.DataFrame(scaler.transform(X_train), columns=X_train.columns, index=X_train.index), X_train_scaled,
+    check_exact=True,
+)
+pd.testing.assert_frame_equal(
+    pd.DataFrame(scaler.transform(X_test), columns=X_test.columns, index=X_test.index), X_test_scaled,
+    check_exact=True,
+)
+assert rastreio_temporal.index.equals(X.index) and set(X_train.index) | set(X_test.index) == set(X.index), \
+    "Rastreabilidade temporal incompleta."
+
+
+def assinatura_integridade(objeto):
+    """SHA-256 dos valores e do índice (pd.util.hash_pandas_object), usado como referência de integridade."""
+    valores_hash = pd.util.hash_pandas_object(objeto, index=True).to_numpy()
+    return hashlib.sha256(valores_hash.tobytes()).hexdigest()
+
+
+estruturas_fase6 = {
+    "X_train": X_train, "X_test": X_test, "y_train": y_train, "y_test": y_test,
+    "X_train_scaled": X_train_scaled, "X_test_scaled": X_test_scaled,
+    "rastreio_temporal": rastreio_temporal, "df_features": df_features,
+}
+assinaturas_fase6 = {nome: assinatura_integridade(estrutura) for nome, estrutura in estruturas_fase6.items()}
+
+# Marcador de controle: passa a True somente no BLOCO 73, depois do registro da seleção
+teste_consultado_fase6 = False
+
+tabela_conjuntos_fase6 = pd.DataFrame({
+    "Dimensões": [str(estrutura.shape) for estrutura in estruturas_fase6.values()],
+    "Escalonado": ["Não", "Não", "—", "—", "Sim", "Sim", "—", "—"],
+    "Assinatura SHA-256 (16 primeiros caracteres)": [assinatura[:16] for assinatura in assinaturas_fase6.values()],
+}, index=pd.Index(estruturas_fase6.keys(), name="Estrutura"))
+print(tabela_conjuntos_fase6.to_string())
+
+tabela_classes_fase6 = pd.DataFrame({
+    "Classe 0": [int((y_train == 0).sum()), int((y_test == 0).sum())],
+    "Classe 1": [int((y_train == 1).sum()), int((y_test == 1).sum())],
+}, index=pd.Index(["Treinamento", "Teste"], name="Conjunto"))
+tabela_classes_fase6["% Classe 1"] = tabela_classes_fase6["Classe 1"] / tabela_classes_fase6.sum(axis=1) * 100
+print("\nDistribuição das classes:")
+print(tabela_classes_fase6.round(4).to_string())
+print("\nAtributos (ordem oficial):", atributos_preditores)
+
+# %% [markdown]
+# ### BLOCO 63 — Configuração dos hiperparâmetros
+#
+# | Modelo | Hiperparâmetro investigado | Valores | Justificativa |
+# |---|---|---|---|
+# | KNN | `n_neighbors` | 3, 5, 7, 9, 11 | Cinco valores ímpares, incluindo os exemplos do enunciado (3, 5, 7) e dois valores maiores para observar a suavização |
+# | Árvore de Decisão | `max_depth` | 3, 5, 10, None | Inclui os exemplos do enunciado (3, 5, None) e um limite intermediário (10) entre a árvore rasa e a árvore sem limite |
+#
+# Parâmetros fixos: no KNN, distância euclidiana (`metric="euclidean"`) e votos com pesos iguais (`weights="uniform"`),
+# sempre dentro do `Pipeline` com `StandardScaler`; na árvore, critério de Gini, `random_state=42` e demais parâmetros
+# no padrão do scikit-learn, sem escalonamento. A busca é deliberadamente pequena: o objetivo é cumprir e interpretar a
+# comparação exigida, sem uma otimização extensa que aumentaria o risco de selecionar ruído. A execução é sequencial
+# (um processo), sem paralelismo.
+
+# %%
+# BLOCO 63 — Configuração dos hiperparâmetros
+
+# Hiperparâmetros investigados (incluem os exemplos do enunciado: K = 3, 5, 7 e max_depth = 3, 5, None)
+valores_k = [3, 5, 7, 9, 11]
+valores_max_depth = [3, 5, 10, None]
+
+# Parâmetros fixos (não investigados)
+parametros_fixos_knn = {"weights": "uniform", "metric": "euclidean"}
+parametros_fixos_arvore = {"criterion": "gini", "random_state": 42}
+
+# Protocolo de validação cruzada e métricas (F1 da classe 1 = ocupado)
+quantidade_folds = 5
+semente_validacao = 42
+metricas_validacao = {"acuracia": "accuracy", "f1_ocupado": "f1", "balanced_accuracy": "balanced_accuracy"}
+
+assert len(valores_k) >= 3 and all(k % 2 == 1 for k in valores_k), "K deve ter ao menos 3 valores ímpares."
+assert len(set(valores_k)) == len(valores_k) and {3, 5, 7}.issubset(valores_k), "Valores de K incompletos."
+assert len(valores_max_depth) >= 3 and {3, 5, None}.issubset(set(valores_max_depth)), "max_depth incompleto."
+
+
+def rotulo_profundidade(profundidade):
+    return "None" if profundidade is None else str(profundidade)
+
+
+def criar_pipeline_knn(k):
+    """Pipeline do KNN: o StandardScaler é ajustado novamente a cada chamada de fit."""
+    return Pipeline([
+        ("scaler", StandardScaler()),
+        ("knn", KNeighborsClassifier(n_neighbors=k, **parametros_fixos_knn)),
+    ])
+
+
+def criar_arvore(profundidade):
+    """Árvore de Decisão sem escalonamento, com semente fixa."""
+    return DecisionTreeClassifier(max_depth=profundidade, **parametros_fixos_arvore)
+
+
+tabela_hiperparametros = pd.DataFrame([
+    {"Modelo": "KNN (Pipeline)", "Investigado": "n_neighbors", "Valores": ", ".join(map(str, valores_k)),
+     "Parâmetros fixos": "StandardScaler no Pipeline; weights='uniform'; metric='euclidean'"},
+    {"Modelo": "Árvore de Decisão", "Investigado": "max_depth",
+     "Valores": ", ".join(rotulo_profundidade(valor) for valor in valores_max_depth),
+     "Parâmetros fixos": "criterion='gini'; random_state=42; demais parâmetros no padrão; sem escalonamento"},
+]).set_index("Modelo")
+print(tabela_hiperparametros.to_string())
+print(f"\nValidação cruzada: StratifiedKFold(n_splits={quantidade_folds}, shuffle=True, "
+      f"random_state={semente_validacao}) | métricas: {list(metricas_validacao)}")
+print("Execução sequencial (n_jobs não informado = 1 processo).")
+
+# %% [markdown]
+# ### BLOCO 64 — Validação cruzada estratificada
+#
+# `StratifiedKFold(n_splits=5, shuffle=True, random_state=42)` divide **apenas** `X_train` e `y_train`, preservando
+# aproximadamente a proporção de ocupados em cada fold. Os índices dos folds são materializados uma única vez
+# (`folds_cv`), de modo que todas as configurações dos dois modelos, com 5 ou 6 atributos, são avaliadas exatamente nas
+# mesmas divisões. A estratificação controla a proporção das classes, mas não a dependência temporal: os folds continuam
+# sorteados entre registros vizinhos no tempo (BLOCO 70).
+
+# %%
+# BLOCO 64 — Validação cruzada estratificada
+
+validacao_estratificada = StratifiedKFold(n_splits=quantidade_folds, shuffle=True, random_state=semente_validacao)
+folds_cv = list(validacao_estratificada.split(X_train, y_train))
+
+# Reprodutibilidade: a mesma configuração gera exatamente as mesmas divisões
+folds_repetidos = list(
+    StratifiedKFold(n_splits=quantidade_folds, shuffle=True, random_state=semente_validacao).split(X_train, y_train)
+)
+assert all(np.array_equal(a[0], b[0]) and np.array_equal(a[1], b[1]) for a, b in zip(folds_cv, folds_repetidos)), \
+    "Folds não reproduzíveis."
+del folds_repetidos
+
+linhas_folds = []
+for numero_fold, (posicoes_treino, posicoes_validacao) in enumerate(folds_cv, start=1):
+    assert np.intersect1d(posicoes_treino, posicoes_validacao).size == 0, "Sobreposição dentro do fold."
+    assert len(posicoes_treino) + len(posicoes_validacao) == len(X_train), "Fold incompleto."
+    y_treino_fold = y_train.iloc[posicoes_treino]
+    y_validacao_fold = y_train.iloc[posicoes_validacao]
+    linhas_folds.append({
+        "Fold": numero_fold,
+        "Treino do fold": len(posicoes_treino),
+        "Treino classe 0": int((y_treino_fold == 0).sum()),
+        "Treino classe 1": int((y_treino_fold == 1).sum()),
+        "Treino % classe 1": y_treino_fold.mean() * 100,
+        "Validação": len(posicoes_validacao),
+        "Validação classe 0": int((y_validacao_fold == 0).sum()),
+        "Validação classe 1": int((y_validacao_fold == 1).sum()),
+        "Validação % classe 1": y_validacao_fold.mean() * 100,
+    })
+tabela_folds = pd.DataFrame(linhas_folds).set_index("Fold")
+
+# Cobertura: cada registro do treino oficial aparece exatamente uma vez como validação
+todas_validacoes = np.sort(np.concatenate([posicoes_validacao for _, posicoes_validacao in folds_cv]))
+assert np.array_equal(todas_validacoes, np.arange(len(X_train))), "Validações não cobrem o treino integralmente."
+
+# Nenhum registro do teste oficial participa dos folds (posições referem-se apenas a X_train)
+rotulos_folds = set(X_train.index[todas_validacoes])
+assert rotulos_folds == set(X_train.index) and rotulos_folds.isdisjoint(X_test.index), "Teste presente nos folds."
+
+print(tabela_folds.round(4).to_string())
+print(f"\nMaior desvio da % de classe 1 na validação em relação ao treino oficial: "
+      f"{(tabela_folds['Validação % classe 1'] - y_train.mean() * 100).abs().max():.4f} p.p.")
+print("Registros de validação somados:", int(tabela_folds["Validação"].sum()), "| registros do teste nos folds: 0")
+
+# %% [markdown]
+# ### BLOCO 65 — Pipeline do KNN
+#
+# O `Pipeline` recebe `X_train` **original** (não escalonado). Em cada fold, o `fit` do Pipeline ajusta um novo
+# `StandardScaler` somente com a parte de treino do fold e transforma a validação com esses parâmetros. `X_train_scaled`
+# não é fornecido ao Pipeline (seria um escalonamento duplicado), e o `scaler` da Fase 5 não é reutilizado. A
+# demonstração abaixo ajusta o Pipeline no fold 1 e compara a média aprendida pelo scaler interno com as médias do
+# treino e da validação do fold e com o scaler da Fase 5.
+
+# %%
+# BLOCO 65 — Pipeline do KNN
+
+pipeline_knn_estrutura = criar_pipeline_knn(valores_k[0])
+print(pipeline_knn_estrutura)
+assert list(pipeline_knn_estrutura.named_steps) == ["scaler", "knn"], "Etapas do Pipeline divergentes."
+assert isinstance(pipeline_knn_estrutura.named_steps["scaler"], StandardScaler)
+assert isinstance(pipeline_knn_estrutura.named_steps["knn"], KNeighborsClassifier)
+assert pipeline_knn_estrutura.named_steps["scaler"] is not scaler, "Scaler da Fase 5 reutilizado."
+
+# Demonstração no fold 1: o scaler interno aprende somente com a parte de treino do fold
+posicoes_treino_demo, posicoes_validacao_demo = folds_cv[0]
+pipeline_demonstracao = criar_pipeline_knn(valores_k[0]).fit(
+    X_train.iloc[posicoes_treino_demo], y_train.iloc[posicoes_treino_demo]
+)
+scaler_interno_demo = pipeline_demonstracao.named_steps["scaler"]
+
+tabela_scaler_fold = pd.DataFrame({
+    "Média do scaler interno (fold 1)": scaler_interno_demo.mean_,
+    "Média do treino do fold 1": X_train.iloc[posicoes_treino_demo].mean().to_numpy(),
+    "Média da validação do fold 1": X_train.iloc[posicoes_validacao_demo].mean().to_numpy(),
+    "Média do scaler da Fase 5 (treino oficial)": scaler.mean_,
+}, index=pd.Index(atributos_preditores, name="Atributo"))
+print("\nMédias aprendidas pelo scaler interno no fold 1:")
+print(tabela_scaler_fold.to_string(float_format=lambda valor: f"{valor:.6f}"))
+
+assert int(scaler_interno_demo.n_samples_seen_) == len(posicoes_treino_demo), "Scaler interno viu outros registros."
+assert np.allclose(scaler_interno_demo.mean_, X_train.iloc[posicoes_treino_demo].mean(),
+                   rtol=tolerancia_parametros, atol=0), "Média do scaler interno difere do treino do fold."
+assert np.allclose(scaler_interno_demo.scale_, X_train.iloc[posicoes_treino_demo].std(ddof=0),
+                   rtol=tolerancia_parametros, atol=0), "Desvio do scaler interno difere do treino do fold."
+assert not np.allclose(scaler_interno_demo.mean_, X_train.mean(), rtol=tolerancia_parametros, atol=0)
+assert not np.allclose(scaler_interno_demo.mean_, X_train.iloc[posicoes_validacao_demo].mean(),
+                       rtol=tolerancia_parametros, atol=0)
+
+# O scaler oficial da Fase 5 permanece inalterado
+for nome_parametro in ["mean_", "var_", "scale_"]:
+    assert np.array_equal(getattr(scaler, nome_parametro), parametros_apos_ajuste[nome_parametro]), \
+        f"Scaler da Fase 5 alterado ({nome_parametro})."
+print("\nObservações vistas pelo scaler interno:", int(scaler_interno_demo.n_samples_seen_),
+      "| registros de validação do fold:", len(posicoes_validacao_demo))
+print("Scaler interno = treino do fold: True | scaler da Fase 5 inalterado: True")
+
+# %% [markdown]
+# ### BLOCO 66 — Comparação dos valores de K
+#
+# `cross_validate` avalia cada K nos mesmos 5 folds, com `return_train_score=True` (métricas na parte de ajuste e na
+# validação de cada fold) e `return_estimator=True` (os Pipelines ajustados são conferidos no BLOCO 77). As métricas
+# são a acurácia, o F1-score da classe ocupada (classe 1) e a balanced accuracy (média do recall das duas classes).
+# Médias e desvios padrão são calculados entre os 5 folds (`ddof=0`). Nenhuma métrica de teste é calculada. No KNN, a
+# acurácia "de treino" inclui o próprio registro entre os vizinhos, o que a torna naturalmente mais alta para K pequeno.
+# Os tempos são informativos e variam entre execuções; por isso não são exportados nos CSVs.
+
+# %%
+# BLOCO 66 — Comparação dos valores de K (validação cruzada)
+
+rotulo_protocolo_cv = f"StratifiedKFold(n_splits={quantidade_folds}, shuffle=True, random_state={semente_validacao})"
+
+
+def avaliar_validacao_cruzada(fabrica, valores, nome_modelo, nome_hiperparametro, colunas):
+    """Avalia cada valor do hiperparâmetro nos mesmos folds; devolve registros por fold, tempos e estimadores."""
+    registros, tempos, estimadores = [], [], {}
+    X_avaliacao = X_train[colunas]
+    for valor in valores:
+        resultado = cross_validate(
+            fabrica(valor), X_avaliacao, y_train, cv=folds_cv, scoring=metricas_validacao,
+            return_train_score=True, return_estimator=True,
+        )
+        rotulo = rotulo_profundidade(valor)
+        estimadores[rotulo] = resultado["estimator"]
+        tempos.append({"Modelo": nome_modelo, "Valor": rotulo, "Ajuste médio (s)": resultado["fit_time"].mean(),
+                       "Predição média (s)": resultado["score_time"].mean()})
+        for indice_fold, (posicoes_treino, posicoes_validacao) in enumerate(folds_cv):
+            for conjunto, prefixo, quantidade in [("treino", "train", len(posicoes_treino)),
+                                                  ("validacao", "test", len(posicoes_validacao))]:
+                for metrica in metricas_validacao:
+                    registros.append({
+                        "protocolo": rotulo_protocolo_cv,
+                        "modelo": nome_modelo,
+                        "hiperparametro": nome_hiperparametro,
+                        "valor_hiperparametro": rotulo,
+                        "configuracao_atributos": f"{len(colunas)} atributos",
+                        "quantidade_atributos": len(colunas),
+                        "fold": indice_fold + 1,
+                        "conjunto": conjunto,
+                        "metrica": metrica,
+                        "resultado": resultado[f"{prefixo}_{metrica}"][indice_fold],
+                        "observacoes_avaliadas": quantidade,
+                        "observacoes_ajuste": len(posicoes_treino),
+                        "semente_folds": semente_validacao,
+                    })
+    return pd.DataFrame(registros), pd.DataFrame(tempos), estimadores
+
+
+def resumir_validacao_cruzada(registros):
+    """Médias e desvios padrão (ddof=0, entre os 5 folds) por configuração."""
+    agrupado = registros.groupby(["modelo", "valor_hiperparametro", "conjunto", "metrica"], sort=False)["resultado"]
+    estatisticas = agrupado.agg(media="mean", desvio=lambda serie: serie.std(ddof=0)).unstack(["conjunto", "metrica"])
+    resumo = pd.DataFrame({
+        "Acurácia treino (média)": estatisticas[("media", "treino", "acuracia")],
+        "Acurácia treino (dp)": estatisticas[("desvio", "treino", "acuracia")],
+        "Acurácia validação (média)": estatisticas[("media", "validacao", "acuracia")],
+        "Acurácia validação (dp)": estatisticas[("desvio", "validacao", "acuracia")],
+        "F1 ocupado validação (média)": estatisticas[("media", "validacao", "f1_ocupado")],
+        "F1 ocupado validação (dp)": estatisticas[("desvio", "validacao", "f1_ocupado")],
+        "Balanced accuracy validação (média)": estatisticas[("media", "validacao", "balanced_accuracy")],
+        "Balanced accuracy validação (dp)": estatisticas[("desvio", "validacao", "balanced_accuracy")],
+    })
+    resumo["Diferença treino − validação (p.p.)"] = (
+        resumo["Acurácia treino (média)"] - resumo["Acurácia validação (média)"]
+    ) * 100
+    return resumo
+
+
+registros_knn, tempos_knn, estimadores_knn = avaliar_validacao_cruzada(
+    criar_pipeline_knn, valores_k, "KNN", "n_neighbors", atributos_preditores
+)
+resumo_knn = resumir_validacao_cruzada(registros_knn).droplevel("modelo")
+resumo_knn.index.name = "K"
+
+print("Validação cruzada — KNN (Pipeline com StandardScaler), 6 atributos:")
+print(resumo_knn.to_string(float_format=lambda valor: f"{valor:.6f}"))
+
+acuracia_validacao_knn_folds = (
+    registros_knn.query("conjunto == 'validacao' and metrica == 'acuracia'")
+    .pivot(index="valor_hiperparametro", columns="fold", values="resultado")
+    .loc[resumo_knn.index]
+)
+print("\nAcurácia de validação por fold:")
+print(acuracia_validacao_knn_folds.to_string(float_format=lambda valor: f"{valor:.6f}"))
+
+# Erros médios por fold (a validação tem cerca de 1.987 registros: 1 erro ≈ 0,05 p.p.)
+media_validacao_fold = tabela_folds["Validação"].mean()
+erros_knn = (1 - resumo_knn["Acurácia validação (média)"]) * media_validacao_fold
+print("\nErros médios de validação por fold:", erros_knn.round(2).to_dict())
+print("\nTempos médios (informativos, variam entre execuções):")
+print(tempos_knn.set_index("Valor").drop(columns="Modelo").to_string(float_format=lambda valor: f"{valor:.4f}"))
+
+# %% [markdown]
+# ### BLOCO 67 — Árvore de Decisão
+#
+# A árvore usa `X_train` original, sem escalonamento, e os mesmos folds do KNN. Além das métricas, registra-se a
+# profundidade efetivamente alcançada: `max_depth` é apenas um limite máximo, e a árvore pode parar antes se não houver
+# divisão útil. Com `max_depth=None`, não há limite: a árvore cresce até que as folhas sejam puras ou não possam mais
+# ser divididas.
+
+# %%
+# BLOCO 67 — Árvore de Decisão (validação cruzada nos mesmos folds)
+
+registros_arvore, tempos_arvore, estimadores_arvore = avaliar_validacao_cruzada(
+    criar_arvore, valores_max_depth, "Árvore de Decisão", "max_depth", atributos_preditores
+)
+resumo_arvore = resumir_validacao_cruzada(registros_arvore).droplevel("modelo")
+resumo_arvore.index.name = "max_depth"
+
+# Profundidade efetivamente alcançada e tamanho das árvores em cada fold
+estrutura_arvores_folds = pd.DataFrame({
+    rotulo: {
+        "Profundidade efetiva (mín.)": min(arvore.get_depth() for arvore in arvores),
+        "Profundidade efetiva (máx.)": max(arvore.get_depth() for arvore in arvores),
+        "Folhas (média)": np.mean([arvore.get_n_leaves() for arvore in arvores]),
+        "Nós (média)": np.mean([arvore.tree_.node_count for arvore in arvores]),
+    }
+    for rotulo, arvores in estimadores_arvore.items()
+}).T
+estrutura_arvores_folds.index.name = "max_depth"
+
+print("Validação cruzada — Árvore de Decisão (dados originais, sem escalonamento), 6 atributos:")
+print(resumo_arvore.to_string(float_format=lambda valor: f"{valor:.6f}"))
+print("\nEstrutura das árvores ajustadas nos 5 folds:")
+print(estrutura_arvores_folds.to_string(float_format=lambda valor: f"{valor:.1f}"))
+
+acuracia_validacao_arvore_folds = (
+    registros_arvore.query("conjunto == 'validacao' and metrica == 'acuracia'")
+    .pivot(index="valor_hiperparametro", columns="fold", values="resultado")
+    .loc[resumo_arvore.index]
+)
+print("\nAcurácia de validação por fold:")
+print(acuracia_validacao_arvore_folds.to_string(float_format=lambda valor: f"{valor:.6f}"))
+erros_arvore = (1 - resumo_arvore["Acurácia validação (média)"]) * media_validacao_fold
+print("\nErros médios de validação por fold:", erros_arvore.round(2).to_dict())
+print("\nTempos médios (informativos, variam entre execuções):")
+print(tempos_arvore.set_index("Valor").drop(columns="Modelo").to_string(float_format=lambda valor: f"{valor:.4f}"))
+
+# %% [markdown]
+# ### BLOCO 68 — Critério de seleção
+#
+# O critério foi definido antes de qualquer métrica de teste. Como o enunciado escolhe o modelo final pela acurácia, o
+# critério principal é a **maior acurácia média na validação cruzada**. Empates numéricos efetivos (diferença menor que
+# 10⁻¹²) são resolvidos, nesta ordem, pela maior balanced accuracy média, pelo maior F1 médio da classe ocupada e,
+# por fim, pela configuração mais simples: no KNN, o maior K (vizinhança mais ampla, fronteira mais suave); na árvore,
+# a menor profundidade (`None` é a menos restrita). O desvio padrão entre folds e a diferença entre treino e validação
+# são registrados como informação complementar, sem entrar no critério. K e `max_depth` são selecionados
+# independentemente. A acurácia de treino não é usada para escolher.
+
+# %%
+# BLOCO 68 — Critério de seleção (definido antes de qualquer métrica de teste)
+
+assert not teste_consultado_fase6, "O teste não pode ser consultado antes da seleção."
+tolerancia_empate = 1e-12
+criterios_selecao = ["Acurácia validação (média)", "Balanced accuracy validação (média)",
+                     "F1 ocupado validação (média)"]
+
+
+def selecionar_configuracao(resumo, ordem_simplicidade):
+    """Aplica os critérios em sequência; empates numéricos passam ao critério seguinte e, por fim, à simplicidade."""
+    candidatos = resumo.copy()
+    etapas = []
+    for criterio in criterios_selecao:
+        melhor = candidatos[criterio].max()
+        candidatos = candidatos[candidatos[criterio] >= melhor - tolerancia_empate]
+        etapas.append(f"{criterio}: {len(candidatos)} candidata(s)")
+    escolhido = min(candidatos.index, key=ordem_simplicidade)
+    return escolhido, etapas
+
+
+# Simplicidade: no KNN, maior K (vizinhança mais ampla); na árvore, menor profundidade (None é a menos restrita)
+k_selecionado_rotulo, etapas_knn = selecionar_configuracao(resumo_knn, lambda rotulo: -int(rotulo))
+profundidade_selecionada_rotulo, etapas_arvore = selecionar_configuracao(
+    resumo_arvore, lambda rotulo: np.inf if rotulo == "None" else int(rotulo)
+)
+k_selecionado = int(k_selecionado_rotulo)
+profundidade_selecionada = None if profundidade_selecionada_rotulo == "None" else int(profundidade_selecionada_rotulo)
+
+# Registro da seleção: congelado antes de qualquer consulta ao teste
+selecao_hiperparametros = {"n_neighbors": k_selecionado, "max_depth": profundidade_selecionada,
+                           "atributos": tuple(atributos_preditores)}
+registro_selecao = repr(selecao_hiperparametros)
+
+for nome, resumo, etapas, escolhido in [("KNN", resumo_knn, etapas_knn, k_selecionado_rotulo),
+                                        ("Árvore de Decisão", resumo_arvore, etapas_arvore,
+                                         profundidade_selecionada_rotulo)]:
+    ordenado = resumo["Acurácia validação (média)"].sort_values(ascending=False)
+    segunda = ordenado.drop(escolhido).iloc[0] if ordenado.index[0] == escolhido else ordenado.iloc[0]
+    print(f"{nome}: selecionado = {escolhido} | " + " → ".join(etapas))
+    print(f"  Acurácia média de validação: {resumo.loc[escolhido, 'Acurácia validação (média)']:.6f} | "
+          f"diferença para a próxima configuração: "
+          f"{(resumo.loc[escolhido, 'Acurácia validação (média)'] - segunda) * 100:.4f} p.p. "
+          f"(≈ {(resumo.loc[escolhido, 'Acurácia validação (média)'] - segunda) * media_validacao_fold:.2f} "
+          f"registros por fold)")
+print("\nSeleção registrada:", registro_selecao)
+
+# %% [markdown]
+# ### BLOCO 69 — Avaliação da variável derivada
+#
+# Comparação feita **somente no treino**, com os mesmos folds, os mesmos hiperparâmetros e o mesmo protocolo:
+#
+# - **Configuração A:** 5 atributos originais (`Temperature`, `Humidity`, `Light`, `CO2`, `HumidityRatio`).
+# - **Configuração B:** os 5 atributos mais `CO2_Light_Ratio` (resultados dos BLOCOS 66 e 67).
+#
+# No KNN, o Pipeline ajusta um scaler próprio em cada fold para cada configuração; a árvore usa dados originais. As
+# diferenças são pareadas por fold (B − A), pois as duas configurações são avaliadas nos mesmos registros. Os modelos
+# principais continuam com 6 atributos, para manter a variável da Fase 3 no fluxo exigido; a configuração A é um
+# experimento complementar e a coluna não é removida da base. Esta comparação usa as mesmas validações que selecionaram
+# os hiperparâmetros e, portanto, não é uma estimativa independente do desempenho.
+
+# %%
+# BLOCO 69 — Avaliação da variável derivada (5 × 6 atributos, somente no treino)
+
+assert not teste_consultado_fase6, "O teste não pode ser consultado na comparação de atributos."
+atributos_originais = [atributo for atributo in atributos_preditores if atributo != "CO2_Light_Ratio"]
+assert atributos_originais == ["Temperature", "Humidity", "Light", "CO2", "HumidityRatio"]
+
+registros_knn_5, _, _ = avaliar_validacao_cruzada(criar_pipeline_knn, valores_k, "KNN", "n_neighbors",
+                                                  atributos_originais)
+registros_arvore_5, _, _ = avaliar_validacao_cruzada(criar_arvore, valores_max_depth, "Árvore de Decisão",
+                                                     "max_depth", atributos_originais)
+registros_feature_engineering = pd.concat(
+    [registros_knn_5, registros_knn, registros_arvore_5, registros_arvore], ignore_index=True
+)
+
+# Diferenças pareadas por fold (6 atributos − 5 atributos), somente na validação
+chaves = ["modelo", "valor_hiperparametro", "fold", "metrica"]
+validacao_fe = registros_feature_engineering.query("conjunto == 'validacao'")
+pareado = (
+    validacao_fe.pivot_table(index=chaves, columns="quantidade_atributos", values="resultado", aggfunc="first")
+    .rename(columns={5: "5 atributos", 6: "6 atributos"})
+)
+pareado["Diferença (6 − 5)"] = pareado["6 atributos"] - pareado["5 atributos"]
+
+resumo_feature_engineering = pareado.groupby(["modelo", "valor_hiperparametro", "metrica"]).agg(
+    media_5=("5 atributos", "mean"),
+    media_6=("6 atributos", "mean"),
+    diferenca_media=("Diferença (6 − 5)", "mean"),
+    diferenca_dp=("Diferença (6 − 5)", lambda serie: serie.std(ddof=0)),
+    folds_6_melhor=("Diferença (6 − 5)", lambda serie: int((serie > 0).sum())),
+    folds_5_melhor=("Diferença (6 − 5)", lambda serie: int((serie < 0).sum())),
+    folds_empate=("Diferença (6 − 5)", lambda serie: int((serie == 0).sum())),
+).reset_index()
+ordem_configuracoes = (
+    [("KNN", str(k), metrica) for k in valores_k for metrica in metricas_validacao]
+    + [("Árvore de Decisão", rotulo_profundidade(valor), metrica) for valor in valores_max_depth
+       for metrica in metricas_validacao]
+)
+resumo_feature_engineering = resumo_feature_engineering.set_index(
+    ["modelo", "valor_hiperparametro", "metrica"]
+).loc[ordem_configuracoes]
+resumo_feature_engineering[["diferenca_media", "diferenca_dp"]] *= 100
+
+print("Comparação na validação cruzada: 5 atributos (sem CO2_Light_Ratio) × 6 atributos")
+print("(médias como proporção; diferença e desvio da diferença em pontos percentuais)")
+print(resumo_feature_engineering.to_string(float_format=lambda valor: f"{valor:.4f}"))
+
+# KNN no fold 1 (K selecionado): a nova coluna altera vizinhos, mas é preciso verificar se altera os votos
+posicoes_treino_f1, posicoes_validacao_f1 = folds_cv[0]
+vizinhos_por_configuracao, previsoes_por_configuracao = {}, {}
+for quantidade, colunas in [(6, atributos_preditores), (5, atributos_originais)]:
+    pipeline_comparacao = criar_pipeline_knn(k_selecionado).fit(
+        X_train.iloc[posicoes_treino_f1][colunas], y_train.iloc[posicoes_treino_f1]
+    )
+    validacao_comparacao = X_train.iloc[posicoes_validacao_f1][colunas]
+    vizinhos_por_configuracao[quantidade] = pipeline_comparacao.named_steps["knn"].kneighbors(
+        pipeline_comparacao.named_steps["scaler"].transform(validacao_comparacao), return_distance=False
+    )
+    previsoes_por_configuracao[quantidade] = pipeline_comparacao.predict(validacao_comparacao)
+vizinhos_diferentes = np.mean([
+    set(vizinhos_6) != set(vizinhos_5)
+    for vizinhos_6, vizinhos_5 in zip(vizinhos_por_configuracao[6], vizinhos_por_configuracao[5])
+]) * 100
+previsoes_diferentes = int((previsoes_por_configuracao[6] != previsoes_por_configuracao[5]).sum())
+print(f"\nKNN (K={k_selecionado}), fold 1: registros de validação com conjunto de vizinhos diferente = "
+      f"{vizinhos_diferentes:.2f}% | previsões diferentes = {previsoes_diferentes} de {len(posicoes_validacao_f1)}")
+
+for modelo, rotulo in [("KNN", k_selecionado_rotulo), ("Árvore de Decisão", profundidade_selecionada_rotulo)]:
+    print(f"\n{modelo} — configuração selecionada ({rotulo}), diferenças por fold (p.p.):")
+    print((pareado.loc[(modelo, rotulo)]["Diferença (6 − 5)"].unstack("metrica") * 100).to_string(
+        float_format=lambda valor: f"{valor:.4f}"))
+
+# %% [markdown]
+# ### BLOCO 70 — Proximidade temporal entre treino e validação nos folds
+#
+# Para cada registro de validação de cada fold, calcula-se a menor distância temporal até um registro da parte de
+# ajuste do mesmo fold, dentro do mesmo segmento contínuo (mesma função de busca binária do BLOCO 44, conferida contra
+# aquela auditoria e por força bruta em 100 registros). Diferentemente da Fase 4, a parte de ajuste de cada fold
+# contém cerca de 64% da base (80% × 80%) e os registros do teste oficial não participam, de modo que o vizinho
+# imediato pode estar no teste. Por isso, a comparação usa limites de tempo (61 e 120 segundos). Os folds não são
+# alterados após esta medição.
+
+# %%
+# BLOCO 70 — Proximidade temporal entre treino e validação nos folds
+
+
+def distancia_temporal_minima(rotulos_referencia, rotulos_avaliados):
+    """Menor distância (s) de cada registro avaliado a um registro de referência do mesmo segmento."""
+    distancias = pd.Series(np.inf, index=pd.Index(rotulos_avaliados), dtype="float64")
+    datas = rastreio_temporal["date"]
+    segmentos_registro = rastreio_temporal["segmento"]
+    referencia = pd.Index(rotulos_referencia)
+    for segmento_id in segmentos_registro.loc[distancias.index].unique():
+        avaliados_seg = distancias.index[segmentos_registro.loc[distancias.index].eq(segmento_id).to_numpy()]
+        referencia_seg = referencia[segmentos_registro.loc[referencia].eq(segmento_id).to_numpy()]
+        if len(referencia_seg) == 0:
+            continue
+        tempos_ref = np.sort(datas.loc[referencia_seg].to_numpy())
+        tempos_av = datas.loc[avaliados_seg].to_numpy()
+        insercao = np.searchsorted(tempos_ref, tempos_av)
+        anterior = np.where(insercao > 0,
+                            (tempos_av - tempos_ref[np.clip(insercao - 1, 0, None)]) / np.timedelta64(1, "s"),
+                            np.inf)
+        posterior = np.where(insercao < len(tempos_ref),
+                             (tempos_ref[np.clip(insercao, None, len(tempos_ref) - 1)] - tempos_av)
+                             / np.timedelta64(1, "s"), np.inf)
+        distancias.loc[avaliados_seg] = np.minimum(anterior, posterior)
+    return distancias
+
+
+def resumir_distancias(distancias):
+    finitas = distancias[np.isfinite(distancias)]
+    return {
+        "Registros avaliados": len(distancias),
+        "Com vizinho elegível": len(finitas),
+        "Até 61 s (%)": (distancias <= 61).mean() * 100,
+        "Até 120 s (%)": (distancias <= 120).mean() * 100,
+        "Mediana (s)": finitas.median(),
+        "Média (s)": finitas.mean(),
+        "Máximo (s)": finitas.max(),
+    }
+
+
+# Conferência da função com a auditoria da Fase 4 (teste × treino oficial)
+assert distancia_temporal_minima(X_train.index, X_test.index).equals(distancia_treino_s.rename(None)), \
+    "Função divergente da auditoria do BLOCO 44."
+
+distancias_folds = {}
+linhas_proximidade_folds = []
+for numero_fold, (posicoes_treino, posicoes_validacao) in enumerate(folds_cv, start=1):
+    rotulos_treino_fold = X_train.index[posicoes_treino]
+    rotulos_validacao_fold = X_train.index[posicoes_validacao]
+    distancias_folds[numero_fold] = distancia_temporal_minima(rotulos_treino_fold, rotulos_validacao_fold)
+    linhas_proximidade_folds.append({"Comparação": f"Fold {numero_fold}: validação × treino do fold",
+                                     **resumir_distancias(distancias_folds[numero_fold])})
+
+# Validação por força bruta em 100 registros de validação do fold 1
+amostra_fold = pd.Series(X_train.index[folds_cv[0][1]]).sample(n=100, random_state=42)
+rotulos_treino_fold1 = X_train.index[folds_cv[0][0]]
+for indice in amostra_fold:
+    candidatos = rotulos_treino_fold1[
+        rastreio_temporal.loc[rotulos_treino_fold1, "segmento"].eq(rastreio_temporal.loc[indice, "segmento"]).to_numpy()
+    ]
+    menor = (rastreio_temporal.loc[candidatos, "date"] - rastreio_temporal.loc[indice, "date"]).abs().min()
+    assert menor / pd.Timedelta(seconds=1) == distancias_folds[1].loc[indice], f"Divergência no índice {indice}."
+
+distancias_todos_folds = pd.concat(distancias_folds.values())
+linhas_proximidade_folds.append({"Comparação": "Cinco folds (todas as validações)",
+                                 **resumir_distancias(distancias_todos_folds)})
+linhas_proximidade_folds.append({"Comparação": "Fase 4: teste oficial × treino oficial",
+                                 **resumir_distancias(distancia_treino_s)})
+tabela_proximidade_folds = pd.DataFrame(linhas_proximidade_folds).set_index("Comparação")
+print("Validação por força bruta em 100 registros do fold 1: aprovada.")
+print(tabela_proximidade_folds.to_string(float_format=lambda valor: f"{valor:.2f}"))
+
+# %% [markdown]
+# ### BLOCO 71 — Validação temporal complementar
+#
+# Protocolo definido antes da avaliação, usando **somente os 9.933 registros do treino oficial**:
+#
+# | Item | Definição |
+# |---|---|
+# | Ordenação | Cronológica, pela coluna `date` de `rastreio_temporal` (equivale à ordem dos índices) |
+# | Divisões | `TimeSeriesSplit(n_splits=5, gap=60)`: janelas expansivas, em que o treino de cada divisão contém todos os registros anteriores e a validação é o bloco seguinte de 1.655 registros |
+# | Intervalo | 60 **registros** do treino oficial descartados entre ajuste e validação. Como o teste oficial foi retirado da sequência, 60 registros correspondem a cerca de 75 minutos reais; a duração efetiva de cada intervalo é registrada na tabela |
+# | Lacuna entre segmentos | Os 7 dias sem registros entre os dois arquivos não são tratados como observações; o fold 1 atravessa essa lacuna, e sua duração aparece nas datas, não na contagem de registros |
+# | Classes | O treino de cada divisão deve conter as duas classes (verificação bloqueante). Se uma janela de validação tiver uma única classe, a acurácia é calculada, e o F1 e a balanced accuracy são registrados como **não calculáveis**, sem excluir a divisão |
+# | Modelos | Somente as configurações selecionadas no BLOCO 68, com 6 atributos, sem alterá-las após os resultados |
+#
+# O objetivo é comparar a avaliação aleatória com uma avaliação que respeita a anterioridade temporal, sem substituir
+# o protocolo acadêmico. `X_test` e `y_test` não são usados. Como referência descritiva, calcula-se a acurácia de
+# prever sempre a classe majoritária do treino de cada divisão.
+
+# %%
+# BLOCO 71 — Validação temporal complementar (somente com o treino oficial)
+
+assert not teste_consultado_fase6, "O teste não pode ser consultado na validação temporal."
+
+# Ordem cronológica dos registros do treino oficial (os índices seguem a ordem temporal da base)
+ordem_cronologica = rastreio_temporal.loc[X_train.index, "date"].sort_values(kind="stable").index
+assert ordem_cronologica.equals(X_train.index.sort_values()), "Ordem temporal diferente da ordem dos índices."
+X_train_cronologico = X_train.loc[ordem_cronologica]
+y_train_cronologico = y_train.loc[ordem_cronologica]
+datas_treino_cronologico = rastreio_temporal.loc[ordem_cronologica, "date"]
+segmentos_treino_cronologico = rastreio_temporal.loc[ordem_cronologica, "segmento"]
+
+# Protocolo definido antes da avaliação
+quantidade_divisoes_temporais = 5
+intervalo_registros = 60
+divisoes_temporais = TimeSeriesSplit(n_splits=quantidade_divisoes_temporais, gap=intervalo_registros)
+folds_temporais = list(divisoes_temporais.split(X_train_cronologico))
+
+
+def formatar_data(data):
+    return pd.Timestamp(data).strftime("%d/%m %H:%M")
+
+
+nomes_dias = {0: "seg", 1: "ter", 2: "qua", 3: "qui", 4: "sex", 5: "sáb", 6: "dom"}
+
+
+def dias_semana(datas):
+    """Dias da semana presentes, na ordem cronológica de ocorrência."""
+    return "-".join(dict.fromkeys(nomes_dias[dia] for dia in datas.dt.dayofweek))
+
+
+linhas_temporais = []
+for numero_fold, (posicoes_treino, posicoes_validacao) in enumerate(folds_temporais, start=1):
+    assert posicoes_treino.max() + intervalo_registros < posicoes_validacao.min(), "Anterioridade violada."
+    datas_t = datas_treino_cronologico.iloc[posicoes_treino]
+    datas_v = datas_treino_cronologico.iloc[posicoes_validacao]
+    y_t = y_train_cronologico.iloc[posicoes_treino]
+    y_v = y_train_cronologico.iloc[posicoes_validacao]
+    linhas_temporais.append({
+        "Fold": numero_fold,
+        "Treino (registros)": len(posicoes_treino),
+        "Treino: início": formatar_data(datas_t.iloc[0]),
+        "Treino: fim": formatar_data(datas_t.iloc[-1]),
+        "Treino % classe 1": y_t.mean() * 100,
+        "Treino: registros de fim de semana": int((datas_t.dt.dayofweek >= 5).sum()),
+        "Intervalo (registros)": intervalo_registros,
+        "Intervalo real": str(datas_v.iloc[0] - datas_t.iloc[-1]),
+        "Validação (registros)": len(posicoes_validacao),
+        "Validação: início": formatar_data(datas_v.iloc[0]),
+        "Validação: fim": formatar_data(datas_v.iloc[-1]),
+        "Dias na validação": dias_semana(datas_v),
+        "Validação classe 0": int((y_v == 0).sum()),
+        "Validação classe 1": int((y_v == 1).sum()),
+        "Validação % classe 1": y_v.mean() * 100,
+        "Segmentos na validação": ", ".join(map(str, sorted(segmentos_treino_cronologico.iloc[posicoes_validacao]
+                                                           .unique()))),
+        "Validação até 61 s do treino (%)": (distancia_temporal_minima(
+            datas_t.index, datas_v.index) <= 61).mean() * 100,
+    })
+tabela_folds_temporais = pd.DataFrame(linhas_temporais).set_index("Fold")
+print(f"TimeSeriesSplit(n_splits={quantidade_divisoes_temporais}, gap={intervalo_registros}) sobre os "
+      f"{len(X_train_cronologico)} registros do treino oficial em ordem cronológica:")
+print(tabela_folds_temporais.to_string(float_format=lambda valor: f"{valor:.2f}"))
+
+# Avaliação das configurações selecionadas no BLOCO 68 (sem alterá-las)
+modelos_temporais = {
+    "KNN": (lambda: criar_pipeline_knn(k_selecionado), "n_neighbors", k_selecionado_rotulo),
+    "Árvore de Decisão": (lambda: criar_arvore(profundidade_selecionada), "max_depth",
+                          profundidade_selecionada_rotulo),
+}
+rotulo_protocolo_temporal = (f"TimeSeriesSplit(n_splits={quantidade_divisoes_temporais}, "
+                             f"gap={intervalo_registros}) cronológico no treino oficial")
+registros_temporais = []
+diagnostico_classe_unica = []
+for numero_fold, (posicoes_treino, posicoes_validacao) in enumerate(folds_temporais, start=1):
+    X_t, y_t = X_train_cronologico.iloc[posicoes_treino], y_train_cronologico.iloc[posicoes_treino]
+    X_v, y_v = X_train_cronologico.iloc[posicoes_validacao], y_train_cronologico.iloc[posicoes_validacao]
+    assert set(y_t.unique()) == {0, 1}, f"Treino do fold temporal {numero_fold} sem as duas classes."
+    for modelo, (fabrica, hiperparametro, rotulo) in modelos_temporais.items():
+        estimador = fabrica().fit(X_t, y_t)
+        for conjunto, X_av, y_av in [("treino", X_t, y_t), ("validacao", X_v, y_v)]:
+            previsto = estimador.predict(X_av)
+            if conjunto == "validacao" and y_av.nunique() == 1:
+                falsos = X_av.loc[previsto != y_av.to_numpy(), "Light"]
+                diagnostico_classe_unica.append({
+                    "Fold": numero_fold, "Modelo": modelo, "Classe presente": int(y_av.iloc[0]),
+                    "Registros": len(y_av), "Previsões erradas": len(falsos),
+                    "Light > 0 na janela (%)": (X_av["Light"] > 0).mean() * 100,
+                    "Light dos erros: mediana (lux)": falsos.median(),
+                    "Light dos erros: máximo (lux)": falsos.max(),
+                })
+            calculavel = set(y_av.unique()) == {0, 1}
+            valores_metricas = {
+                "acuracia": accuracy_score(y_av, previsto),
+                "f1_ocupado": f1_score(y_av, previsto, zero_division=0.0) if calculavel else np.nan,
+                "balanced_accuracy": balanced_accuracy_score(y_av, previsto) if calculavel else np.nan,
+            }
+            for metrica, valor in valores_metricas.items():
+                registros_temporais.append({
+                    "protocolo": rotulo_protocolo_temporal,
+                    "modelo": modelo,
+                    "hiperparametro": hiperparametro,
+                    "valor_hiperparametro": rotulo,
+                    "configuracao_atributos": "6 atributos",
+                    "quantidade_atributos": 6,
+                    "fold": numero_fold,
+                    "conjunto": conjunto,
+                    "metrica": metrica,
+                    "resultado": valor,
+                    "observacoes_avaliadas": len(y_av),
+                    "observacoes_ajuste": len(y_t),
+                    "intervalo_registros": intervalo_registros,
+                    "intervalo_real_s": (datas_treino_cronologico.iloc[posicoes_validacao[0]]
+                                         - datas_treino_cronologico.iloc[posicoes_treino[-1]]).total_seconds(),
+                    "inicio_validacao": datas_treino_cronologico.iloc[posicoes_validacao[0]],
+                    "fim_validacao": datas_treino_cronologico.iloc[posicoes_validacao[-1]],
+                    "validacao_classe_1": int(y_v.sum()),
+                    "observacao": "calculável" if calculavel else "não calculável: avaliação sem as duas classes",
+                })
+registros_temporais = pd.DataFrame(registros_temporais)
+tabela_diagnostico_classe_unica = pd.DataFrame(diagnostico_classe_unica)
+
+resultados_temporais = registros_temporais.query("conjunto == 'validacao'").pivot_table(
+    index="fold", columns=["modelo", "metrica"], values="resultado", aggfunc="first", dropna=False
+)
+print("\nResultados na validação temporal (por fold):")
+print(resultados_temporais.to_string(float_format=lambda valor: f"{valor:.6f}"))
+
+# Referência descritiva: proporção da classe majoritária do treino em cada janela de validação
+referencia_majoritaria_temporal = pd.Series({
+    numero_fold: (y_train_cronologico.iloc[posicoes_validacao] == y_train_cronologico.iloc[posicoes_treino].mode()[0])
+    .mean()
+    for numero_fold, (posicoes_treino, posicoes_validacao) in enumerate(folds_temporais, start=1)
+}, name="Acurácia de prever sempre a classe majoritária do treino")
+print("\n" + referencia_majoritaria_temporal.to_frame().to_string(float_format=lambda valor: f"{valor:.6f}"))
+
+if len(tabela_diagnostico_classe_unica):
+    print("\nJanelas de validação com uma única classe (F1 e balanced accuracy não calculáveis):")
+    print(tabela_diagnostico_classe_unica.set_index(["Fold", "Modelo"]).to_string(
+        float_format=lambda valor: f"{valor:.2f}"))
+
+# Comparação descritiva entre protocolos (configurações selecionadas)
+linhas_comparacao_protocolos = []
+for modelo, rotulo, resumo in [("KNN", k_selecionado_rotulo, resumo_knn),
+                               ("Árvore de Decisão", profundidade_selecionada_rotulo, resumo_arvore)]:
+    validacao_temporal = registros_temporais.query("modelo == @modelo and conjunto == 'validacao'")
+    for metrica, coluna in [("acuracia", "Acurácia validação"), ("f1_ocupado", "F1 ocupado validação"),
+                            ("balanced_accuracy", "Balanced accuracy validação")]:
+        valores_temporais = validacao_temporal.query("metrica == @metrica")["resultado"]
+        linhas_comparacao_protocolos.append({
+            "Modelo": modelo, "Métrica": metrica,
+            "Aleatória estratificada (média)": resumo.loc[rotulo, f"{coluna} (média)"],
+            "Aleatória estratificada (dp)": resumo.loc[rotulo, f"{coluna} (dp)"],
+            "Temporal (média dos folds calculáveis)": valores_temporais.mean(),
+            "Temporal (dp)": valores_temporais.std(ddof=0),
+            "Temporal (mínimo)": valores_temporais.min(),
+            "Folds temporais calculáveis": int(valores_temporais.notna().sum()),
+        })
+tabela_comparacao_protocolos = pd.DataFrame(linhas_comparacao_protocolos).set_index(["Modelo", "Métrica"])
+print("\nComparação descritiva entre protocolos:")
+print(tabela_comparacao_protocolos.to_string(float_format=lambda valor: f"{valor:.6f}"))
+
+# %% [markdown]
+# ### BLOCO 72 — Consolidação e ajuste dos modelos selecionados
+#
+# Os modelos principais são instanciados com os hiperparâmetros congelados no BLOCO 68 e ajustados **somente** em
+# `X_train` e `y_train`: `modelo_knn_final` (Pipeline com `StandardScaler` e `KNeighborsClassifier`) e
+# `modelo_arvore_final` (`DecisionTreeClassifier` com `random_state=42`, dados não escalonados). Os objetos ficam em
+# memória para a Fase 7, sem serialização. Como o scaler interno é ajustado nos mesmos 9.933 registros do scaler da
+# Fase 5, seus parâmetros devem coincidir com os daquele scaler, embora sejam objetos diferentes.
+
+# %%
+# BLOCO 72 — Consolidação e ajuste dos modelos selecionados
+
+assert repr(selecao_hiperparametros) == registro_selecao, "Seleção alterada após o registro."
+assert not teste_consultado_fase6, "Os modelos finais devem ser definidos antes da consulta ao teste."
+
+modelo_knn_final = criar_pipeline_knn(k_selecionado).fit(X_train, y_train)
+modelo_arvore_final = criar_arvore(profundidade_selecionada).fit(X_train, y_train)
+
+check_is_fitted(modelo_knn_final)
+check_is_fitted(modelo_arvore_final)
+scaler_knn_final = modelo_knn_final.named_steps["scaler"]
+knn_final = modelo_knn_final.named_steps["knn"]
+assert int(scaler_knn_final.n_samples_seen_) == knn_final.n_samples_fit_ == len(X_train) == 9933
+assert list(modelo_knn_final.feature_names_in_) == list(modelo_arvore_final.feature_names_in_) == atributos_preditores
+assert scaler_knn_final is not scaler, "Scaler da Fase 5 reutilizado no modelo final."
+
+tabela_knn_final = pd.Series({
+    "n_neighbors": knn_final.n_neighbors,
+    "weights": knn_final.weights,
+    "Métrica de distância": knn_final.effective_metric_,
+    "Amostras de treinamento (n_samples_fit_)": knn_final.n_samples_fit_,
+    "Scaler interno: observações": int(scaler_knn_final.n_samples_seen_),
+    "Scaler interno igual ao da Fase 5 (mesmos dados)": bool(
+        np.allclose(scaler_knn_final.mean_, scaler.mean_, rtol=tolerancia_parametros, atol=0)
+        and np.allclose(scaler_knn_final.scale_, scaler.scale_, rtol=tolerancia_parametros, atol=0)
+    ),
+})
+tabela_arvore_final = pd.Series({
+    "max_depth configurado": rotulo_profundidade(modelo_arvore_final.max_depth),
+    "Profundidade efetiva": modelo_arvore_final.get_depth(),
+    "Nós": modelo_arvore_final.tree_.node_count,
+    "Folhas": modelo_arvore_final.get_n_leaves(),
+    "criterion": modelo_arvore_final.criterion,
+    "random_state": modelo_arvore_final.random_state,
+    "Amostras de treinamento": int(modelo_arvore_final.tree_.n_node_samples[0]),
+})
+print("Modelo KNN final (Pipeline):")
+print(tabela_knn_final.to_string())
+print("\nParâmetros do scaler interno:")
+print(pd.DataFrame({"mean_": scaler_knn_final.mean_, "scale_": scaler_knn_final.scale_},
+                   index=atributos_preditores).to_string(float_format=lambda valor: f"{valor:.6g}"))
+print("\nÁrvore de Decisão final:")
+print(tabela_arvore_final.to_string())
+
+importancias_arvore = pd.Series(modelo_arvore_final.feature_importances_, index=atributos_preditores,
+                                name="Importância (redução de impureza)").sort_values(ascending=False)
+print("\n" + importancias_arvore.to_frame().to_string(float_format=lambda valor: f"{valor:.6f}"))
+
+# %% [markdown]
+# ### BLOCO 73 — Tabela acadêmica de acurácia no treino e no teste
+#
+# O enunciado exige registrar a acurácia **no treino e no teste** de cada configuração. Para atender a exigência sem
+# comprometer a seleção:
+#
+# 1. a seleção do BLOCO 68 foi registrada (`registro_selecao`) antes desta célula e é conferida antes e depois dela;
+# 2. cada configuração é ajustada somente em `X_train` e avaliada uma vez em `X_train` e em `X_test`;
+# 3. as acurácias de teste são **resultados descritivos posteriores à seleção**: nenhum hiperparâmetro, atributo ou
+#    semente é alterado depois desta consulta, e a maior acurácia de teste não é critério de escolha;
+# 4. a partir daqui, o teste foi consultado (`teste_consultado_fase6 = True`); a Fase 7 não será a primeira consulta.
+#
+# Apenas a acurácia é calculada no teste, como pede a Fase 6; as demais métricas de teste ficam para a Fase 7.
+
+# %%
+# BLOCO 73 — Tabela acadêmica de acurácia no treino e no teste (exigência do enunciado)
+
+# A seleção do BLOCO 68 permanece congelada: as métricas abaixo são descritivas e posteriores à seleção
+assert repr(selecao_hiperparametros) == registro_selecao, "Seleção alterada antes da consulta ao teste."
+teste_consultado_fase6 = True  # a partir daqui o teste foi consultado (exigência do enunciado)
+
+linhas_treino_teste = []
+for modelo, fabrica, valores, hiperparametro, selecionado in [
+    ("KNN", criar_pipeline_knn, valores_k, "n_neighbors", k_selecionado_rotulo),
+    ("Árvore de Decisão", criar_arvore, valores_max_depth, "max_depth", profundidade_selecionada_rotulo),
+]:
+    resumo = resumo_knn if modelo == "KNN" else resumo_arvore
+    for valor in valores:
+        rotulo = rotulo_profundidade(valor)
+        estimador = fabrica(valor).fit(X_train, y_train)
+        acuracia_treino = accuracy_score(y_train, estimador.predict(X_train))
+        acuracia_teste = accuracy_score(y_test, estimador.predict(X_test))
+        linhas_treino_teste.append({
+            "Modelo": modelo, "Hiperparâmetro": f"{hiperparametro}={rotulo}",
+            "Acurácia treino": acuracia_treino,
+            "Acurácia teste": acuracia_teste,
+            "Diferença treino − teste (p.p.)": (acuracia_treino - acuracia_teste) * 100,
+            "Acurácia validação cruzada (média)": resumo.loc[rotulo, "Acurácia validação (média)"],
+            "Selecionado pela validação cruzada": rotulo == selecionado,
+            "Profundidade efetiva": estimador.get_depth() if modelo != "KNN" else np.nan,
+        })
+tabela_treino_teste = pd.DataFrame(linhas_treino_teste).set_index(["Modelo", "Hiperparâmetro"])
+print(tabela_treino_teste.to_string(float_format=lambda valor: f"{valor:.6f}"))
+
+# Os modelos selecionados reproduzem os modelos finais do BLOCO 72
+assert np.array_equal(modelo_knn_final.predict(X_test),
+                      criar_pipeline_knn(k_selecionado).fit(X_train, y_train).predict(X_test))
+assert np.array_equal(modelo_arvore_final.predict(X_test),
+                      criar_arvore(profundidade_selecionada).fit(X_train, y_train).predict(X_test))
+assert repr(selecao_hiperparametros) == registro_selecao, "Seleção alterada após a consulta ao teste."
+print("\nSeleção inalterada após a consulta ao teste:", registro_selecao)
+
+# %% [markdown]
+# ### BLOCO 74 — Visualização da comparação dos hiperparâmetros
+#
+# Quatro painéis: (1) e (2) acurácia média de treino e de validação cruzada por K e por `max_depth`, com o desvio
+# padrão entre folds, os resultados individuais dos folds e, em linha tracejada, a acurácia de teste do BLOCO 73
+# (descritiva, posterior à seleção); (3) diferença entre treino e validação cruzada e entre treino e teste; (4) desvio
+# padrão das três métricas de validação entre os folds. Os eixos dos painéis 1 e 2 foram ampliados para mostrar
+# diferenças pequenas, e a faixa de cada eixo está indicada no rótulo.
+
+# %%
+# BLOCO 74 — Visualização da comparação dos hiperparâmetros
+
+cor_treino, cor_validacao, cor_teste = "#4C72B0", "#DD8452", "#55A868"
+
+
+def formatar_eixo_percentual(eixo, casas=1):
+    eixo.yaxis.set_major_formatter(
+        plt.FuncFormatter(lambda valor, _: f"{valor:.{casas}f}%".replace(".", ","))
+    )
+
+
+def painel_curvas(eixo, resumo, folds_validacao, rotulos, selecionado, titulo, rotulo_x, nome_modelo):
+    posicoes = np.arange(len(rotulos))
+    eixo.errorbar(posicoes - 0.06, resumo["Acurácia treino (média)"] * 100, yerr=resumo["Acurácia treino (dp)"] * 100,
+                  marker="o", color=cor_treino, capsize=4, linewidth=2, label="Treino (média ± dp dos folds)")
+    eixo.errorbar(posicoes + 0.06, resumo["Acurácia validação (média)"] * 100,
+                  yerr=resumo["Acurácia validação (dp)"] * 100, marker="s", color=cor_validacao, capsize=4,
+                  linewidth=2, label="Validação cruzada (média ± dp)")
+    for coluna_fold in folds_validacao.columns:
+        eixo.scatter(posicoes + 0.18, folds_validacao[coluna_fold] * 100, color=cor_validacao, s=12, alpha=0.5,
+                     zorder=3, label="Validação: cada fold" if coluna_fold == 1 else None)
+    teste = tabela_treino_teste.loc[nome_modelo, "Acurácia teste"].to_numpy() * 100
+    eixo.plot(posicoes, teste, linestyle="--", marker="x", color=cor_teste, linewidth=1.5,
+              label="Teste (descritivo, após a seleção)")
+    posicao_selecionada = rotulos.index(selecionado)
+    eixo.axvspan(posicao_selecionada - 0.35, posicao_selecionada + 0.35, color="gold", alpha=0.25,
+                 label="Selecionado pela validação cruzada")
+    limite_inferior = np.floor(min(resumo["Acurácia validação (média)"].min() * 100 - resumo[
+        "Acurácia validação (dp)"].max() * 100, folds_validacao.min().min() * 100, teste.min()) * 2) / 2 - 0.25
+    eixo.set_ylim(limite_inferior, 100.15)
+    eixo.set_xticks(posicoes, rotulos)
+    eixo.set_xlabel(rotulo_x)
+    eixo.set_ylabel(f"Acurácia (eixo de {formatar_decimal(limite_inferior, 2)}% a 100%)")
+    formatar_eixo_percentual(eixo, 2)
+    eixo.set_title(titulo)
+    eixo.legend(loc="lower left", fontsize=8.5)
+
+
+rotulos_k = [str(k) for k in valores_k]
+rotulos_profundidade = [rotulo_profundidade(valor) for valor in valores_max_depth]
+rotulos_profundidade_grafico = [rotulo if rotulo != "None" else "None\n(sem limite)" for rotulo in rotulos_profundidade]
+
+fig, eixos = plt.subplots(2, 2, figsize=(18, 13))
+eixo_knn, eixo_arvore, eixo_diferenca, eixo_variabilidade = eixos.ravel()
+
+painel_curvas(eixo_knn, resumo_knn, acuracia_validacao_knn_folds, rotulos_k, k_selecionado_rotulo,
+              "KNN (Pipeline com StandardScaler): acurácia por K", "Número de vizinhos (K)", "KNN")
+painel_curvas(eixo_arvore, resumo_arvore, acuracia_validacao_arvore_folds, rotulos_profundidade,
+              profundidade_selecionada_rotulo, "Árvore de Decisão: acurácia por max_depth", "max_depth",
+              "Árvore de Decisão")
+eixo_arvore.set_xticks(np.arange(len(rotulos_profundidade)), rotulos_profundidade_grafico)
+
+# Painel 3 — Diferença entre treino e validação (seleção) e entre treino e teste (descritivo)
+rotulos_configuracoes = [f"K={rotulo}" for rotulo in rotulos_k] + [f"prof.={rotulo}" for rotulo in rotulos_profundidade]
+diferencas_cv = np.concatenate([resumo_knn["Diferença treino − validação (p.p.)"],
+                                resumo_arvore["Diferença treino − validação (p.p.)"]])
+diferencas_teste = tabela_treino_teste["Diferença treino − teste (p.p.)"].to_numpy()
+posicoes_configuracoes = np.arange(len(rotulos_configuracoes))
+selecionados = [f"K={k_selecionado_rotulo}", f"prof.={profundidade_selecionada_rotulo}"]
+barras = eixo_diferenca.bar(posicoes_configuracoes, diferencas_cv, color=cor_validacao, edgecolor="black",
+                            label="Treino − validação cruzada (médias dos folds)")
+for barra, rotulo in zip(barras, rotulos_configuracoes):
+    if rotulo in selecionados:
+        barra.set_linewidth(2.5)
+        barra.set_hatch("//")
+eixo_diferenca.scatter(posicoes_configuracoes + 0.3, diferencas_teste, marker="x", s=70, color=cor_teste, zorder=3,
+                       label="Treino − teste (descritivo, após a seleção)")
+for posicao, valor in zip(posicoes_configuracoes, diferencas_cv):
+    eixo_diferenca.text(posicao - 0.05, valor + 0.02, formatar_decimal(valor, 2), ha="center", va="bottom", fontsize=9)
+eixo_diferenca.axvline(len(valores_k) - 0.5, color="gray", linewidth=1)
+eixo_diferenca.set_xticks(posicoes_configuracoes, rotulos_configuracoes, rotation=30)
+eixo_diferenca.set_ylabel("Diferença de acurácia (pontos percentuais)")
+eixo_diferenca.yaxis.set_major_formatter(plt.FuncFormatter(lambda valor, _: formatar_decimal(valor, 1)))
+eixo_diferenca.set_ylim(0, max(diferencas_cv.max(), diferencas_teste.max()) * 1.2)
+eixo_diferenca.set_title("Diferença entre treino e avaliação (hachurado = selecionado)")
+eixo_diferenca.legend(loc="upper left", fontsize=9)
+
+# Painel 4 — Variabilidade entre os folds (desvio padrão das métricas de validação)
+largura = 0.26
+for deslocamento, metrica, cor, rotulo in [(-largura, "Acurácia validação (dp)", cor_validacao, "Acurácia"),
+                                           (0, "F1 ocupado validação (dp)", "#8172B3", "F1 da classe ocupada"),
+                                           (largura, "Balanced accuracy validação (dp)", "#937860",
+                                            "Balanced accuracy")]:
+    valores_dp = np.concatenate([resumo_knn[metrica], resumo_arvore[metrica]]) * 100
+    eixo_variabilidade.bar(posicoes_configuracoes + deslocamento, valores_dp, width=largura, color=cor,
+                           edgecolor="black", label=rotulo)
+eixo_variabilidade.axvline(len(valores_k) - 0.5, color="gray", linewidth=1)
+eixo_variabilidade.set_xticks(posicoes_configuracoes, rotulos_configuracoes, rotation=30)
+eixo_variabilidade.set_ylabel("Desvio padrão entre os 5 folds (pontos percentuais)")
+eixo_variabilidade.yaxis.set_major_formatter(plt.FuncFormatter(lambda valor, _: formatar_decimal(valor, 1)))
+eixo_variabilidade.set_title("Variabilidade das métricas de validação entre os folds")
+eixo_variabilidade.legend(loc="upper left", fontsize=9)
+
+plt.suptitle("Fase 6 — Comparação dos hiperparâmetros (validação cruzada estratificada de 5 folds no treino)",
+             fontsize=16)
+plt.tight_layout()
+plt.savefig(caminho_grafico_hiperparametros, dpi=300, bbox_inches="tight")
+print("Figura salva em:", caminho_grafico_hiperparametros)
+plt.show()
+
+# %% [markdown]
+# ### BLOCO 75 — Visualizações complementares: variável derivada e validação temporal
+#
+# A primeira figura compara 5 e 6 atributos: acurácia média de validação de cada configuração e diferenças pareadas por
+# fold (6 − 5) na acurácia, no F1 da classe ocupada e na balanced accuracy. A segunda figura resume a validação
+# temporal: a organização das divisões no tempo real (com a lacuna entre os segmentos e os fins de semana), as métricas
+# por divisão comparadas com a média da validação aleatória, a proximidade temporal entre registros avaliados e de
+# ajuste nos dois protocolos e na Fase 4, e a proporção de ocupados em cada janela.
+
+# %%
+# BLOCO 75 — Visualizações complementares: variável derivada e validação temporal
+
+# Figura 2 — Impacto da CO2_Light_Ratio (5 × 6 atributos)
+metricas_grafico = [("acuracia", "Acurácia"), ("f1_ocupado", "F1 da classe ocupada"),
+                    ("balanced_accuracy", "Balanced accuracy")]
+fig, eixos = plt.subplots(2, 2, figsize=(18, 12))
+eixo_absoluto = eixos[0, 0]
+eixos_diferencas = [eixos[0, 1], eixos[1, 0], eixos[1, 1]]
+
+medias_acuracia = resumo_feature_engineering.xs("acuracia", level="metrica")
+largura = 0.38
+eixo_absoluto.bar(posicoes_configuracoes - largura / 2, medias_acuracia["media_5"] * 100, width=largura,
+                  color="#8DA0CB", edgecolor="black", label="5 atributos (sem CO2_Light_Ratio)")
+eixo_absoluto.bar(posicoes_configuracoes + largura / 2, medias_acuracia["media_6"] * 100, width=largura,
+                  color=cor_validacao, edgecolor="black", label="6 atributos (com CO2_Light_Ratio)")
+limite_absoluto = np.floor(medias_acuracia[["media_5", "media_6"]].min().min() * 100 * 4) / 4 - 0.25
+eixo_absoluto.set_ylim(limite_absoluto, 100)
+eixo_absoluto.axvline(len(valores_k) - 0.5, color="gray", linewidth=1)
+eixo_absoluto.set_xticks(posicoes_configuracoes, rotulos_configuracoes, rotation=30)
+eixo_absoluto.set_ylabel(f"Acurácia média de validação (eixo de {formatar_decimal(limite_absoluto, 2)}% a 100%)")
+formatar_eixo_percentual(eixo_absoluto, 2)
+eixo_absoluto.set_title("Acurácia média na validação cruzada")
+eixo_absoluto.legend(loc="upper right", fontsize=9)
+
+for eixo, (metrica, nome_metrica) in zip(eixos_diferencas, metricas_grafico):
+    diferencas_folds = (
+        pareado.xs(metrica, level="metrica")["Diferença (6 − 5)"].unstack("fold")
+        .loc[[(modelo, valor) for modelo, valor, _ in ordem_configuracoes[::len(metricas_validacao)]]] * 100
+    )
+    for posicao, (_, linha) in enumerate(diferencas_folds.iterrows()):
+        eixo.scatter(np.full(len(linha), posicao) + np.linspace(-0.15, 0.15, len(linha)), linha, s=22,
+                     color="gray", alpha=0.7, zorder=3, label="Cada fold" if posicao == 0 else None)
+    eixo.scatter(posicoes_configuracoes, diferencas_folds.mean(axis=1), marker="D", s=60, color="#C44E52",
+                 zorder=4, label="Média dos 5 folds")
+    eixo.axhline(0, color="black", linewidth=1)
+    eixo.axvline(len(valores_k) - 0.5, color="gray", linewidth=1)
+    amplitude = max(np.abs(diferencas_folds.to_numpy()).max(), 0.05) * 1.3
+    eixo.set_ylim(-amplitude, amplitude)
+    eixo.yaxis.set_major_formatter(plt.FuncFormatter(lambda valor, _: formatar_decimal(valor, 2)))
+    eixo.set_xticks(posicoes_configuracoes, rotulos_configuracoes, rotation=30)
+    eixo.set_ylabel("Diferença (6 − 5 atributos), pontos percentuais")
+    eixo.set_title(f"{nome_metrica}: diferença pareada por fold")
+    eixo.legend(loc="lower left", fontsize=9)
+
+plt.suptitle("Fase 6 — Contribuição da CO2_Light_Ratio na validação cruzada (somente treino, mesmos folds)",
+             fontsize=16)
+plt.tight_layout()
+plt.savefig(caminho_grafico_feature_engineering, dpi=300, bbox_inches="tight")
+print("Figura salva em:", caminho_grafico_feature_engineering)
+plt.show()
+
+# Figura 3 — Validação temporal complementar
+fig, eixos = plt.subplots(2, 2, figsize=(18, 12))
+eixo_linha_tempo, eixo_metricas_temporais, eixo_proximidade, eixo_composicao = eixos.ravel()
+
+# Painel 1 — Organização das divisões cronológicas no tempo real
+inicio_lacuna = rastreio_temporal.loc[rastreio_temporal["segmento"].eq(0), "date"].max()
+fim_lacuna = rastreio_temporal.loc[rastreio_temporal["segmento"].eq(1), "date"].min()
+eixo_linha_tempo.axvspan(inicio_lacuna, fim_lacuna, color="lightgray", alpha=0.6, label="Sem registros na base")
+for dia in pd.date_range("2015-02-07", "2015-02-15"):
+    if dia.dayofweek >= 5:
+        eixo_linha_tempo.axvspan(dia, dia + pd.Timedelta(days=1), color="#C44E52", alpha=0.08,
+                                 label="Fim de semana" if dia.dayofweek == 5 and dia.day == 7 else None)
+for numero_fold, (posicoes_treino, posicoes_validacao) in enumerate(folds_temporais, start=1):
+    inicio_t = datas_treino_cronologico.iloc[posicoes_treino[0]]
+    fim_t = datas_treino_cronologico.iloc[posicoes_treino[-1]]
+    inicio_v = datas_treino_cronologico.iloc[posicoes_validacao[0]]
+    fim_v = datas_treino_cronologico.iloc[posicoes_validacao[-1]]
+    eixo_linha_tempo.barh(numero_fold, fim_t - inicio_t, left=inicio_t, height=0.5, color=cor_treino,
+                          label="Treino do fold" if numero_fold == 1 else None)
+    eixo_linha_tempo.barh(numero_fold, inicio_v - fim_t, left=fim_t, height=0.5, color="black",
+                          label="Intervalo de 60 registros" if numero_fold == 1 else None)
+    eixo_linha_tempo.barh(numero_fold, fim_v - inicio_v, left=inicio_v, height=0.5, color=cor_validacao,
+                          label="Validação do fold" if numero_fold == 1 else None)
+eixo_linha_tempo.set_yticks(range(1, quantidade_divisoes_temporais + 1),
+                            [f"Fold {numero}" for numero in range(1, quantidade_divisoes_temporais + 1)])
+eixo_linha_tempo.invert_yaxis()
+eixo_linha_tempo.xaxis.set_major_formatter(mdates.DateFormatter("%d/%m"))
+eixo_linha_tempo.set_xlabel("Data (fevereiro de 2015)")
+eixo_linha_tempo.set_title("Divisões cronológicas expansivas no treino oficial")
+eixo_linha_tempo.legend(loc="upper center", bbox_to_anchor=(0.5, -0.1), ncol=3, fontsize=9, frameon=False)
+
+# Painel 2 — Métricas por fold temporal × média da validação aleatória
+posicoes_temporais = np.arange(1, quantidade_divisoes_temporais + 1)
+for modelo, cor, deslocamento, rotulo, resumo in [("KNN", cor_treino, -0.1, k_selecionado_rotulo, resumo_knn),
+                                                  ("Árvore de Decisão", "#55A868", 0.1, profundidade_selecionada_rotulo,
+                                                   resumo_arvore)]:
+    nome_curto = f"KNN (K={rotulo})" if modelo == "KNN" else f"Árvore (max_depth={rotulo})"
+    acuracia_temporal = resultados_temporais[(modelo, "acuracia")] * 100
+    balanceada_temporal = resultados_temporais[(modelo, "balanced_accuracy")] * 100
+    eixo_metricas_temporais.plot(posicoes_temporais + deslocamento, acuracia_temporal, marker="o", color=cor,
+                                 linewidth=2, label=f"{nome_curto}: acurácia temporal")
+    eixo_metricas_temporais.scatter(posicoes_temporais + deslocamento, balanceada_temporal, marker="^", s=60,
+                                    facecolor="white", edgecolor=cor, linewidth=2, zorder=3,
+                                    label=f"{nome_curto}: balanced accuracy temporal")
+    eixo_metricas_temporais.axhline(resumo.loc[rotulo, "Acurácia validação (média)"] * 100, color=cor,
+                                    linestyle="--", linewidth=1.2,
+                                    label=f"{nome_curto}: acurácia média na validação aleatória")
+    # Rótulo apenas nos pontos com queda acentuada (os demais valores estão nas tabelas do BLOCO 71)
+    for posicao, valor in zip(posicoes_temporais + deslocamento, acuracia_temporal):
+        if valor < 90:
+            eixo_metricas_temporais.annotate(f"{formatar_decimal(valor, 1)}%", (posicao, valor), xytext=(0, -16),
+                                             textcoords="offset points", ha="center", fontsize=9, color=cor)
+fold_sem_classe = [numero for numero, linha in tabela_folds_temporais.iterrows() if linha["Validação classe 1"] == 0]
+for numero in fold_sem_classe:
+    eixo_metricas_temporais.annotate("sem registros ocupados:\nF1 e balanced accuracy\nnão calculáveis",
+                                     (numero, 60), ha="center", fontsize=9,
+                                     bbox={"boxstyle": "round", "facecolor": "white", "edgecolor": "gray"})
+eixo_metricas_temporais.set_ylim(40, 102)
+eixo_metricas_temporais.set_xticks(posicoes_temporais, [f"Fold {numero}" for numero in posicoes_temporais])
+eixo_metricas_temporais.set_ylabel("Métrica na validação (eixo de 40% a 102%)")
+formatar_eixo_percentual(eixo_metricas_temporais, 0)
+eixo_metricas_temporais.set_title("Validação temporal × validação aleatória (configurações selecionadas)")
+eixo_metricas_temporais.legend(loc="upper center", bbox_to_anchor=(0.5, -0.08), ncol=2, fontsize=8.5,
+                               frameon=False)
+
+# Painel 3 — Proximidade temporal entre avaliação e ajuste
+rotulos_proximidade = ([f"Aleatória\nfold {numero}" for numero in range(1, quantidade_folds + 1)]
+                       + ["Fase 4\nteste"] + [f"Temporal\nfold {numero}" for numero in posicoes_temporais])
+valores_61 = (list(tabela_proximidade_folds["Até 61 s (%)"].iloc[:quantidade_folds])
+              + [tabela_proximidade_folds.loc["Fase 4: teste oficial × treino oficial", "Até 61 s (%)"]]
+              + list(tabela_folds_temporais["Validação até 61 s do treino (%)"]))
+cores_proximidade = [cor_validacao] * quantidade_folds + [cor_teste] + [cor_treino] * quantidade_divisoes_temporais
+barras = eixo_proximidade.bar(np.arange(len(rotulos_proximidade)), valores_61, color=cores_proximidade,
+                              edgecolor="black")
+for barra, valor in zip(barras, valores_61):
+    eixo_proximidade.text(barra.get_x() + barra.get_width() / 2, valor + 1, formatar_percentual(valor),
+                          ha="center", fontsize=9)
+eixo_proximidade.set_xticks(np.arange(len(rotulos_proximidade)), rotulos_proximidade, fontsize=9)
+eixo_proximidade.set_ylim(0, 110)
+eixo_proximidade.set_ylabel("Registros avaliados com vizinho de ajuste a até 61 s (%)")
+formatar_eixo_percentual(eixo_proximidade, 0)
+eixo_proximidade.set_title("Proximidade temporal entre os registros avaliados e os de ajuste")
+
+# Painel 4 — Composição das janelas temporais
+eixo_composicao.bar(posicoes_temporais - 0.2, tabela_folds_temporais["Treino % classe 1"], width=0.4,
+                    color=cor_treino, edgecolor="black", label="Treino do fold")
+eixo_composicao.bar(posicoes_temporais + 0.2, tabela_folds_temporais["Validação % classe 1"], width=0.4,
+                    color=cor_validacao, edgecolor="black", label="Validação do fold")
+for posicao, (_, linha) in zip(posicoes_temporais, tabela_folds_temporais.iterrows()):
+    eixo_composicao.text(posicao - 0.2, linha["Treino % classe 1"] - 1.5,
+                         formatar_inteiro(linha["Treino (registros)"]), ha="center", va="top", fontsize=8.5,
+                         color="white", rotation=90)
+    eixo_composicao.text(posicao + 0.2, linha["Validação % classe 1"] + 0.8, linha["Dias na validação"],
+                         ha="center", va="bottom", fontsize=8.5, rotation=90)
+eixo_composicao.axhline(y_train.mean() * 100, color="gray", linestyle=":", linewidth=1.5,
+                        label="Treino oficial completo")
+eixo_composicao.set_xticks(posicoes_temporais, [f"Fold {numero}" for numero in posicoes_temporais])
+eixo_composicao.set_ylim(0, 50)
+eixo_composicao.set_ylabel("Registros ocupados (%)")
+formatar_eixo_percentual(eixo_composicao, 0)
+eixo_composicao.set_title("Ocupação por janela (rótulos: registros de treino e dias da validação)")
+eixo_composicao.legend(loc="upper right", fontsize=9)
+
+fig.text(0.5, -0.045,
+         "Limitação: os protocolos usam treinos de tamanhos diferentes (7.946–7.947 registros na validação aleatória; "
+         "1.598 a 8.218 na temporal) e janelas com composições distintas;\nas diferenças não podem ser atribuídas "
+         "exclusivamente à ordem temporal.", ha="center", fontsize=11)
+plt.suptitle("Fase 6 — Validação temporal complementar no treino oficial (TimeSeriesSplit, 5 divisões, "
+             "intervalo de 60 registros)", fontsize=16)
+plt.tight_layout()
+plt.savefig(caminho_grafico_validacao_temporal, dpi=300, bbox_inches="tight")
+print("Figura salva em:", caminho_grafico_validacao_temporal)
+plt.show()
+
+# %% [markdown]
+# ### BLOCO 76 — Exportação dos resultados tabulares
+#
+# Os resultados por fold são exportados em formato longo (uma linha por modelo, valor do hiperparâmetro, configuração de
+# atributos, fold, conjunto e métrica), sem arredondamento e sem tempos de execução, para que os arquivos sejam
+# reproduzíveis byte a byte:
+#
+# | Arquivo | Conteúdo |
+# |---|---|
+# | `resultados/modelagem/cv_hiperparametros.csv` | Validação cruzada dos 5 valores de K e dos 4 de `max_depth` (6 atributos) |
+# | `resultados/modelagem/cv_feature_engineering.csv` | Mesmas avaliações com 5 e com 6 atributos; as linhas de 6 atributos repetem, de forma intencional, as do arquivo anterior, para que a comparação fique completa em um único arquivo |
+# | `resultados/modelagem/cv_temporal.csv` | Validação temporal das configurações selecionadas, com datas das janelas e duração real do intervalo; métricas não calculáveis ficam vazias e são identificadas na coluna `observacao` |
+#
+# A recarga usa `float_precision="round_trip"` e é comparada com os resultados em memória (`check_exact=True`).
+
+# %%
+# BLOCO 76 — Exportação dos resultados tabulares
+
+colunas_registro = ["protocolo", "modelo", "hiperparametro", "valor_hiperparametro", "configuracao_atributos",
+                    "quantidade_atributos", "fold", "conjunto", "metrica", "resultado", "observacoes_avaliadas",
+                    "observacoes_ajuste"]
+cv_hiperparametros = pd.concat([registros_knn, registros_arvore], ignore_index=True)[
+    colunas_registro + ["semente_folds"]]
+cv_feature_engineering = registros_feature_engineering[colunas_registro + ["semente_folds"]].reset_index(drop=True)
+cv_temporal = registros_temporais.copy()
+for coluna in ["inicio_validacao", "fim_validacao"]:
+    cv_temporal[coluna] = cv_temporal[coluna].dt.strftime("%Y-%m-%d %H:%M:%S")
+
+exportacoes = {
+    caminho_cv_hiperparametros: cv_hiperparametros,
+    caminho_cv_feature_engineering: cv_feature_engineering,
+    caminho_cv_temporal: cv_temporal,
+}
+chaves_unicas = ["protocolo", "modelo", "valor_hiperparametro", "quantidade_atributos", "fold", "conjunto", "metrica"]
+linhas_exportacao = []
+for caminho, tabela in exportacoes.items():
+    assert not tabela.duplicated(subset=chaves_unicas).any(), f"Linhas duplicadas em {caminho}."
+    tabela.to_csv(caminho, index=False)
+    recarregada = pd.read_csv(caminho, float_precision="round_trip", dtype={"valor_hiperparametro": str},
+                              keep_default_na=False, na_values=[""])
+    pd.testing.assert_frame_equal(recarregada, tabela, check_exact=True, check_dtype=False)
+    with open(caminho, "rb") as arquivo:
+        linhas_exportacao.append({
+            "Arquivo": caminho, "Linhas": len(tabela), "Colunas": tabela.shape[1],
+            "SHA-256": hashlib.sha256(arquivo.read()).hexdigest(),
+        })
+
+# O bloco de 6 atributos da comparação de atributos é idêntico aos resultados do BLOCO 66/67
+pd.testing.assert_frame_equal(
+    cv_feature_engineering.query("quantidade_atributos == 6").sort_values(chaves_unicas).reset_index(drop=True),
+    cv_hiperparametros.sort_values(chaves_unicas).reset_index(drop=True), check_exact=True,
+)
+tabela_exportacao = pd.DataFrame(linhas_exportacao).set_index("Arquivo")
+print(tabela_exportacao.to_string())
+print("\nRecarga com float_precision='round_trip' idêntica aos resultados em memória: True")
+
+# %% [markdown]
+# ### BLOCO 77 — Auditoria contra Data Leakage
+#
+# A auditoria reúne evidências verificáveis no código e nos objetos ajustados: assinaturas dos conjuntos, composição dos
+# folds, parâmetros de todos os scalers internos, escala dos limiares da árvore, atributos dos modelos, quantidade e
+# composição dos dados de ajuste dos modelos finais e o momento da consulta ao teste. Essas verificações reduzem, mas
+# não eliminam, os riscos metodológicos registrados no BLOCO 79.9.
+
+# %%
+# BLOCO 77 — Auditoria contra Data Leakage
+
+# 1. Conjuntos oficiais inalterados desde o BLOCO 62
+for nome, estrutura in estruturas_fase6.items():
+    assert assinatura_integridade(estrutura) == assinaturas_fase6[nome], f"{nome} alterado durante a Fase 6."
+
+# 2. Scaler interno de cada Pipeline ajustado somente no treino do respectivo fold (5 valores de K × 5 folds)
+pipelines_conferidos = 0
+for pipelines_fold in estimadores_knn.values():
+    for pipeline_fold, (posicoes_treino, _) in zip(pipelines_fold, folds_cv):
+        scaler_fold = pipeline_fold.named_steps["scaler"]
+        assert int(scaler_fold.n_samples_seen_) == len(posicoes_treino)
+        assert np.allclose(scaler_fold.mean_, X_train.iloc[posicoes_treino].mean(), rtol=tolerancia_parametros, atol=0)
+        assert scaler_fold is not scaler
+        pipelines_conferidos += 1
+
+# 3. Sem escalonamento duplicado: o Pipeline recebeu dados na escala original (médias em unidades físicas)
+assert (np.abs(estimadores_knn[k_selecionado_rotulo][0].named_steps["scaler"].mean_) > 1e-3).all()
+
+# 4. Scaler oficial da Fase 5 inalterado
+for nome_parametro in ["mean_", "var_", "scale_"]:
+    assert np.array_equal(getattr(scaler, nome_parametro), parametros_apos_ajuste[nome_parametro])
+
+# 5. Árvore treinada com atributos originais: limiares dentro da faixa original de cada atributo no treino
+arvore_tree = modelo_arvore_final.tree_
+for posicao_no, indice_atributo in enumerate(arvore_tree.feature):
+    if indice_atributo >= 0:
+        atributo = atributos_preditores[indice_atributo]
+        assert X_train[atributo].min() <= arvore_tree.threshold[posicao_no] <= X_train[atributo].max(), \
+            f"Limiar fora da escala original em {atributo}."
+
+# 6. Atributos dos modelos: sem a variável alvo e sem a data
+for modelo_final in [modelo_knn_final, modelo_arvore_final]:
+    assert list(modelo_final.feature_names_in_) == atributos_preditores
+    assert variavel_alvo not in modelo_final.feature_names_in_ and "date" not in modelo_final.feature_names_in_
+
+# 7. Modelos finais ajustados somente no treino oficial (quantidade e composição das classes)
+contagem_raiz = arvore_tree.value[0, 0] * arvore_tree.weighted_n_node_samples[0]
+assert np.allclose(contagem_raiz, y_train.value_counts().sort_index().to_numpy()), "Árvore ajustada em outros dados."
+assert modelo_knn_final.named_steps["knn"].n_samples_fit_ == len(X_train)
+assert np.array_equal(modelo_knn_final.named_steps["knn"].classes_, np.array([0, 1]))
+
+# 8. Seleção registrada antes da consulta ao teste e inalterada depois dela
+assert teste_consultado_fase6 and repr(selecao_hiperparametros) == registro_selecao
+
+# 9. Variáveis originais preservadas
+pd.testing.assert_series_equal(df_features["CO2_Light_Ratio"], df_features_referencia["CO2_Light_Ratio"],
+                               check_exact=True)
+pd.testing.assert_series_equal(y, y_referencia, check_exact=True)
+
+tabela_auditoria_fase6 = pd.Series({
+    "Split oficial e conjuntos escalonados inalterados (assinaturas do BLOCO 62)": True,
+    "Folds formados somente por registros do treino oficial": True,
+    f"Scalers internos conferidos (K × fold): treino do próprio fold": pipelines_conferidos,
+    "Pipeline alimentado com dados não escalonados (sem escala duplicada)": True,
+    "Scaler da Fase 5 inalterado e não reutilizado": True,
+    "Limiares da árvore na escala original dos atributos": True,
+    "Sem Occupancy e sem date entre os atributos": True,
+    "Modelos finais ajustados somente com X_train e y_train": True,
+    "Hiperparâmetros e atributos escolhidos antes da consulta ao teste": True,
+    "Teste consultado apenas no BLOCO 73 (exigência do enunciado)": True,
+    "CO2_Light_Ratio, Occupancy e df_features preservados": True,
+})
+print(tabela_auditoria_fase6.to_string())
+
+# %% [markdown]
+# ### BLOCO 78 — Resumo consolidado da Fase 6
+#
+# Os resultados de validação (cruzada e temporal), obtidos somente no treino, ficam separados dos resultados descritivos
+# no teste do BLOCO 73. Nenhum modelo é declarado vencedor definitivo nesta fase: a comparação final, com as métricas
+# complementares, é atribuição da Fase 7.
+
+# %%
+# BLOCO 78 — Resumo consolidado da Fase 6
+
+linhas_resumo_fase6 = []
+for modelo, rotulo, resumo, hiperparametro in [("KNN (Pipeline)", k_selecionado_rotulo, resumo_knn, "n_neighbors"),
+                                                ("Árvore de Decisão", profundidade_selecionada_rotulo, resumo_arvore,
+                                                 "max_depth")]:
+    chave_modelo = "KNN" if modelo.startswith("KNN") else modelo
+    temporal = registros_temporais.query("modelo == @chave_modelo and conjunto == 'validacao'")
+    linhas_resumo_fase6.append({
+        "Modelo": modelo,
+        "Hiperparâmetro": f"{hiperparametro}={rotulo}",
+        "Atributos": len(atributos_preditores),
+        "CV: acurácia treino": resumo.loc[rotulo, "Acurácia treino (média)"],
+        "CV: acurácia validação": resumo.loc[rotulo, "Acurácia validação (média)"],
+        "CV: dp validação": resumo.loc[rotulo, "Acurácia validação (dp)"],
+        "CV: F1 ocupado": resumo.loc[rotulo, "F1 ocupado validação (média)"],
+        "CV: balanced accuracy": resumo.loc[rotulo, "Balanced accuracy validação (média)"],
+        "CV: treino − validação (p.p.)": resumo.loc[rotulo, "Diferença treino − validação (p.p.)"],
+        "Temporal: acurácia média (5 folds)": temporal.query("metrica == 'acuracia'")["resultado"].mean(),
+        "Temporal: acurácia mínima": temporal.query("metrica == 'acuracia'")["resultado"].min(),
+        "Temporal: balanced accuracy (4 folds)": temporal.query("metrica == 'balanced_accuracy'")["resultado"].mean(),
+    })
+tabela_resumo_fase6 = pd.DataFrame(linhas_resumo_fase6).set_index("Modelo")
+print("Resultados no treino (validação cruzada e validação temporal):")
+print(tabela_resumo_fase6.T.to_string(float_format=lambda valor: f"{valor:.6f}"))
+
+print("\nResultados descritivos no teste (BLOCO 73, calculados após a seleção):")
+print(tabela_treino_teste.loc[[("KNN", f"n_neighbors={k_selecionado_rotulo}"),
+                               ("Árvore de Decisão", f"max_depth={profundidade_selecionada_rotulo}")],
+                              ["Acurácia treino", "Acurácia teste", "Diferença treino − teste (p.p.)"]]
+      .to_string(float_format=lambda valor: f"{valor:.6f}"))
+print("\nModelos em memória para a Fase 7: modelo_knn_final e modelo_arvore_final")
+
+# %% [markdown]
+# ## BLOCO 79 — Interpretação e conclusão do ajuste de hiperparâmetros
+#
+# ### 79.1 — Funcionamento do KNN
+#
+# Todas as configurações ficaram entre 99,10% e 99,16% de acurácia média de validação, isto é, entre 16,6 e 17,8 erros
+# por fold de cerca de 1.987 registros. As diferenças entre os valores de K (no máximo 0,06 p.p., cerca de 1 registro
+# por fold) são menores que o desvio padrão entre folds (0,16 a 0,24 p.p.) e não demonstram superioridade de nenhum K.
+# O padrão esperado aparece na acurácia de treino: ela cai de 99,57% (K = 3) para 99,16% (K = 11), porque com poucos
+# vizinhos o próprio registro e seus vizinhos imediatos pesam mais na votação. Com K maior, a diferença entre treino e
+# validação diminui (0,42 p.p. com K = 3; 0,06 p.p. com K = 11), mas a validação não melhora e a variabilidade entre
+# folds cresce (0,24 p.p. com K = 9 e 11). Não houve sinal de underfitting: mesmo K = 11 mantém 99,10% na validação.
+#
+# ### 79.2 — Funcionamento da Árvore de Decisão
+#
+# A profundidade controla a complexidade de forma visível. Com `max_depth` = 3 e 5, as árvores atingem exatamente o
+# limite (7,8 e 19,2 folhas em média) e ficam entre 99,05% e 99,09% de validação. Com 10 e None, a acurácia de treino
+# sobe para 99,74% e 100%, enquanto a validação cai para 98,87% e 98,85% (cerca de 22 erros por fold, contra 18 com
+# profundidade 5). Sem limite, as árvores alcançaram profundidade efetiva de 15 a 17 nos folds (92 folhas em média): o
+# limite `None` não significa profundidade infinita, mas crescimento até separar completamente os registros de treino.
+# Na árvore final de profundidade 5, a importância de `Light` por redução de impureza (`feature_importances_`, que soma
+# 100% entre os seis atributos) é de 98,87%: quase toda a redução da impureza de Gini nas divisões desta árvore ocorre
+# em divisões por luminosidade. Essa medida descreve a estrutura da árvore ajustada neste treino; não é uma
+# probabilidade de ocupação, não é o percentual de acertos devido ao atributo, não indica relação causal e não vale
+# automaticamente para outros ambientes. Ela é coerente com a forte associação entre `Light` e ocupação (BLOCO 17).
+#
+# ### 79.3 — Pipeline e prevenção de Data Leakage
+#
+# No fold 1, o scaler interno aprendeu exatamente a média dos 7.946 registros de ajuste do fold (por exemplo,
+# `CO2_Light_Ratio` = 424,43), diferente da média da validação do fold (436,15) e da média do treino oficial usada na
+# Fase 5 (426,77). O BLOCO 77 repetiu a verificação para os 25 Pipelines da validação cruzada (5 valores de K × 5 folds):
+# cada scaler viu apenas a parte de ajuste do seu fold. O Pipeline sempre recebeu dados na escala original, sem
+# escalonamento duplicado, e o scaler da Fase 5 não foi reutilizado nem alterado.
+#
+# ### 79.4 — Seleção dos hiperparâmetros
+#
+# Pelo critério definido no BLOCO 68, foram selecionados **K = 5** (99,16% de acurácia média de validação, F1 da classe
+# ocupada de 98,30% e balanced accuracy de 99,10%) e **`max_depth` = 5** (99,09%, 98,15% e 99,01%). Não houve empate
+# numérico. As margens são muito pequenas: K = 5 supera K = 3 e K = 7 em 0,02 p.p. (cerca de 0,4 registro por fold), e
+# `max_depth` = 5 supera `max_depth` = 3 em 0,04 p.p. (cerca de 0,8 registro por fold). As métricas complementares não
+# apontam na mesma direção em todos os casos: a maior balanced accuracy do KNN foi a de K = 7 (99,20%), e a da árvore foi
+# a de `max_depth` = 3 (99,11%). As configurações selecionadas são, portanto, escolhas válidas pelo critério
+# pré-definido, mas não configurações comprovadamente superiores às vizinhas.
+#
+# ### 79.5 — Overfitting, underfitting e estabilidade
+#
+# **Overfitting** (alta acurácia no treino acompanhada de queda na avaliação), considerando a validação cruzada e a
+# tabela de treino e teste exigida pelo enunciado (BLOCO 73):
+#
+# - **Árvore com `max_depth=None`:** 100% no treino, com queda para 98,85% na validação cruzada (1,15 p.p.) e para
+#   99,36% no teste (0,64 p.p.). É o caso mais claro de memorização: a árvore separa todos os registros de treino.
+# - **Árvore com `max_depth=10`:** 99,70% no treino oficial, 98,87% na validação (0,87 p.p.) e 99,07% no teste
+#   (0,62 p.p.); mesmo padrão, um pouco menos intenso.
+# - **KNN com K = 3:** sinal leve, com 0,42 p.p. de diferença na validação cruzada e 0,22 p.p. no teste.
+#
+# As quedas são pequenas em valor absoluto porque a tarefa é quase separável pela luminosidade, mas são consistentes nos
+# dois protocolos. No teste, a árvore sem limite obteve acurácia maior que a de profundidade 5 (99,36% contra 99,03%,
+# uma diferença de 8 registros), o oposto da validação cruzada. Esse resultado não muda a seleção e é compatível com a
+# proximidade temporal: 96,10% dos registros de teste têm um registro quase idêntico no treino, o que favorece modelos
+# que memorizam. A árvore com `max_depth=3` teve a menor acurácia de teste (98,63%) e a menor acurácia de treino entre as
+# árvores, mas a diferença entre treino e validação foi de apenas 0,13 p.p.: é o indício mais próximo de underfitting,
+# ainda que muito discreto. Nenhuma configuração apresentou underfitting acentuado.
+#
+# **Estabilidade:** entre as configurações selecionadas, o **KNN com K = 5** foi o mais estável entre treino e teste
+# (99,44% e 99,40%, diferença de 0,04 p.p.) e também na validação temporal (BLOCO 79.8). Na validação cruzada, as menores
+# diferenças entre treino e validação foram as do KNN com K = 9 e 11 (0,07 e 0,06 p.p.) e da árvore com profundidade 3
+# (0,13 p.p.); os menores desvios padrão de acurácia entre folds foram os da árvore sem limite e do KNN com K = 3
+# (0,16 p.p.), que, no entanto, apresentam as maiores diferenças entre treino e validação dentro de cada modelo.
+#
+# ### 79.6 — Avaliação da CO2_Light_Ratio
+#
+# No KNN, as métricas com 5 e com 6 atributos foram **idênticas em todos os folds e em todos os valores de K**. A nova
+# coluna altera o conjunto de vizinhos de parte dos registros, mas, no recorte verificado (somente o fold 1, com K = 5),
+# isso ocorreu em 16,36% das validações sem mudar nenhum voto majoritário (0 previsões diferentes em 1.987); nos demais
+# folds e valores de K, a igualdade das métricas foi verificada, mas não a dos vizinhos. Na árvore, a configuração com
+# 6 atributos foi igual ou ligeiramente pior: −0,01 p.p. de acurácia com profundidade 3 e 5 (1 registro em um único
+# fold), −0,08 p.p. com 10 e −0,03 p.p. com None; em nenhuma profundidade a média melhorou. A importância da variável
+# por redução de impureza na árvore final é de 0,11%.
+#
+# **A inclusão da variável derivada não demonstrou ganho preditivo nas configurações e nos protocolos avaliados.** Uma
+# explicação compatível com os resultados é a redundância com `Light` e `CO2` (com `Light = 0`, o índice é igual a
+# `CO2`; BLOCO 36), mas isso não foi testado isoladamente, e o resultado não se generaliza para outros modelos,
+# ambientes ou conjuntos de dados. A variável permanece nos modelos principais por exigência do fluxo do projeto, não
+# por desempenho comprovado.
+#
+# ### 79.7 — Dependência temporal na validação cruzada
+#
+# Em média, 87,18% dos registros de validação dos folds (86,11% a 87,81% por fold) têm um registro da parte de ajuste a
+# até 61 segundos, e 96,74% a até 120 segundos (mediana de 60 segundos). A proximidade é um pouco menor que a do teste
+# oficial (96,10% a até 61 segundos), porque a parte de ajuste de cada fold contém menos registros, mas continua muito
+# alta. A validação cruzada aleatória, portanto, mede principalmente a capacidade de reconhecer condições quase
+# idênticas às já vistas cerca de um minuto antes ou depois, e não a capacidade de generalizar para outros períodos.
+#
+# ### 79.8 — Validação temporal complementar
+#
+# Com janelas cronológicas e um intervalo de 60 registros (72 a 82 minutos reais), nenhum registro de validação teve
+# registro de ajuste a até 61 segundos. Os resultados das configurações selecionadas foram:
+#
+# | Fold | Validação | KNN (K = 5): acurácia | Árvore (profundidade 5): acurácia |
+# |---|---|---:|---:|
+# | 1 | 04/02 a 12/02 (atravessa a lacuna) | 98,13% | 95,53% |
+# | 2 | 12/02 a 14/02 | 98,37% | 99,15% |
+# | 3 | 14/02 a 15/02 (sábado e domingo, sem ocupação) | 80,24% | 45,86% |
+# | 4 | 15/02 a 16/02 | 99,46% | 98,43% |
+# | 5 | 16/02 a 18/02 | 98,31% | 99,58% |
+#
+# Nas quatro janelas com as duas classes, a balanced accuracy média foi de 98,74% (KNN) e 97,22% (árvore), próxima da
+# validação aleatória (99,10% e 99,01%). A diferença decisiva está no fold 3: a janela de validação cobre o fim de
+# semana, quando ninguém ocupou a sala, e o treino daquela divisão tinha apenas 55 registros de fim de semana (madrugada
+# de sábado). Dos 1.655 registros da janela, 982 têm `Light = 0` e 673 (40,66%) têm luminosidade positiva sem
+# ocupação — possivelmente luz natural, hipótese não verificável com os dados. Como a janela não tem registros
+# ocupados, todos os erros são previsões incorretas de ocupação:
+#
+# | Modelo | Erros | Com `Light = 0` | Com `Light > 0` | Acurácia na janela |
+# |---|---:|---:|---:|---:|
+# | KNN (K = 5) | 327 | 0 | 327 (48,59% dos 673) | 80,24% |
+# | Árvore (profundidade 5) | 896 | 405 | 491 (72,96% dos 673) | 45,86% |
+#
+# Os erros do KNN concentram-se nos registros iluminados (mediana de 163 lux). Os da árvore ocorrem nos dois grupos:
+# 405 registros escuros também foram classificados como ocupados, por divisões que, abaixo do limiar de `Light`, usam
+# outros atributos (a mediana de 7 lux refere-se ao conjunto dos 896 erros). Prever sempre "desocupado" teria acertado
+# 100% da janela. Quando o treino passa a incluir o fim de semana (folds 4 e 5), as duas acurácias voltam a ficar
+# acima de 98%.
+#
+# A comparação é descritiva: os protocolos usam treinos de tamanhos diferentes (1.598 a 8.218 registros na temporal,
+# contra 7.946 na aleatória), janelas com composições distintas e uma única sequência temporal; a diferença não pode ser
+# atribuída exclusivamente à ordem do tempo. Ainda assim, ela indica que o desempenho de 99% depende de o treino conter
+# condições semelhantes às avaliadas, e que o KNN selecionado degradou menos que a árvore selecionada na condição
+# inédita. As configurações principais não foram alteradas por esses resultados.
+#
+# ### 79.9 — Limitações metodológicas
+#
+# - **Dependência temporal:** a validação cruzada e o teste oficial têm registros quase idênticos na parte de ajuste;
+#   as acurácias próximas de 99% são otimistas como estimativa para outros períodos (BLOCOS 44, 70 e 71).
+# - **Seleção pela validação cruzada:** as mesmas validações escolheram os hiperparâmetros e compararam os atributos;
+#   o valor da configuração escolhida tende a ser ligeiramente otimista, e as diferenças entre configurações são da
+#   ordem de um registro por fold.
+# - **Consulta ao teste:** exigida pelo enunciado na Fase 6; a seleção foi congelada antes, mas o teste deixa de ser
+#   inédito para a Fase 7.
+# - **Desequilíbrio:** 24,33% de ocupados; a acurácia sozinha pode esconder erros na classe minoritária, por isso F1 e
+#   balanced accuracy foram acompanhados.
+# - **Redundância e dependência de `Light`:** a árvore concentra em `Light` quase toda a redução de impureza (98,87%),
+#   e a variável derivada não demonstrou ganho preditivo nas configurações e nos protocolos avaliados. Em automação
+#   predial, a luz natural e o próprio acionamento da iluminação afetam o sensor, com risco de realimentação (BLOCO 17).
+# - **Composição da base:** a EDA e a escolha da variável derivada usaram a base completa; a base tem dois segmentos,
+#   um único fim de semana (14 e 15/02) e não inclui o período de `datatraining.txt`, que contém outro fim de semana.
+#
+# ### 79.10 — Preparação para a Fase 7
+#
+# Ficam em memória `modelo_knn_final` (Pipeline com `StandardScaler` e KNN com K = 5, ajustado nos 9.933 registros do
+# treino) e `modelo_arvore_final` (Árvore de Decisão com `max_depth=5`, profundidade efetiva 5, 37 nós e 19 folhas). A
+# Fase 7 deverá apresentar a acurácia final dos dois modelos no teste, compará-los e justificar a escolha, complementando
+# a análise com o baseline da classe majoritária (`DummyClassifier`), a matriz de confusão, a precision, o recall, o
+# F1-score e a balanced accuracy, sem alterar os hiperparâmetros selecionados.
