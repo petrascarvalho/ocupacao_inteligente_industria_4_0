@@ -1,0 +1,49 @@
+conjunto,modelo,metrica,valor,observacoes_avaliadas,observacao
+teste_oficial,DummyClassifier,accuracy,0.7568438003220612,2484,medida
+teste_oficial,DummyClassifier,balanced_accuracy,0.5,2484,medida
+teste_oficial,DummyClassifier,precision_ocupado,,2484,"indefinida: denominador zero (TP + FP = 0, nenhuma previsão positiva)"
+teste_oficial,DummyClassifier,recall_ocupado,0.0,2484,medida
+teste_oficial,DummyClassifier,f1_ocupado,0.0,2484,medida
+teste_oficial,DummyClassifier,especificidade,1.0,2484,medida
+teste_oficial,DummyClassifier,taxa_falsos_positivos,0.0,2484,medida
+teste_oficial,DummyClassifier,taxa_falsos_negativos,1.0,2484,medida
+teste_oficial,DummyClassifier,precision_macro,0.7568438003220612,2484,média apenas da classe com precision definida (classe 1 indefinida)
+teste_oficial,DummyClassifier,recall_macro,0.5,2484,medida
+teste_oficial,DummyClassifier,f1_macro,0.4307974335472044,2484,medida
+teste_oficial,DummyClassifier,f1_ponderado,0.6520927335497136,2484,medida
+teste_oficial,DummyClassifier,TN,1880.0,2484,medida
+teste_oficial,DummyClassifier,FP,0.0,2484,medida
+teste_oficial,DummyClassifier,FN,604.0,2484,medida
+teste_oficial,DummyClassifier,TP,0.0,2484,medida
+teste_oficial,KNN,accuracy,0.9939613526570048,2484,medida
+teste_oficial,KNN,balanced_accuracy,0.9932013526842327,2484,medida
+teste_oficial,KNN,precision_ocupado,0.9835796387520526,2484,medida
+teste_oficial,KNN,recall_ocupado,0.9917218543046358,2484,medida
+teste_oficial,KNN,f1_ocupado,0.9876339653751031,2484,medida
+teste_oficial,KNN,especificidade,0.9946808510638298,2484,medida
+teste_oficial,KNN,taxa_falsos_positivos,0.005319148936170213,2484,medida
+teste_oficial,KNN,taxa_falsos_negativos,0.008278145695364239,2484,medida
+teste_oficial,KNN,precision_macro,0.990456486042693,2484,medida
+teste_oficial,KNN,recall_macro,0.9932013526842327,2484,medida
+teste_oficial,KNN,f1_macro,0.991819645803397,2484,medida
+teste_oficial,KNN,f1_ponderado,0.9939697779396703,2484,medida
+teste_oficial,KNN,TN,1870.0,2484,medida
+teste_oficial,KNN,FP,10.0,2484,medida
+teste_oficial,KNN,FN,5.0,2484,medida
+teste_oficial,KNN,TP,599.0,2484,medida
+teste_oficial,Árvore de Decisão,accuracy,0.9903381642512077,2484,medida
+teste_oficial,Árvore de Decisão,balanced_accuracy,0.991369592785684,2484,medida
+teste_oficial,Árvore de Decisão,precision_ocupado,0.967741935483871,2484,medida
+teste_oficial,Árvore de Decisão,recall_ocupado,0.9933774834437086,2484,medida
+teste_oficial,Árvore de Decisão,f1_ocupado,0.9803921568627451,2484,medida
+teste_oficial,Árvore de Decisão,especificidade,0.9893617021276596,2484,medida
+teste_oficial,Árvore de Decisão,taxa_falsos_positivos,0.010638297872340425,2484,medida
+teste_oficial,Árvore de Decisão,taxa_falsos_negativos,0.006622516556291391,2484,medida
+teste_oficial,Árvore de Decisão,precision_macro,0.9827980063685449,2484,medida
+teste_oficial,Árvore de Decisão,recall_macro,0.991369592785684,2484,medida
+teste_oficial,Árvore de Decisão,f1_macro,0.9869909502262444,2484,medida
+teste_oficial,Árvore de Decisão,f1_ponderado,0.9903806685562867,2484,medida
+teste_oficial,Árvore de Decisão,TN,1860.0,2484,medida
+teste_oficial,Árvore de Decisão,FP,20.0,2484,medida
+teste_oficial,Árvore de Decisão,FN,4.0,2484,medida
+teste_oficial,Árvore de Decisão,TP,600.0,2484,medida

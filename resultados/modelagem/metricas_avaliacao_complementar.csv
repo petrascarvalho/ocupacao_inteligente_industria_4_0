@@ -1,0 +1,49 @@
+conjunto,modelo,metrica,valor,observacoes_avaliadas,observacao
+datatraining.txt,DummyClassifier,accuracy,0.7876703917475132,8143,medida
+datatraining.txt,DummyClassifier,balanced_accuracy,0.5,8143,medida
+datatraining.txt,DummyClassifier,precision_ocupado,,8143,"indefinida: denominador zero (TP + FP = 0, nenhuma previsão positiva)"
+datatraining.txt,DummyClassifier,recall_ocupado,0.0,8143,medida
+datatraining.txt,DummyClassifier,f1_ocupado,0.0,8143,medida
+datatraining.txt,DummyClassifier,especificidade,1.0,8143,medida
+datatraining.txt,DummyClassifier,taxa_falsos_positivos,0.0,8143,medida
+datatraining.txt,DummyClassifier,taxa_falsos_negativos,1.0,8143,medida
+datatraining.txt,DummyClassifier,precision_macro,0.7876703917475132,8143,média apenas da classe com precision definida (classe 1 indefinida)
+datatraining.txt,DummyClassifier,recall_macro,0.5,8143,medida
+datatraining.txt,DummyClassifier,f1_macro,0.4406127636188775,8143,medida
+datatraining.txt,DummyClassifier,f1_ponderado,0.6941152562572714,8143,medida
+datatraining.txt,DummyClassifier,TN,6414.0,8143,medida
+datatraining.txt,DummyClassifier,FP,0.0,8143,medida
+datatraining.txt,DummyClassifier,FN,1729.0,8143,medida
+datatraining.txt,DummyClassifier,TP,0.0,8143,medida
+datatraining.txt,KNN,accuracy,0.9580007368291784,8143,medida
+datatraining.txt,KNN,balanced_accuracy,0.951160417053283,8143,medida
+datatraining.txt,KNN,precision_ocupado,0.8726491133799033,8143,medida
+datatraining.txt,KNN,recall_ocupado,0.9392712550607287,8143,medida
+datatraining.txt,KNN,f1_ocupado,0.9047353760445682,8143,medida
+datatraining.txt,KNN,especificidade,0.9630495790458372,8143,medida
+datatraining.txt,KNN,taxa_falsos_positivos,0.03695042095416277,8143,medida
+datatraining.txt,KNN,taxa_falsos_negativos,0.06072874493927125,8143,medida
+datatraining.txt,KNN,precision_macro,0.9279673456106775,8143,medida
+datatraining.txt,KNN,recall_macro,0.951160417053283,8143,medida
+datatraining.txt,KNN,f1_macro,0.9388988789485602,8143,medida
+datatraining.txt,KNN,f1_ponderado,0.9585545354762774,8143,medida
+datatraining.txt,KNN,TN,6177.0,8143,medida
+datatraining.txt,KNN,FP,237.0,8143,medida
+datatraining.txt,KNN,FN,105.0,8143,medida
+datatraining.txt,KNN,TP,1624.0,8143,medida
+datatraining.txt,Árvore de Decisão,accuracy,0.9813336608129682,8143,medida
+datatraining.txt,Árvore de Decisão,balanced_accuracy,0.9843487794105685,8143,medida
+datatraining.txt,Árvore de Decisão,precision_ocupado,0.9273712737127371,8143,medida
+datatraining.txt,Árvore de Decisão,recall_ocupado,0.9895893580104106,8143,medida
+datatraining.txt,Árvore de Decisão,f1_ocupado,0.95747062115277,8143,medida
+datatraining.txt,Árvore de Decisão,especificidade,0.9791082008107266,8143,medida
+datatraining.txt,Árvore de Decisão,taxa_falsos_positivos,0.020891799189273464,8143,medida
+datatraining.txt,Árvore de Decisão,taxa_falsos_negativos,0.010410641989589358,8143,medida
+datatraining.txt,Árvore de Decisão,precision_macro,0.9622566117690392,8143,medida
+datatraining.txt,Árvore de Decisão,recall_macro,0.9843487794105685,8143,medida
+datatraining.txt,Árvore de Decisão,f1_macro,0.9727567076814826,8143,medida
+datatraining.txt,Árvore de Decisão,f1_ponderado,0.9815514166814848,8143,medida
+datatraining.txt,Árvore de Decisão,TN,6280.0,8143,medida
+datatraining.txt,Árvore de Decisão,FP,134.0,8143,medida
+datatraining.txt,Árvore de Decisão,FN,18.0,8143,medida
+datatraining.txt,Árvore de Decisão,TP,1711.0,8143,medida
