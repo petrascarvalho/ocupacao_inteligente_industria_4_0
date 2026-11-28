@@ -134,6 +134,7 @@ print(plt.rcParams["figure.figsize"])
 # | `caminho_tratado` | `dados/tratados/occupancy_tratado.csv` (gerado na Fase 2) |
 # | `pasta_features` | `dados/features` |
 # | `caminho_features` | `dados/features/occupancy_features.csv` (gerado na Fase 3) |
+# | `caminho_grafico_split` | `resultados/graficos/split_01_divisao_treino_teste.png` (gerado na Fase 4) |
 # | `pasta_graficos` / `pasta_metricas` | `resultados/graficos` / `resultados/metricas` |
 #
 # Conceitos: o item 5.1 do enunciado proíbe caminhos absolutos; `os.makedirs(..., exist_ok=True)` cria as pastas sem erro
@@ -173,6 +174,9 @@ caminho_tratado = "dados/tratados/occupancy_tratado.csv"
 
 # Definindo o caminho do arquivo com a nova variável (Feature Engineering)
 caminho_features = "dados/features/occupancy_features.csv"
+
+# Definindo o caminho do gráfico da divisão treino/teste (Fase 4)
+caminho_grafico_split = f"{pasta_graficos}/split_01_divisao_treino_teste.png"
 
 # Validando o diretório de trabalho
 print("Diretório atual:", os.getcwd())
@@ -2442,3 +2446,610 @@ print("SHA-256:", hash_features)
 # faixa não esteja ocupada na base atual; há redundância parcial com `CO2` e `Light`; o índice não tem interpretação
 # física validada; e o ganho preditivo ainda não foi comprovado. A divisão treino/teste, o escalonamento e o
 # treinamento dos modelos serão realizados nas fases seguintes.
+
+# %% [markdown]
+# # FASE 4 — Train/Test Split (Divisão dos Dados)
+# ## BLOCO 37 — Contextualização da divisão dos dados
+#
+# ### Aprendizado supervisionado
+#
+# No aprendizado supervisionado, o modelo aprende a partir de exemplos rotulados: cada registro reúne os **atributos
+# preditores** (`X`), que descrevem a situação observada pelos sensores, e a **variável alvo** (`y`), que é a resposta
+# conhecida — aqui, `Occupancy`. O modelo procura uma regra que relacione `X` a `y` e que funcione em registros que
+# não viu durante o aprendizado (MUS01, slides 39, 40 e 50; MUS02, slides 39 a 42).
+#
+# ### Treinamento e teste
+#
+# | Conjunto | Proporção | Finalidade |
+# |---|---:|---|
+# | Treinamento | 80% | Dados usados para ajustar os modelos e todas as transformações que aprendem parâmetros |
+# | Teste | 20% | Dados reservados para a avaliação final, simulando registros novos que o modelo nunca viu |
+#
+# A proporção 80/20 é a exigida pelo enunciado (Fase 4, p. 5) e está na faixa apresentada no MUS01 (slide 50: treino
+# de 70% a 80% e teste de 20% a 30%). Ela mantém a maior parte dos dados para o aprendizado e reserva 2.484 registros
+# para a avaliação.
+#
+# | Parâmetro | Valor | Efeito |
+# |---|---|---|
+# | `test_size` | `0.2` | 20% dos registros vão para o teste |
+# | `stratify` | `y` | A proporção de ocupados e desocupados é preservada nos dois conjuntos |
+# | `random_state` | `42` | O sorteio é reproduzido exatamente a cada execução, nas versões testadas |
+#
+# ### Por que dividir antes de qualquer transformação de escala (Data Leakage)
+#
+# O `StandardScaler` aprende a média e o desvio padrão dos dados. Se ele fosse ajustado na base completa, essas
+# estatísticas incluiriam informações dos registros de teste, e o modelo seria avaliado com dados que, indiretamente,
+# já influenciaram sua preparação. Esse vazamento de dados (*Data Leakage*) produz avaliações otimistas, que não se
+# repetem com dados realmente novos. Por isso, a divisão é feita **antes** de qualquer transformação estatística: o
+# escalonamento será ajustado somente no treinamento (Fase 5) e apenas aplicado ao teste. O mesmo vale para qualquer
+# outra decisão que aprenda com os dados, como a escolha de hiperparâmetros.
+#
+# ### Registros desta fase
+#
+# - Nenhum modelo é treinado nesta fase, e nenhuma transformação de escala é aplicada.
+# - O conjunto de teste não deverá orientar a escolha de hiperparâmetros nem de atributos.
+# - O título do enunciado menciona "Balanceamento", mas o requisito da fase é a estratificação. A estratificação
+#   preserva a proporção original das classes; ela não as equilibra. Nenhuma técnica de balanceamento é aplicada.
+# - O split aleatório exigido pelo enunciado é preservado. Como os registros são temporalmente dependentes (BLOCO
+#   16.2), registros vizinhos tendem a ficar em conjuntos diferentes; essa proximidade é medida no BLOCO 44, e uma
+#   validação temporal complementar será realizada posteriormente.
+
+# %% [markdown]
+# ### BLOCO 38 — Preparação da matriz X e do vetor y
+#
+# Os seis atributos preditores são as cinco medições dos sensores e a variável criada na Fase 3. `date` não entra em
+# `X`: o modelo deve reconhecer a ocupação a partir das condições do ambiente, e não da data ou do horário dos
+# registros, que identificam cada observação e não descrevem o ambiente. A coluna fica em uma estrutura separada
+# (`rastreio_temporal`), com o mesmo índice, para a auditoria temporal do BLOCO 44. `Occupancy` é separada como `y`.
+
+# %%
+# BLOCO 38 — Preparação da matriz X e do vetor y
+
+# Referência para confirmar, ao final da fase, que df_features não foi alterada
+df_features_referencia = df_features.copy(deep=True)
+
+# Atributos preditores, na ordem utilizada em todas as fases seguintes
+atributos_preditores = [
+    "Temperature",
+    "Humidity",
+    "Light",
+    "CO2",
+    "HumidityRatio",
+    "CO2_Light_Ratio",
+]
+variavel_alvo = "Occupancy"
+
+# Verificações anteriores à separação
+assert len(atributos_preditores) == len(set(atributos_preditores)), "Atributos preditores duplicados."
+assert set(atributos_preditores + [variavel_alvo, "date"]).issubset(df_features.columns), "Coluna ausente."
+assert df_features.columns.is_unique, "Nomes de colunas duplicados em df_features."
+assert "date" not in atributos_preditores and variavel_alvo not in atributos_preditores, "Coluna indevida em X."
+
+# Separação de X, y e da estrutura de rastreabilidade temporal (índice original preservado)
+X = df_features[atributos_preditores].copy()
+y = df_features[variavel_alvo].copy()
+rastreio_temporal = df_features[["date"]].copy()
+rastreio_temporal["segmento"] = (rastreio_temporal["date"].diff() > limite_continuidade).cumsum()
+
+# Validações
+assert X.shape == (12417, 6), "X não possui as dimensões esperadas."
+assert y.shape == (12417,), "y não possui a quantidade esperada de observações."
+assert X.index.equals(y.index) and X.index.equals(rastreio_temporal.index), "Índices divergentes."
+assert all(pd.api.types.is_float_dtype(X[coluna]) for coluna in atributos_preditores), "Atributo não float64."
+assert X.isna().sum().sum() == 0 and y.isna().sum() == 0, "Existem valores ausentes."
+assert np.isinf(X).sum().sum() == 0, "Existem valores infinitos."
+assert set(y.unique()) == {0, 1}, "y possui classes diferentes de 0 e 1."
+assert (rastreio_temporal["segmento"].to_numpy() == segmentos.to_numpy()).all(), "Segmentos divergentes do BLOCO 16.2."
+pd.testing.assert_frame_equal(X, df_features[atributos_preditores], check_exact=True)
+
+tabela_colunas_modelagem = pd.DataFrame({
+    "Coluna": atributos_preditores + [variavel_alvo, "date"],
+    "Tipo": [str(X[coluna].dtype) for coluna in atributos_preditores]
+            + [str(y.dtype), str(rastreio_temporal["date"].dtype)],
+    "Função": ["Preditor (sensor)"] * 5 + ["Preditor (variável derivada)", "Alvo (y)",
+                                           "Rastreabilidade temporal (fora de X)"],
+}).set_index("Coluna")
+print(tabela_colunas_modelagem)
+print("\nX:", X.shape, "| y:", y.shape, "| rastreio_temporal:", rastreio_temporal.shape)
+print("Índices de 0 a", X.index.max(), "| únicos:", X.index.is_unique)
+print("Registros por segmento temporal:", rastreio_temporal["segmento"].value_counts().sort_index().to_dict())
+
+# %% [markdown]
+# ### BLOCO 39 — Distribuição original das classes
+#
+# A acurácia de um classificador que previsse sempre a classe majoritária é calculada como referência descritiva: ela
+# indica o patamar que qualquer modelo útil deverá superar, mas não é o resultado de um modelo treinado. O
+# `DummyClassifier` será implementado na avaliação dos modelos. Nenhuma técnica de balanceamento (*oversampling*,
+# *undersampling* ou SMOTE) é aplicada.
+
+# %%
+# BLOCO 39 — Distribuição original das classes
+
+contagem_y = y.value_counts().sort_index()
+percentual_y = y.value_counts(normalize=True).sort_index() * 100
+
+tabela_classes_original = pd.DataFrame({
+    "Registros": [contagem_y[0], contagem_y[1], contagem_y.sum()],
+    "Percentual (%)": [percentual_y[0], percentual_y[1], percentual_y.sum()],
+}, index=pd.Index(["0 — Desocupado", "1 — Ocupado", "Total"], name="Occupancy"))
+print(tabela_classes_original.round(2))
+
+classe_majoritaria = contagem_y.idxmax()
+classe_minoritaria = contagem_y.idxmin()
+razao_classes = contagem_y[classe_majoritaria] / contagem_y[classe_minoritaria]
+acuracia_referencia = contagem_y[classe_majoritaria] / contagem_y.sum()
+
+print("\nClasse majoritária:", classe_majoritaria, "| classe minoritária:", classe_minoritaria)
+print(f"Razão entre as classes: {razao_classes:.4f} desocupados para cada ocupado")
+print(f"Acurácia de referência (sempre prever a classe {classe_majoritaria}): {acuracia_referencia:.4%}")
+
+# %% [markdown]
+# ### BLOCO 40 — Divisão entre treinamento e teste
+#
+# `train_test_split` já está importado no BLOCO 01. Com o comportamento padrão (`shuffle=True`), os registros são
+# embaralhados antes da divisão; com `stratify=y`, o sorteio é feito separadamente dentro de cada classe. Os índices
+# originais de `X` e `y` são preservados nos quatro conjuntos, o que permite rastrear cada registro até `df_features`
+# e até sua data. Nenhum escalonamento é aplicado nesta etapa, e a divisão é executada uma única vez, sem testar
+# sementes alternativas.
+
+# %%
+# BLOCO 40 — Divisão entre treinamento e teste
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X,
+    y,
+    test_size=0.2,
+    random_state=42,
+    stratify=y,
+)
+
+# Quantidade esperada no teste: o scikit-learn arredonda 20% de 12.417 para cima
+registros_teste_esperados = int(np.ceil(0.2 * len(X)))
+assert len(X_test) == registros_teste_esperados and len(X_train) == len(X) - registros_teste_esperados
+
+print("X_train:", X_train.shape, "| y_train:", y_train.shape)
+print("X_test: ", X_test.shape, "| y_test: ", y_test.shape)
+print(f"Proporção efetiva: treino {len(X_train) / len(X):.4%} | teste {len(X_test) / len(X):.4%}")
+print("Primeiros índices originais do treino:", X_train.index[:5].tolist())
+print("Primeiros índices originais do teste: ", X_test.index[:5].tolist())
+
+# %% [markdown]
+# ### BLOCO 41 — Verificação da estratificação
+#
+# A diferença entre a proporção de uma classe em um conjunto e na base completa é expressa em **pontos percentuais**
+# (p.p.), isto é, pela subtração direta dos percentuais. Como as contagens são números inteiros, a igualdade exata das
+# proporções não é possível; a referência de tolerância é o peso de um único registro no menor conjunto
+# (100 / 2.484 ≈ 0,04 p.p.).
+
+# %%
+# BLOCO 41 — Verificação da estratificação
+
+def resumir_classes(serie_alvo, nome_conjunto):
+    contagem = serie_alvo.value_counts().sort_index()
+    return {
+        "Conjunto": nome_conjunto,
+        "Classe 0": contagem[0],
+        "Classe 1": contagem[1],
+        "Total": len(serie_alvo),
+        "% Classe 0": contagem[0] / len(serie_alvo) * 100,
+        "% Classe 1": contagem[1] / len(serie_alvo) * 100,
+        "Razão 0/1": contagem[0] / contagem[1],
+    }
+
+tabela_estratificacao = pd.DataFrame([
+    resumir_classes(y, "Base completa"),
+    resumir_classes(y_train, "Treinamento"),
+    resumir_classes(y_test, "Teste"),
+]).set_index("Conjunto")
+tabela_estratificacao["Diferença % Classe 1 (p.p.)"] = (
+    tabela_estratificacao["% Classe 1"] - tabela_estratificacao.loc["Base completa", "% Classe 1"]
+)
+tabela_estratificacao["Proporção da base (%)"] = tabela_estratificacao["Total"] / len(y) * 100
+print(tabela_estratificacao.round(4).to_string())
+
+desvio_maximo_pp = tabela_estratificacao["Diferença % Classe 1 (p.p.)"].abs().max()
+tolerancia_pp = 100 / len(y_test)
+print(f"\nDesvio máximo da proporção das classes: {desvio_maximo_pp:.4f} p.p.")
+print(f"Peso de um registro no conjunto de teste: {tolerancia_pp:.4f} p.p.")
+
+assert tabela_estratificacao.loc["Treinamento", "Classe 0"] + tabela_estratificacao.loc["Teste", "Classe 0"] \
+    == tabela_estratificacao.loc["Base completa", "Classe 0"], "Classe 0 não se conserva."
+assert tabela_estratificacao.loc["Treinamento", "Classe 1"] + tabela_estratificacao.loc["Teste", "Classe 1"] \
+    == tabela_estratificacao.loc["Base completa", "Classe 1"], "Classe 1 não se conserva."
+assert desvio_maximo_pp <= tolerancia_pp, "A estratificação desviou mais do que um registro."
+print("Estratificação verificada.")
+
+# %% [markdown]
+# ### BLOCO 42 — Validação da integridade da divisão
+#
+# As verificações confirmam que cada registro foi para exatamente um dos conjuntos e que nenhum valor foi alterado. A
+# ausência de registros em comum prova apenas que treino e teste não compartilham **linhas**; ela não significa
+# independência estatística, pois registros vizinhos no tempo são muito semelhantes (BLOCO 44).
+
+# %%
+# BLOCO 42 — Validação da integridade da divisão
+
+indices_treino = set(X_train.index)
+indices_teste = set(X_test.index)
+
+assert X_train.index.equals(y_train.index), "Índices de X_train e y_train divergentes."
+assert X_test.index.equals(y_test.index), "Índices de X_test e y_test divergentes."
+assert X_train.index.is_unique and X_test.index.is_unique, "Índices repetidos."
+assert indices_treino.isdisjoint(indices_teste), "Registros presentes no treino e no teste."
+assert indices_treino | indices_teste == set(X.index), "A união dos conjuntos não reproduz a base."
+assert len(X_train) + len(X_test) == len(X) == 12417, "Quantidade total de registros divergente."
+assert (y_train.value_counts() + y_test.value_counts()).sort_index().equals(contagem_y), "Classes divergentes."
+assert list(X_train.columns) == list(X_test.columns) == atributos_preditores, "Atributos ou ordem divergentes."
+assert "date" not in X_train.columns and variavel_alvo not in X_train.columns, "Coluna indevida nos preditores."
+assert X_train.isna().sum().sum() == 0 and X_test.isna().sum().sum() == 0, "Existem valores ausentes."
+assert np.isinf(X_train).sum().sum() == 0 and np.isinf(X_test).sum().sum() == 0, "Existem valores infinitos."
+assert (X_train.dtypes == X.dtypes).all() and (X_test.dtypes == X.dtypes).all(), "Tipos alterados."
+
+# Reconstrução temporária da base a partir dos dois conjuntos, ordenada pelo índice original
+X_reconstruido = pd.concat([X_train, X_test]).sort_index()
+y_reconstruido = pd.concat([y_train, y_test]).sort_index()
+pd.testing.assert_frame_equal(X_reconstruido, X, check_exact=True)
+pd.testing.assert_series_equal(y_reconstruido, y, check_exact=True)
+
+# Base de Feature Engineering preservada
+pd.testing.assert_frame_equal(df_features, df_features_referencia, check_exact=True)
+
+print("Registros no treino:", len(indices_treino), "| no teste:", len(indices_teste))
+print("Registros em comum entre treino e teste:", len(indices_treino & indices_teste))
+print("Reconstrução de X e y idêntica à base original (check_exact=True): True")
+print("df_features inalterada: True")
+print("Validação da integridade da divisão concluída com sucesso!")
+
+# %% [markdown]
+# ### BLOCO 43 — Validação da reprodutibilidade
+#
+# A divisão é repetida em variáveis temporárias, com os mesmos parâmetros, e comparada à divisão oficial. Os conjuntos
+# temporários não substituem os oficiais. A igualdade comprova que a semente fixa reproduz a divisão nas condições e
+# versões testadas (scikit-learn 1.8.0); ela não elimina vieses e não garante o mesmo sorteio em outras versões das
+# bibliotecas.
+
+# %%
+# BLOCO 43 — Validação da reprodutibilidade
+
+X_train_repeticao, X_test_repeticao, y_train_repeticao, y_test_repeticao = train_test_split(
+    X,
+    y,
+    test_size=0.2,
+    random_state=42,
+    stratify=y,
+)
+
+pd.testing.assert_frame_equal(X_train_repeticao, X_train, check_exact=True)
+pd.testing.assert_frame_equal(X_test_repeticao, X_test, check_exact=True)
+pd.testing.assert_series_equal(y_train_repeticao, y_train, check_exact=True)
+pd.testing.assert_series_equal(y_test_repeticao, y_test, check_exact=True)
+print("Repetição com test_size=0.2, random_state=42 e stratify=y: índices e valores idênticos nos quatro conjuntos.")
+
+del X_train_repeticao, X_test_repeticao, y_train_repeticao, y_test_repeticao
+
+# %% [markdown]
+# ### BLOCO 44 — Auditoria da proximidade temporal entre treino e teste
+#
+# Análise complementar ao enunciado, motivada pela dependência temporal medida no BLOCO 16.2. Três medidas
+# diferentes são calculadas para cada registro de teste, sempre dentro do seu segmento temporal contínuo (registros
+# do outro segmento não são considerados vizinhos):
+#
+# | Medida | Definição |
+# |---|---|
+# | Vizinhança por posição | O registro imediatamente anterior ou posterior, na ordem das linhas do segmento, está no treino |
+# | Vizinhança por diferença temporal | Existe um registro de treino a até 60, 61 ou 120 segundos |
+# | Distância ao treino mais próximo | Menor diferença absoluta de tempo até qualquer registro de treino do segmento |
+#
+# O limite de 61 segundos acompanha os intervalos reais entre registros consecutivos (59, 60 ou 61 segundos, BLOCO
+# 16.1): um vizinho imediato pode estar a 61 segundos, e o limite de 60 segundos não o contaria. Como dois passos
+# consecutivos somam pelo menos 118 segundos, uma distância de até 61 segundos só ocorre com o vizinho imediato. A
+# distância mais próxima é obtida por busca binária (`np.searchsorted`) nos tempos ordenados do treino, sem calcular
+# a matriz completa de distâncias. `Occupancy` não é usada, e os conjuntos não são alterados após esta análise.
+
+# %%
+# BLOCO 44 — Auditoria da proximidade temporal entre treino e teste
+
+no_treino = pd.Series(X.index.isin(X_train.index), index=X.index)
+datas_teste = rastreio_temporal.loc[X_test.index]
+
+distancia_treino_s = pd.Series(np.nan, index=X_test.index, name="distancia_s")
+vizinho_posicao_treino = pd.Series(False, index=X_test.index)
+vizinhos_elegiveis = pd.Series(0, index=X_test.index)
+
+for segmento_id, indices_segmento in rastreio_temporal.groupby("segmento").groups.items():
+    tempos_segmento = rastreio_temporal.loc[indices_segmento, "date"].to_numpy()
+    assert (np.diff(tempos_segmento) > np.timedelta64(0, "s")).all(), "Tempos fora de ordem no segmento."
+    marcador_treino = no_treino.loc[indices_segmento].to_numpy()
+    tempos_treino = tempos_segmento[marcador_treino]
+    posicoes_teste = np.flatnonzero(~marcador_treino)
+    tempos_teste = tempos_segmento[posicoes_teste]
+
+    # Distância ao registro de treino mais próximo (busca binária nos tempos ordenados)
+    posicao_insercao = np.searchsorted(tempos_treino, tempos_teste)
+    anterior = tempos_treino[np.clip(posicao_insercao - 1, 0, len(tempos_treino) - 1)]
+    posterior = tempos_treino[np.clip(posicao_insercao, 0, len(tempos_treino) - 1)]
+    distancia_anterior = np.where(posicao_insercao > 0, (tempos_teste - anterior) / np.timedelta64(1, "s"), np.inf)
+    distancia_posterior = np.where(
+        posicao_insercao < len(tempos_treino), (posterior - tempos_teste) / np.timedelta64(1, "s"), np.inf
+    )
+    rotulos_teste = indices_segmento[posicoes_teste]
+    distancia_treino_s.loc[rotulos_teste] = np.minimum(distancia_anterior, distancia_posterior)
+
+    # Vizinhança por posição (registros das extremidades têm apenas um vizinho elegível)
+    tem_anterior = posicoes_teste - 1 >= 0
+    tem_posterior = posicoes_teste + 1 < len(indices_segmento)
+    anterior_no_treino = tem_anterior & marcador_treino[np.clip(posicoes_teste - 1, 0, None)]
+    posterior_no_treino = tem_posterior & marcador_treino[np.clip(posicoes_teste + 1, None, len(indices_segmento) - 1)]
+    vizinho_posicao_treino.loc[rotulos_teste] = anterior_no_treino | posterior_no_treino
+    vizinhos_elegiveis.loc[rotulos_teste] = tem_anterior.astype(int) + tem_posterior.astype(int)
+
+assert distancia_treino_s.notna().all() and np.isfinite(distancia_treino_s).all(), "Distância não calculada."
+
+# Validação independente em uma amostra: menor distância calculada por força bruta
+amostra_validacao = X_test.index.to_series().sample(n=100, random_state=42)
+for indice in amostra_validacao:
+    segmento_registro = rastreio_temporal.loc[indice, "segmento"]
+    candidatos = X_train.index[rastreio_temporal.loc[X_train.index, "segmento"].eq(segmento_registro)]
+    menor = (rastreio_temporal.loc[candidatos, "date"] - rastreio_temporal.loc[indice, "date"]).abs().min()
+    assert menor / pd.Timedelta(seconds=1) == distancia_treino_s.loc[indice], f"Divergência no índice {indice}."
+print("Validação por força bruta em 100 registros de teste: aprovada.")
+
+# Estatísticas da menor distância ao treino
+estatisticas_distancia = distancia_treino_s.describe()[["count", "min", "25%", "50%", "mean", "75%", "max"]]
+print("\nMenor distância (s) entre cada registro de teste e o treino do mesmo segmento:")
+print(estatisticas_distancia.round(2).to_string())
+print("\nFrequência das distâncias mais comuns (s):")
+print(distancia_treino_s.value_counts().head(8).to_string())
+
+# Resumo geral e por segmento
+def resumir_proximidade(mascara):
+    distancias = distancia_treino_s[mascara]
+    return {
+        "Registros de teste": int(mascara.sum()),
+        "Com vizinho de treino elegível": int(np.isfinite(distancias).sum()),
+        "Nas extremidades do segmento": int((vizinhos_elegiveis[mascara] == 1).sum()),
+        "Mediana (s)": distancias.median(),
+        "Até 60 s (%)": (distancias <= 60).mean() * 100,
+        "Até 61 s (%)": (distancias <= 61).mean() * 100,
+        "Até 120 s (%)": (distancias <= 120).mean() * 100,
+        "Vizinho por posição no treino (%)": vizinho_posicao_treino[mascara].mean() * 100,
+    }
+
+segmento_teste = datas_teste["segmento"]
+tabela_proximidade = pd.DataFrame({
+    "Base completa": resumir_proximidade(pd.Series(True, index=X_test.index)),
+    "Segmento 0": resumir_proximidade(segmento_teste.eq(0)),
+    "Segmento 1": resumir_proximidade(segmento_teste.eq(1)),
+}).T
+print("\nProximidade temporal entre teste e treino:")
+print(tabela_proximidade.round(2).to_string())
+
+# Comparação com a aproximação teórica (dois vizinhos elegíveis, atribuições independentes)
+estimativa_teorica = 1 - 0.2 ** 2
+medicao_posicao = vizinho_posicao_treino.mean()
+print(f"\nEstimativa teórica (1 − 0,2²): {estimativa_teorica:.2%}")
+print(f"Medição por posição após o split: {medicao_posicao:.4%}")
+print("Vizinhança por posição equivale ao critério de até 61 s:",
+      vizinho_posicao_treino.equals(distancia_treino_s <= 61))
+
+# %% [markdown]
+# ### BLOCO 45 — Visualização da divisão dos dados
+#
+# A figura reúne a quantidade de registros, a proporção das classes em cada conjunto e a distribuição acumulada da
+# menor distância temporal entre cada registro de teste e o treino. Os pontos destacados na curva indicam a fração de
+# registros de teste a até 60, 61 e 120 segundos de um registro de treino.
+
+# %%
+# BLOCO 45 — Visualização da divisão dos dados
+
+nomes_conjuntos = ["Base completa", "Treinamento", "Teste"]
+cores_classes = sns.color_palette("Set2", 2)
+
+def formatar_inteiro(valor):
+    return f"{int(valor):,}".replace(",", ".")
+
+def formatar_percentual(valor):
+    return f"{valor:.2f}%".replace(".", ",")
+
+fig, (eixo_quantidade, eixo_classes, eixo_distancia) = plt.subplots(1, 3, figsize=(19, 6))
+
+# Painel 1 — Quantidade de registros
+quantidades = tabela_estratificacao.loc[nomes_conjuntos, "Total"]
+barras = eixo_quantidade.bar(nomes_conjuntos, quantidades, color="#4C72B0", edgecolor="black")
+for barra, quantidade in zip(barras, quantidades):
+    eixo_quantidade.annotate(
+        f"{formatar_inteiro(quantidade)}\n({formatar_percentual(quantidade / len(y) * 100)})",
+        (barra.get_x() + barra.get_width() / 2, barra.get_height()),
+        ha="center", va="bottom", xytext=(0, 3), textcoords="offset points", fontsize=10,
+    )
+eixo_quantidade.set_ylim(0, len(y) * 1.18)
+eixo_quantidade.set_title("Quantidade de registros")
+eixo_quantidade.set_ylabel("Registros")
+
+# Painel 2 — Proporção das classes (barras empilhadas em percentual)
+base_empilhada = np.zeros(len(nomes_conjuntos))
+for classe, cor, rotulo in zip([0, 1], cores_classes, ["0 — Desocupado", "1 — Ocupado"]):
+    percentuais = tabela_estratificacao.loc[nomes_conjuntos, f"% Classe {classe}"].to_numpy()
+    contagens = tabela_estratificacao.loc[nomes_conjuntos, f"Classe {classe}"].to_numpy()
+    eixo_classes.bar(nomes_conjuntos, percentuais, bottom=base_empilhada, color=cor, edgecolor="black", label=rotulo)
+    for posicao, (percentual, contagem, base) in enumerate(zip(percentuais, contagens, base_empilhada)):
+        eixo_classes.text(posicao, base + percentual / 2,
+                          f"{formatar_inteiro(contagem)}\n({formatar_percentual(percentual)})",
+                          ha="center", va="center", fontsize=10)
+    base_empilhada += percentuais
+eixo_classes.set_ylim(0, 100)
+eixo_classes.set_title("Proporção das classes de Occupancy")
+eixo_classes.set_ylabel("Percentual dos registros (%)")
+eixo_classes.legend(title="Classe", loc="upper center", bbox_to_anchor=(0.5, -0.08), ncol=2, frameon=False)
+
+# Painel 3 — Distribuição acumulada da menor distância ao treino
+distancias_ordenadas = np.sort(distancia_treino_s.to_numpy())
+fracao_acumulada = np.arange(1, len(distancias_ordenadas) + 1) / len(distancias_ordenadas) * 100
+eixo_distancia.step(distancias_ordenadas, fracao_acumulada, where="post", color="#4C72B0", linewidth=2)
+# Rótulos em área livre do gráfico, ligados aos pontos por setas (evita sobreposição com a curva)
+posicoes_rotulo = {60: (110, 62), 61: (110, 74), 120: (160, 86)}
+for limite, posicao_texto in posicoes_rotulo.items():
+    fracao = (distancia_treino_s <= limite).mean() * 100
+    eixo_distancia.plot(limite, fracao, marker="o", color="#C44E52", markersize=6, zorder=3)
+    eixo_distancia.annotate(f"até {limite} s: {formatar_percentual(fracao)}", (limite, fracao),
+                            xytext=posicao_texto, textcoords="data", fontsize=10,
+                            arrowprops={"arrowstyle": "->", "color": "#C44E52", "linewidth": 1})
+eixo_distancia.set_xlim(50, distancias_ordenadas.max() + 10)
+eixo_distancia.set_ylim(0, 102)
+eixo_distancia.set_title("Menor distância de cada registro de teste ao treino")
+eixo_distancia.set_xlabel("Distância temporal (segundos), dentro do mesmo segmento")
+eixo_distancia.set_ylabel("Registros de teste acumulados (%)")
+
+plt.suptitle("Divisão treino/teste (80/20, estratificada, random_state=42)", fontsize=16)
+plt.tight_layout()
+
+# Exportação antes da exibição
+plt.savefig(caminho_grafico_split, dpi=300, bbox_inches="tight")
+print("Figura salva em:", caminho_grafico_split)
+
+plt.show()
+
+# %% [markdown]
+# ### BLOCO 46 — Resumo consolidado da Fase 4
+#
+# Os conjuntos permanecem em memória para as fases seguintes e são reproduzidos pela execução sequencial do script.
+# Nenhum arquivo CSV de treino ou teste é exportado.
+
+# %%
+# BLOCO 46 — Resumo consolidado da Fase 4
+
+tabela_dimensoes = pd.DataFrame({
+    "Linhas": [X_train.shape[0], X_test.shape[0], y_train.shape[0], y_test.shape[0]],
+    "Colunas": [X_train.shape[1], X_test.shape[1], 1, 1],
+}, index=["X_train", "X_test", "y_train", "y_test"])
+print("Dimensões dos conjuntos:")
+print(tabela_dimensoes)
+
+print("\nAtributos preditores:", atributos_preditores)
+
+tabela_resumo_fase4 = pd.Series({
+    "Registros (treino / teste)": f"{len(X_train)} / {len(X_test)}",
+    "Classe 1 na base / treino / teste (%)": " / ".join(
+        f"{valor:.2f}" for valor in tabela_estratificacao["% Classe 1"]
+    ),
+    "Desvio máximo de proporção (p.p.)": f"{desvio_maximo_pp:.4f}",
+    "Registros em comum entre treino e teste": len(indices_treino & indices_teste),
+    "Reconstrução exata de X e y": True,
+    "Divisão reproduzida com a mesma semente": True,
+    "Mediana da distância ao treino (s)": distancia_treino_s.median(),
+    "Teste com vizinho imediato no treino (%)": round(medicao_posicao * 100, 2),
+    "df_features preservada": df_features.equals(df_features_referencia),
+})
+print("\nResumo da Fase 4:")
+print(tabela_resumo_fase4.to_string())
+
+# %% [markdown]
+# ## BLOCO 47 — Interpretação e conclusão da divisão dos dados
+#
+# ### 47.1 — Seleção das variáveis
+#
+# `X` reúne seis atributos `float64`, na ordem fixa `Temperature`, `Humidity`, `Light`, `CO2`, `HumidityRatio` e
+# `CO2_Light_Ratio`: as cinco medições dos sensores e a variável derivada da Fase 3. `y` contém apenas `Occupancy`
+# (`int64`, classes 0 e 1). A coluna `date` ficou fora de `X` porque identifica o momento da observação e não descreve
+# as condições do ambiente; usá-la, ou atributos derivados dela, faria o modelo depender do período específico desta
+# coleta. Ela permanece em `rastreio_temporal`, com o mesmo índice de `X` e `y`, apenas para a auditoria temporal. As
+# validações confirmaram 12.417 × 6 em `X`, 12.417 observações em `y`, índices idênticos, nenhum valor ausente ou
+# infinito e valores iguais aos de `df_features` (`check_exact=True`).
+#
+# ### 47.2 — Divisão 80/20
+#
+# | Conjunto | X | y |
+# |---|---|---|
+# | Treinamento | 9.933 × 6 | 9.933 |
+# | Teste | 2.484 × 6 | 2.484 |
+#
+# A proporção efetiva é de 79,9952% para treino e 20,0048% para teste. A pequena diferença em relação a 80/20 vem do
+# arredondamento: 20% de 12.417 é 2.483,4, e o scikit-learn arredonda o tamanho do teste para cima (2.484 registros).
+#
+# ### 47.3 — Estratificação e desequilíbrio
+#
+# | Conjunto | Classe 0 | Classe 1 | % Classe 1 | Diferença (p.p.) |
+# |---|---:|---:|---:|---:|
+# | Base completa | 9.396 | 3.021 | 24,3295% | — |
+# | Treinamento | 7.516 | 2.417 | 24,3330% | +0,0035 |
+# | Teste | 1.880 | 604 | 24,3156% | −0,0139 |
+#
+# O maior desvio (0,0139 p.p.) é menor que o peso de um único registro no teste (0,0403 p.p.): a distribuição foi
+# preservada tão de perto quanto as contagens inteiras permitem. A estratificação reproduz o desequilíbrio original
+# (cerca de 3,11 desocupados para cada ocupado) em ambos os conjuntos; ela evita que o teste tenha, por acaso, uma
+# proporção diferente da base, mas não equilibra as classes. A acurácia de referência de quem previsse sempre
+# "desocupado" é 75,67% na base — valor descritivo que os modelos deverão superar, e não o resultado de um modelo.
+#
+# ### 47.4 — Integridade e reprodutibilidade
+#
+# Os índices de `X_train` e `y_train`, e de `X_test` e `y_test`, são idênticos e únicos; nenhum registro aparece nos
+# dois conjuntos, e sua união reproduz os 12.417 índices da base. As classes se conservam (7.516 + 1.880 = 9.396 e
+# 2.417 + 604 = 3.021), os seis atributos mantêm nome, ordem e tipo, e `date` e `Occupancy` não estão entre os
+# preditores. A concatenação dos dois conjuntos, reordenada pelo índice original, reconstruiu `X` e `y` exatamente
+# (`check_exact=True`), e `df_features` permaneceu inalterada. A repetição da divisão com os mesmos parâmetros
+# produziu os mesmos índices e valores nos quatro conjuntos, nas versões testadas.
+#
+# ### 47.5 — Dependência temporal entre os conjuntos
+#
+# | Medida (registros de teste, mesmo segmento) | Base | Segmento 0 | Segmento 1 |
+# |---|---:|---:|---:|
+# | Registros de teste | 2.484 | 535 | 1.949 |
+# | Mediana da distância ao treino | 60 s | 60 s | 60 s |
+# | Até 60 s | 90,10% | 90,47% | 89,99% |
+# | Até 61 s | 96,10% | 96,26% | 96,05% |
+# | Até 120 s | 99,52% | 100,00% | 99,38% |
+# | Vizinho imediato (por posição) no treino | 96,10% | 96,26% | 96,05% |
+#
+# Todos os 2.484 registros de teste têm algum registro de treino no mesmo segmento. A menor distância varia de 59 a
+# 240 segundos (média de 62,25 s); apenas 1 registro de teste está na extremidade de um segmento. As três medidas
+# respondem a perguntas diferentes, mas, nesta base, a vizinhança por posição coincide exatamente com o critério de
+# até 61 segundos, porque registros consecutivos distam de 59 a 61 segundos. O limite de 60 segundos subestima a
+# proximidade (90,10%), pois exclui os vizinhos registrados a 61 segundos.
+#
+# A medição (96,10%) ficou muito próxima da aproximação teórica 1 − 0,2² = 96%, calculada supondo dois vizinhos
+# elegíveis e atribuições independentes. A pequena diferença é compatível com essas hipóteses aproximadas: a
+# estratificação torna o sorteio dependente da classe, e um registro de extremidade tem apenas um vizinho.
+#
+# Na prática, para quase todo registro de teste existe, no treino, uma medição feita cerca de um minuto antes ou
+# depois, com valores dos sensores quase idênticos (autocorrelação de lag 1 acima de 0,99, BLOCO 16.2). Um modelo pode
+# acertar esses registros por semelhança com o vizinho, e não por ter aprendido um padrão que se mantenha em outros
+# períodos. Por isso, a acurácia no teste tende a ser otimista como estimativa do desempenho em dados de dias ou
+# ambientes diferentes. Isso não invalida os resultados: o teste continua medindo o desempenho em registros não usados
+# no ajuste, mas sua interpretação deve considerar essa proximidade, e a avaliação temporal complementar ajudará a
+# dimensioná-la.
+#
+# ### 47.6 — Prevenção de Data Leakage
+#
+# - O conjunto de teste foi separado antes de qualquer transformação que aprenda parâmetros e não será usado para
+#   ajustar o escalonamento, escolher atributos ou escolher hiperparâmetros; ele fica reservado para a avaliação.
+# - A EDA, a investigação de outliers e a comparação das variáveis candidatas da Fase 3 foram feitas na base completa,
+#   antes desta divisão. Nenhum parâmetro de modelo foi ajustado com esses dados, mas essas decisões observaram
+#   registros que agora estão no teste — limitação registrada desde a Fase 3.
+# - A ausência de registros em comum garante que nenhuma linha é usada nos dois papéis, mas não garante independência
+#   estatística: registros vizinhos no tempo carregam praticamente a mesma informação.
+# - A seleção de hiperparâmetros será feita por validação cruzada apenas no treinamento.
+# - Esta fase caracteriza a proximidade temporal e o equilíbrio das classes; nenhuma métrica de desempenho no teste foi
+#   calculada, e nenhuma decisão foi tomada com base nele.
+#
+# ### 47.7 — Preparação para o StandardScaler
+#
+# Os atributos têm escalas muito diferentes (por exemplo, desvio padrão de cerca de 1 °C em `Temperature` e de cerca de
+# 400 em `CO2_Light_Ratio`), e o KNN calcula distâncias entre registros. Na Fase 5, o `StandardScaler` será ajustado
+# somente em `X_train` (`fit_transform`), e `X_test` será transformado com a média e o desvio padrão aprendidos no
+# treino (`transform`), sem novo ajuste. A Árvore de Decisão usará os atributos sem escalonamento, pois suas divisões
+# dependem apenas da ordem dos valores. Na validação cruzada do KNN, o scaler deverá estar dentro de um `Pipeline`,
+# para que cada divisão interna seja escalonada apenas com os dados da sua parte de treino.
+#
+# ### 47.8 — Limitações e próximos passos
+#
+# - A dependência temporal é elevada, e 96,10% dos registros de teste têm um vizinho imediato no treino.
+# - As classes continuam desequilibradas (24,33% de ocupados); a acurácia deverá ser acompanhada de métricas por
+#   classe e comparada com a referência da classe majoritária.
+# - Há redundância parcial entre atributos (`Humidity` × `HumidityRatio`, `Temperature` × `Light` e
+#   `CO2_Light_Ratio` × `Light`), cujo efeito será examinado com e sem a variável derivada, dentro do treino.
+# - A base consolida dois arquivos com uma descontinuidade de sete dias e proporções de ocupação diferentes.
+# - Uma avaliação temporal complementar e, possivelmente, uma avaliação em `datatraining.txt` — período intermediário
+#   do mesmo conjunto de dados, não usado no ajuste dos modelos — serão realizadas ao final, sem substituir o split
+#   exigido.
+# - Nenhum resultado preditivo foi produzido nesta fase. A próxima etapa é a Fase 5 — escalonamento com
+#   `StandardScaler`.
