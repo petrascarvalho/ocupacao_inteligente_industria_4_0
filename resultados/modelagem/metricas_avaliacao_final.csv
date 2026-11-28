@@ -15,22 +15,22 @@ teste_oficial,DummyClassifier,TN,1880.0,2484,medida
 teste_oficial,DummyClassifier,FP,0.0,2484,medida
 teste_oficial,DummyClassifier,FN,604.0,2484,medida
 teste_oficial,DummyClassifier,TP,0.0,2484,medida
-teste_oficial,KNN,accuracy,0.9939613526570048,2484,medida
-teste_oficial,KNN,balanced_accuracy,0.9932013526842327,2484,medida
-teste_oficial,KNN,precision_ocupado,0.9835796387520526,2484,medida
-teste_oficial,KNN,recall_ocupado,0.9917218543046358,2484,medida
-teste_oficial,KNN,f1_ocupado,0.9876339653751031,2484,medida
-teste_oficial,KNN,especificidade,0.9946808510638298,2484,medida
-teste_oficial,KNN,taxa_falsos_positivos,0.005319148936170213,2484,medida
-teste_oficial,KNN,taxa_falsos_negativos,0.008278145695364239,2484,medida
-teste_oficial,KNN,precision_macro,0.990456486042693,2484,medida
-teste_oficial,KNN,recall_macro,0.9932013526842327,2484,medida
-teste_oficial,KNN,f1_macro,0.991819645803397,2484,medida
-teste_oficial,KNN,f1_ponderado,0.9939697779396703,2484,medida
-teste_oficial,KNN,TN,1870.0,2484,medida
-teste_oficial,KNN,FP,10.0,2484,medida
-teste_oficial,KNN,FN,5.0,2484,medida
-teste_oficial,KNN,TP,599.0,2484,medida
+teste_oficial,KNN,accuracy,0.9955716586151369,2484,medida
+teste_oficial,KNN,balanced_accuracy,0.9953888967169227,2484,medida
+teste_oficial,KNN,precision_ocupado,0.986863711001642,2484,medida
+teste_oficial,KNN,recall_ocupado,0.9950331125827815,2484,medida
+teste_oficial,KNN,f1_ocupado,0.9909315746084089,2484,medida
+teste_oficial,KNN,especificidade,0.9957446808510638,2484,medida
+teste_oficial,KNN,taxa_falsos_positivos,0.00425531914893617,2484,medida
+teste_oficial,KNN,taxa_falsos_negativos,0.004966887417218543,2484,medida
+teste_oficial,KNN,precision_macro,0.992631855500821,2484,medida
+teste_oficial,KNN,recall_macro,0.9953888967169227,2484,medida
+teste_oficial,KNN,f1_macro,0.9940010735891578,2484,medida
+teste_oficial,KNN,f1_ponderado,0.9955778371557584,2484,medida
+teste_oficial,KNN,TN,1872.0,2484,medida
+teste_oficial,KNN,FP,8.0,2484,medida
+teste_oficial,KNN,FN,3.0,2484,medida
+teste_oficial,KNN,TP,601.0,2484,medida
 teste_oficial,Árvore de Decisão,accuracy,0.9903381642512077,2484,medida
 teste_oficial,Árvore de Decisão,balanced_accuracy,0.991369592785684,2484,medida
 teste_oficial,Árvore de Decisão,precision_ocupado,0.967741935483871,2484,medida

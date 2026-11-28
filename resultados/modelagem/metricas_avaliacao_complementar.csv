@@ -15,22 +15,22 @@ datatraining.txt,DummyClassifier,TN,6414.0,8143,medida
 datatraining.txt,DummyClassifier,FP,0.0,8143,medida
 datatraining.txt,DummyClassifier,FN,1729.0,8143,medida
 datatraining.txt,DummyClassifier,TP,0.0,8143,medida
-datatraining.txt,KNN,accuracy,0.9580007368291784,8143,medida
-datatraining.txt,KNN,balanced_accuracy,0.951160417053283,8143,medida
-datatraining.txt,KNN,precision_ocupado,0.8726491133799033,8143,medida
-datatraining.txt,KNN,recall_ocupado,0.9392712550607287,8143,medida
-datatraining.txt,KNN,f1_ocupado,0.9047353760445682,8143,medida
-datatraining.txt,KNN,especificidade,0.9630495790458372,8143,medida
-datatraining.txt,KNN,taxa_falsos_positivos,0.03695042095416277,8143,medida
-datatraining.txt,KNN,taxa_falsos_negativos,0.06072874493927125,8143,medida
-datatraining.txt,KNN,precision_macro,0.9279673456106775,8143,medida
-datatraining.txt,KNN,recall_macro,0.951160417053283,8143,medida
-datatraining.txt,KNN,f1_macro,0.9388988789485602,8143,medida
-datatraining.txt,KNN,f1_ponderado,0.9585545354762774,8143,medida
-datatraining.txt,KNN,TN,6177.0,8143,medida
-datatraining.txt,KNN,FP,237.0,8143,medida
-datatraining.txt,KNN,FN,105.0,8143,medida
-datatraining.txt,KNN,TP,1624.0,8143,medida
+datatraining.txt,KNN,accuracy,0.9571411027876704,8143,medida
+datatraining.txt,KNN,balanced_accuracy,0.9487136655050593,8143,medida
+datatraining.txt,KNN,precision_ocupado,0.8729729729729729,8143,medida
+datatraining.txt,KNN,recall_ocupado,0.9340659340659341,8143,medida
+datatraining.txt,KNN,f1_ocupado,0.9024867281363509,8143,medida
+datatraining.txt,KNN,especificidade,0.9633613969441845,8143,medida
+datatraining.txt,KNN,taxa_falsos_positivos,0.03663860305581541,8143,medida
+datatraining.txt,KNN,taxa_falsos_negativos,0.06593406593406594,8143,medida
+datatraining.txt,KNN,precision_macro,0.9274288033464897,8143,medida
+datatraining.txt,KNN,recall_macro,0.9487136655050593,8143,medida
+datatraining.txt,KNN,f1_macro,0.9375107757310384,8143,medida
+datatraining.txt,KNN,f1_ponderado,0.957661538715333,8143,medida
+datatraining.txt,KNN,TN,6179.0,8143,medida
+datatraining.txt,KNN,FP,235.0,8143,medida
+datatraining.txt,KNN,FN,114.0,8143,medida
+datatraining.txt,KNN,TP,1615.0,8143,medida
 datatraining.txt,Árvore de Decisão,accuracy,0.9813336608129682,8143,medida
 datatraining.txt,Árvore de Decisão,balanced_accuracy,0.9843487794105685,8143,medida
 datatraining.txt,Árvore de Decisão,precision_ocupado,0.9273712737127371,8143,medida

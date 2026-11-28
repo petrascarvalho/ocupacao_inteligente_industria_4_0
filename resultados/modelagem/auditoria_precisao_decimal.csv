@@ -1,0 +1,235 @@
+grupo,atributo,indicador,antes,depois,diferenca,valor
+precisao_textual_original,Temperature,Valores distintos,,,,444.0
+precisao_textual_original,Temperature,Casas no texto (mín.),,,,0.0
+precisao_textual_original,Temperature,Casas no texto (mediana),,,,2.0
+precisao_textual_original,Temperature,Casas no texto (máx.),,,,13.0
+precisao_textual_original,Temperature,Textos com até as casas adotadas,,,,5372.0
+precisao_textual_original,Temperature,Textos com mais casas,,,,7045.0
+precisao_textual_original,Humidity,Valores distintos,,,,1815.0
+precisao_textual_original,Humidity,Casas no texto (mín.),,,,0.0
+precisao_textual_original,Humidity,Casas no texto (mediana),,,,2.0
+precisao_textual_original,Humidity,Casas no texto (máx.),,,,13.0
+precisao_textual_original,Humidity,Textos com até as casas adotadas,,,,8709.0
+precisao_textual_original,Humidity,Textos com mais casas,,,,3708.0
+precisao_textual_original,Light,Valores distintos,,,,1439.0
+precisao_textual_original,Light,Casas no texto (mín.),,,,0.0
+precisao_textual_original,Light,Casas no texto (mediana),,,,0.0
+precisao_textual_original,Light,Casas no texto (máx.),,,,14.0
+precisao_textual_original,Light,Textos com até as casas adotadas,,,,11562.0
+precisao_textual_original,Light,Textos com mais casas,,,,855.0
+precisao_textual_original,CO2,Valores distintos,,,,4262.0
+precisao_textual_original,CO2,Casas no texto (mín.),,,,0.0
+precisao_textual_original,CO2,Casas no texto (mediana),,,,1.0
+precisao_textual_original,CO2,Casas no texto (máx.),,,,12.0
+precisao_textual_original,CO2,Textos com até as casas adotadas,,,,9041.0
+precisao_textual_original,CO2,Textos com mais casas,,,,3376.0
+precisao_textual_original,HumidityRatio,Valores distintos,,,,6220.0
+precisao_textual_original,HumidityRatio,Casas no texto (mín.),,,,13.0
+precisao_textual_original,HumidityRatio,Casas no texto (mediana),,,,17.0
+precisao_textual_original,HumidityRatio,Casas no texto (máx.),,,,17.0
+precisao_textual_original,HumidityRatio,Textos com até as casas adotadas,,,,0.0
+precisao_textual_original,HumidityRatio,Textos com mais casas,,,,12417.0
+empates_arredondamento,Temperature,Empates textuais,,,,417.0
+empates_arredondamento,Temperature,Empates iguais ao meio-par decimal,,,,417.0
+empates_arredondamento,Temperature,Empates iguais ao meio-para-cima decimal,,,,211.0
+empates_arredondamento,Temperature,Divergências fora de empates (numpy × decimal),,,,0.0
+empates_arredondamento,Humidity,Empates textuais,,,,1684.0
+empates_arredondamento,Humidity,Empates iguais ao meio-par decimal,,,,1595.0
+empates_arredondamento,Humidity,Empates iguais ao meio-para-cima decimal,,,,602.0
+empates_arredondamento,Humidity,Divergências fora de empates (numpy × decimal),,,,0.0
+empates_arredondamento,Light,Empates textuais,,,,428.0
+empates_arredondamento,Light,Empates iguais ao meio-par decimal,,,,428.0
+empates_arredondamento,Light,Empates iguais ao meio-para-cima decimal,,,,217.0
+empates_arredondamento,Light,Divergências fora de empates (numpy × decimal),,,,0.0
+empates_arredondamento,CO2,Empates textuais,,,,1491.0
+empates_arredondamento,CO2,Empates iguais ao meio-par decimal,,,,1491.0
+empates_arredondamento,CO2,Empates iguais ao meio-para-cima decimal,,,,746.0
+empates_arredondamento,CO2,Divergências fora de empates (numpy × decimal),,,,0.0
+empates_arredondamento,HumidityRatio,Empates textuais,,,,0.0
+empates_arredondamento,HumidityRatio,Empates iguais ao meio-par decimal,,,,0.0
+empates_arredondamento,HumidityRatio,Empates iguais ao meio-para-cima decimal,,,,0.0
+empates_arredondamento,HumidityRatio,Divergências fora de empates (numpy × decimal),,,,0.0
+auditoria_arredondamento,Temperature,Casas decimais,,,,1.0
+auditoria_arredondamento,Temperature,Limite teórico,,,,0.05
+auditoria_arredondamento,Temperature,Registros,,,,12417.0
+auditoria_arredondamento,Temperature,Modificados,,,,7045.0
+auditoria_arredondamento,Temperature,Modificados (%),,,,56.73673189981477
+auditoria_arredondamento,Temperature,Inalterados,,,,5372.0
+auditoria_arredondamento,Temperature,Diferença média com sinal,,,,0.001673017407010949
+auditoria_arredondamento,Temperature,Diferença absoluta média,,,,0.011812584130051087
+auditoria_arredondamento,Temperature,Mediana da diferença absoluta,,,,0.00999999999999801
+auditoria_arredondamento,Temperature,Maior diferença absoluta,,,,0.05000000000000071
+auditoria_arredondamento,Temperature,Erro quadrático médio,,,,0.00035911981142078774
+auditoria_arredondamento,Temperature,Erro relativo médio (valores ≠ 0),,,,0.0005596653973176268
+auditoria_arredondamento,Temperature,Maior erro relativo (valores ≠ 0),,,,0.0025575447570332843
+auditoria_arredondamento,Temperature,Valores distintos antes,,,,444.0
+auditoria_arredondamento,Temperature,Valores distintos depois,,,,50.0
+auditoria_arredondamento,Temperature,Zeros antes,,,,0.0
+auditoria_arredondamento,Temperature,Zeros depois,,,,0.0
+auditoria_arredondamento,Humidity,Casas decimais,,,,2.0
+auditoria_arredondamento,Humidity,Limite teórico,,,,0.005
+auditoria_arredondamento,Humidity,Registros,,,,12417.0
+auditoria_arredondamento,Humidity,Modificados,,,,3708.0
+auditoria_arredondamento,Humidity,Modificados (%),,,,29.862285576226142
+auditoria_arredondamento,Humidity,Inalterados,,,,8709.0
+auditoria_arredondamento,Humidity,Diferença média com sinal,,,,-0.0001884436467670549
+auditoria_arredondamento,Humidity,Diferença absoluta média,,,,0.0011647913574678306
+auditoria_arredondamento,Humidity,Mediana da diferença absoluta,,,,0.0
+auditoria_arredondamento,Humidity,Maior diferença absoluta,,,,0.005000000000002558
+auditoria_arredondamento,Humidity,Erro quadrático médio,,,,4.890166008398155e-06
+auditoria_arredondamento,Humidity,Erro relativo médio (valores ≠ 0),,,,4.159513568436225e-05
+auditoria_arredondamento,Humidity,Maior erro relativo (valores ≠ 0),,,,0.00022867596615591153
+auditoria_arredondamento,Humidity,Valores distintos antes,,,,1815.0
+auditoria_arredondamento,Humidity,Valores distintos depois,,,,1134.0
+auditoria_arredondamento,Humidity,Zeros antes,,,,0.0
+auditoria_arredondamento,Humidity,Zeros depois,,,,0.0
+auditoria_arredondamento,Light,Casas decimais,,,,1.0
+auditoria_arredondamento,Light,Limite teórico,,,,0.05
+auditoria_arredondamento,Light,Registros,,,,12417.0
+auditoria_arredondamento,Light,Modificados,,,,855.0
+auditoria_arredondamento,Light,Modificados (%),,,,6.885721188692921
+auditoria_arredondamento,Light,Inalterados,,,,11562.0
+auditoria_arredondamento,Light,Diferença média com sinal,,,,-4.717035400733509e-05
+auditoria_arredondamento,Light,Diferença absoluta média,,,,0.002862435140754793
+auditoria_arredondamento,Light,Mediana da diferença absoluta,,,,0.0
+auditoria_arredondamento,Light,Maior diferença absoluta,,,,0.05000000000001137
+auditoria_arredondamento,Light,Erro quadrático médio,,,,0.0001240618660279527
+auditoria_arredondamento,Light,Erro relativo médio (valores ≠ 0),,,,7.190323713302852e-05
+auditoria_arredondamento,Light,Maior erro relativo (valores ≠ 0),,,,0.0071428571428565416
+auditoria_arredondamento,Light,Valores distintos antes,,,,1439.0
+auditoria_arredondamento,Light,Valores distintos depois,,,,1424.0
+auditoria_arredondamento,Light,Zeros antes,,,,7612.0
+auditoria_arredondamento,Light,Zeros depois,,,,7612.0
+auditoria_arredondamento,CO2,Casas decimais,,,,1.0
+auditoria_arredondamento,CO2,Limite teórico,,,,0.05
+auditoria_arredondamento,CO2,Registros,,,,12417.0
+auditoria_arredondamento,CO2,Modificados,,,,3376.0
+auditoria_arredondamento,CO2,Modificados (%),,,,27.18853185149392
+auditoria_arredondamento,CO2,Inalterados,,,,9041.0
+auditoria_arredondamento,CO2,Diferença média com sinal,,,,-0.00016921885126583834
+auditoria_arredondamento,CO2,Diferença absoluta média,,,,0.011059818144743033
+auditoria_arredondamento,CO2,Mediana da diferença absoluta,,,,0.0
+auditoria_arredondamento,CO2,Maior diferença absoluta,,,,0.0500000000001819
+auditoria_arredondamento,CO2,Erro quadrático médio,,,,0.0004687842694914655
+auditoria_arredondamento,CO2,Erro relativo médio (valores ≠ 0),,,,1.6596234562868334e-05
+auditoria_arredondamento,CO2,Maior erro relativo (valores ≠ 0),,,,0.0001167542323409489
+auditoria_arredondamento,CO2,Valores distintos antes,,,,4262.0
+auditoria_arredondamento,CO2,Valores distintos depois,,,,4114.0
+auditoria_arredondamento,CO2,Zeros antes,,,,0.0
+auditoria_arredondamento,CO2,Zeros depois,,,,0.0
+auditoria_arredondamento,HumidityRatio,Casas decimais,,,,5.0
+auditoria_arredondamento,HumidityRatio,Limite teórico,,,,5e-06
+auditoria_arredondamento,HumidityRatio,Registros,,,,12417.0
+auditoria_arredondamento,HumidityRatio,Modificados,,,,12417.0
+auditoria_arredondamento,HumidityRatio,Modificados (%),,,,100.0
+auditoria_arredondamento,HumidityRatio,Inalterados,,,,0.0
+auditoria_arredondamento,HumidityRatio,Diferença média com sinal,,,,3.899443012680948e-08
+auditoria_arredondamento,HumidityRatio,Diferença absoluta média,,,,2.4850995776629314e-06
+auditoria_arredondamento,HumidityRatio,Mediana da diferença absoluta,,,,2.4679850621003863e-06
+auditoria_arredondamento,HumidityRatio,Maior diferença absoluta,,,,4.9993794109005896e-06
+auditoria_arredondamento,HumidityRatio,Erro quadrático médio,,,,8.296523108523871e-12
+auditoria_arredondamento,HumidityRatio,Erro relativo médio (valores ≠ 0),,,,0.0005688340778049605
+auditoria_arredondamento,HumidityRatio,Maior erro relativo (valores ≠ 0),,,,0.001506310245202647
+auditoria_arredondamento,HumidityRatio,Valores distintos antes,,,,6220.0
+auditoria_arredondamento,HumidityRatio,Valores distintos depois,,,,250.0
+auditoria_arredondamento,HumidityRatio,Zeros antes,,,,0.0
+auditoria_arredondamento,HumidityRatio,Zeros depois,,,,0.0
+auditoria_arredondamento,Temperature,Dentro do limite,,,,1.0
+auditoria_arredondamento,Humidity,Dentro do limite,,,,1.0
+auditoria_arredondamento,Light,Dentro do limite,,,,1.0
+auditoria_arredondamento,CO2,Dentro do limite,,,,1.0
+auditoria_arredondamento,HumidityRatio,Dentro do limite,,,,1.0
+estatisticas_antes_depois,Temperature,Média,21.094509635407675,21.09618265281469,0.001673017407014754,
+estatisticas_antes_depois,Temperature,Mediana,20.79,20.8,0.010000000000001563,
+estatisticas_antes_depois,Temperature,Variância,1.076429052830095,1.0772760194703137,0.0008469666402186604,
+estatisticas_antes_depois,Temperature,Desvio padrão,1.037510989257509,1.0379190813692143,0.0004080921117053382,
+estatisticas_antes_depois,Temperature,Mínimo,19.5,19.5,0.0,
+estatisticas_antes_depois,Temperature,Primeiro quartil (Q1),20.39,20.4,0.00999999999999801,
+estatisticas_antes_depois,Temperature,Terceiro quartil (Q3),21.675,21.7,0.02499999999999858,
+estatisticas_antes_depois,Temperature,Máximo,24.4083333333333,24.4,-0.008333333333300885,
+estatisticas_antes_depois,Temperature,Amplitude,4.9083333333332995,4.899999999999999,-0.008333333333300885,
+estatisticas_antes_depois,Temperature,Assimetria,1.1040597654471866,1.1015349754296184,-0.0025247900175682236,
+estatisticas_antes_depois,Temperature,Valores distintos,444.0,50.0,-394.0,
+estatisticas_antes_depois,Temperature,Zeros,0.0,0.0,0.0,
+estatisticas_antes_depois,Temperature,Pearson com Occupancy,0.5764184960136742,0.5764862535101015,6.775749642728979e-05,
+estatisticas_antes_depois,Temperature,Spearman com Occupancy,0.5922883843547576,0.592661556430894,0.0003731720761364077,
+estatisticas_antes_depois,Temperature,Limite inferior IQR,18.4625,18.449999999999996,-0.012500000000002842,
+estatisticas_antes_depois,Temperature,Limite superior IQR,23.6025,23.65,0.04749999999999943,
+estatisticas_antes_depois,Temperature,Potenciais outliers IQR,461.0,447.0,-14.0,
+estatisticas_antes_depois,Humidity,Média,28.917947161533537,28.91775871788677,-0.0001884436467669559,
+estatisticas_antes_depois,Humidity,Mediana,28.6,28.6,0.0,
+estatisticas_antes_depois,Humidity,Variância,17.016797538533265,17.01641578005145,-0.00038175848181509764,
+estatisticas_antes_depois,Humidity,Desvio padrão,4.125142123434448,4.125095851013822,-4.6272420625825816e-05,
+estatisticas_antes_depois,Humidity,Mínimo,21.865,21.86,-0.004999999999999005,
+estatisticas_antes_depois,Humidity,Primeiro quartil (Q1),25.39,25.39,0.0,
+estatisticas_antes_depois,Humidity,Terceiro quartil (Q3),31.79,31.79,0.0,
+estatisticas_antes_depois,Humidity,Máximo,39.5,39.5,0.0,
+estatisticas_antes_depois,Humidity,Amplitude,17.635,17.64,0.004999999999999005,
+estatisticas_antes_depois,Humidity,Assimetria,0.3007978652238363,0.3007771980870363,-2.0667136799989994e-05,
+estatisticas_antes_depois,Humidity,Valores distintos,1815.0,1134.0,-681.0,
+estatisticas_antes_depois,Humidity,Zeros,0.0,0.0,0.0,
+estatisticas_antes_depois,Humidity,Pearson com Occupancy,-0.04267701309935066,-0.0426755177565563,1.4953427943595332e-06,
+estatisticas_antes_depois,Humidity,Spearman com Occupancy,-0.018933346013013087,-0.018970889351212786,-3.7543338199698406e-05,
+estatisticas_antes_depois,Humidity,Limite inferior IQR,15.790000000000003,15.790000000000003,0.0,
+estatisticas_antes_depois,Humidity,Limite superior IQR,41.39,41.39,0.0,
+estatisticas_antes_depois,Humidity,Potenciais outliers IQR,0.0,0.0,0.0,
+estatisticas_antes_depois,Light,Média,138.12594714619357,138.12589997583956,-4.717035400858549e-05,
+estatisticas_antes_depois,Light,Mediana,0.0,0.0,0.0,
+estatisticas_antes_depois,Light,Variância,48312.58181430337,48312.582745696505,0.0009313931368524209,
+estatisticas_antes_depois,Light,Desvio padrão,219.80123251315806,219.80123463187485,2.1187167931202566e-06,
+estatisticas_antes_depois,Light,Mínimo,0.0,0.0,0.0,
+estatisticas_antes_depois,Light,Primeiro quartil (Q1),0.0,0.0,0.0,
+estatisticas_antes_depois,Light,Terceiro quartil (Q3),392.0,392.0,0.0,
+estatisticas_antes_depois,Light,Máximo,1697.25,1697.2,-0.049999999999954525,
+estatisticas_antes_depois,Light,Amplitude,1697.25,1697.2,-0.049999999999954525,
+estatisticas_antes_depois,Light,Assimetria,1.3173095578060754,1.317306522662126,-3.0351439495035493e-06,
+estatisticas_antes_depois,Light,Valores distintos,1439.0,1424.0,-15.0,
+estatisticas_antes_depois,Light,Zeros,7612.0,7612.0,0.0,
+estatisticas_antes_depois,Light,Pearson com Occupancy,0.9197027675487198,0.9197028031114411,3.556272132332339e-08,
+estatisticas_antes_depois,Light,Spearman com Occupancy,0.8391176509571068,0.8391176809863063,3.002919957140193e-08,
+estatisticas_antes_depois,Light,Limite inferior IQR,-588.0,-588.0,0.0,
+estatisticas_antes_depois,Light,Limite superior IQR,980.0,980.0,0.0,
+estatisticas_antes_depois,Light,Potenciais outliers IQR,7.0,7.0,0.0,
+estatisticas_antes_depois,CO2,Média,745.6446244012624,745.6444551824112,-0.0001692188511697168,
+estatisticas_antes_depois,CO2,Mediana,632.0,632.0,0.0,
+estatisticas_antes_depois,CO2,Variância,87910.65509455412,87910.67478098739,0.019686433268361725,
+estatisticas_antes_depois,CO2,Desvio padrão,296.4973104339298,296.49734363226156,3.3198331777839485e-05,
+estatisticas_antes_depois,CO2,Mínimo,427.5,427.5,0.0,
+estatisticas_antes_depois,CO2,Primeiro quartil (Q1),527.5,527.5,0.0,
+estatisticas_antes_depois,CO2,Terceiro quartil (Q3),857.0,857.0,0.0,
+estatisticas_antes_depois,CO2,Máximo,2076.5,2076.5,0.0,
+estatisticas_antes_depois,CO2,Amplitude,1649.0,1649.0,0.0,
+estatisticas_antes_depois,CO2,Assimetria,1.3850828217413163,1.3850851008041292,2.2790628129154555e-06,
+estatisticas_antes_depois,CO2,Valores distintos,4262.0,4114.0,-148.0,
+estatisticas_antes_depois,CO2,Zeros,0.0,0.0,0.0,
+estatisticas_antes_depois,CO2,Pearson com Occupancy,0.3709741935954548,0.3709745329659583,3.3937050347709885e-07,
+estatisticas_antes_depois,CO2,Spearman com Occupancy,0.4489905007895945,0.4489904490756406,-5.171395389691469e-08,
+estatisticas_antes_depois,CO2,Limite inferior IQR,33.25,33.25,0.0,
+estatisticas_antes_depois,CO2,Limite superior IQR,1351.25,1351.25,0.0,
+estatisticas_antes_depois,CO2,Potenciais outliers IQR,992.0,992.0,0.0,
+estatisticas_antes_depois,HumidityRatio,Média,0.004468208569393663,0.0044682475638237905,3.899443012760073e-08,
+estatisticas_antes_depois,HumidityRatio,Mediana,0.0045113540952711,0.00451,-1.354095271099455e-06,
+estatisticas_antes_depois,HumidityRatio,Variância,3.546151518007244e-07,3.545543707304128e-07,-6.078107031161205e-11,
+estatisticas_antes_depois,HumidityRatio,Desvio padrão,0.0005954957193806891,0.0005954446831825882,-5.1036198100875944e-08,
+estatisticas_antes_depois,HumidityRatio,Mínimo,0.0032747639766004,0.00327,-4.7639766004000175e-06,
+estatisticas_antes_depois,HumidityRatio,Primeiro quartil (Q1),0.0039880225741871,0.00399,1.977425812899926e-06,
+estatisticas_antes_depois,HumidityRatio,Terceiro quartil (Q3),0.0049417553923567,0.00494,-1.7553923567000668e-06,
+estatisticas_antes_depois,HumidityRatio,Máximo,0.0057686083475499,0.00577,1.3916524500999158e-06,
+estatisticas_antes_depois,HumidityRatio,Amplitude,0.0024938443709495,0.0025,6.155629050499933e-06,
+estatisticas_antes_depois,HumidityRatio,Assimetria,-0.14575172589419175,-0.14504630643006527,0.0007054194641264722,
+estatisticas_antes_depois,HumidityRatio,Valores distintos,6220.0,250.0,-5970.0,
+estatisticas_antes_depois,HumidityRatio,Zeros,0.0,0.0,0.0,
+estatisticas_antes_depois,HumidityRatio,Pearson com Occupancy,0.24200037112663486,0.24198222431762867,-1.8146809006192033e-05,
+estatisticas_antes_depois,HumidityRatio,Spearman com Occupancy,0.22655453665918898,0.2265831971232653,2.8660464076318837e-05,
+estatisticas_antes_depois,HumidityRatio,Limite inferior IQR,0.0025574233469326992,0.002564999999999999,7.576653067299915e-06,
+estatisticas_antes_depois,HumidityRatio,Limite superior IQR,0.0063723546196111005,0.006365000000000001,-7.354619611099622e-06,
+estatisticas_antes_depois,HumidityRatio,Potenciais outliers IQR,0.0,0.0,0.0,
+repeticoes_antes_depois,cinco sensores,Linhas integralmente duplicadas,0.0,0.0,0.0,
+repeticoes_antes_depois,cinco sensores,Timestamps repetidos,0.0,0.0,0.0,
+repeticoes_antes_depois,cinco sensores,Vetores de sensores repetidos (ocorrências excedentes),571.0,603.0,32.0,
+repeticoes_antes_depois,cinco sensores,Grupos de vetores repetidos,461.0,487.0,26.0,
+repeticoes_antes_depois,cinco sensores,Registros envolvidos em repetições,1032.0,1090.0,58.0,
+repeticoes_antes_depois,cinco sensores,Vetores associados a classes diferentes,0.0,0.0,0.0,
+repeticoes_antes_depois,cinco sensores,Vetores distintos,11846.0,11814.0,-32.0,
+repeticoes_antes_depois,cinco sensores,Vetores arredondados com fusão de vetores originais,,,,32.0
+correlacoes,cinco sensores e Occupancy,Maior alteração absoluta na matriz de Pearson,,,,0.0009777165611453004
