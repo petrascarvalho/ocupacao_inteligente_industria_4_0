@@ -135,6 +135,7 @@ print(plt.rcParams["figure.figsize"])
 # | `pasta_features` | `dados/features` |
 # | `caminho_features` | `dados/features/occupancy_features.csv` (gerado na Fase 3) |
 # | `caminho_grafico_split` | `resultados/graficos/split_01_divisao_treino_teste.png` (gerado na Fase 4) |
+# | `caminho_grafico_scaler` | `resultados/graficos/scaler_01_padronizacao_atributos.png` (gerado na Fase 5) |
 # | `pasta_graficos` / `pasta_metricas` | `resultados/graficos` / `resultados/metricas` |
 #
 # Conceitos: o item 5.1 do enunciado proíbe caminhos absolutos; `os.makedirs(..., exist_ok=True)` cria as pastas sem erro
@@ -177,6 +178,9 @@ caminho_features = "dados/features/occupancy_features.csv"
 
 # Definindo o caminho do gráfico da divisão treino/teste (Fase 4)
 caminho_grafico_split = f"{pasta_graficos}/split_01_divisao_treino_teste.png"
+
+# Definindo o caminho do gráfico da padronização dos atributos (Fase 5)
+caminho_grafico_scaler = f"{pasta_graficos}/scaler_01_padronizacao_atributos.png"
 
 # Validando o diretório de trabalho
 print("Diretório atual:", os.getcwd())
@@ -3053,3 +3057,915 @@ print(tabela_resumo_fase4.to_string())
 #   exigido.
 # - Nenhum resultado preditivo foi produzido nesta fase. A próxima etapa é a Fase 5 — escalonamento com
 #   `StandardScaler`.
+
+# %% [markdown]
+# # FASE 5 — StandardScaler (Padronização dos Dados)
+# ## BLOCO 48 — Contextualização do escalonamento
+#
+# ### Requisitos do enunciado
+#
+# | Fonte | Exigência |
+# |---|---|
+# | Enunciado, Fase 5 (p. 5) | Aplicar o `StandardScaler` nas variáveis numéricas destinadas ao KNN, usando obrigatoriamente `fit_transform()` apenas no treino e `transform()` no teste |
+# | Enunciado, Fase 5 (p. 5) | Manter sem escalonamento os dados da Árvore de Decisão e justificar no código por que algoritmos baseados em árvores são imunes à diferença de escala entre os sensores (ex.: Lux de 0 a mais de 1.000 e Temperatura de 19 a 24) |
+# | Rubrica, critério 8 (p. 8 e 9) | Pontuação total: `StandardScaler` apenas no KNN (`fit_transform` no treino e `transform` no teste) e justificativa da ausência na Árvore |
+#
+# Os materiais didáticos apresentam o mesmo procedimento: o MUS01 (slide 48) inclui a normalização/padronização no
+# pré-processamento, para não comparar diretamente grandezas de escalas diferentes; o notebook `knn.ipynb` aplica
+# `fit_transform` no treino e `transform` no teste e explica que, sem padronização, uma variável de valores grandes
+# domina o cálculo da distância; os notebooks `01_pipeline_exemplo.ipynb` e `03_pipeline_exemplo.ipynb` mostram o mesmo
+# par de chamadas e o `StandardScaler` dentro de um `Pipeline`, ajustado apenas na parte de treino de cada divisão da
+# validação cruzada. A inspeção das escalas e dos parâmetros, a validação matemática, a transformação inversa e a
+# análise das distâncias desta fase são **complementos metodológicos** deste projeto, e não exigências do enunciado.
+#
+# ### Escalonamento
+#
+# Escalonar é expressar atributos medidos em unidades e ordens de grandeza diferentes em escalas numéricas comparáveis,
+# sem alterar a ordem dos valores dentro de cada atributo.
+#
+# | Técnica | Fórmula | Resultado no conjunto de ajuste |
+# |---|---|---|
+# | Padronização (`StandardScaler`, usada nesta fase) | `z = (x − μ) / σ` | Média 0 e desvio padrão 1; valores sem limites fixos |
+# | Normalização Min-Max (`MinMaxScaler`, apenas para comparação) | `x' = (x − mínimo) / (máximo − mínimo)` | Valores entre 0 e 1; depende diretamente dos dois valores extremos |
+#
+# ### Fórmula do StandardScaler
+#
+# Para cada atributo `j`, o scaler aprende no treinamento (`n` = 9.933 registros):
+#
+# - a média `μ_j = (1/n) · Σ x_ij`;
+# - a variância populacional `σ²_j = (1/n) · Σ (x_ij − μ_j)²`, com divisor `n` (`ddof=0`), e não `n − 1`;
+# - o desvio padrão populacional `σ_j = √σ²_j`.
+#
+# Cada valor é transformado em `z_ij = (x_ij − μ_j) / σ_j`, isto é, na distância até a média do treino medida em
+# desvios padrão do treino. Os parâmetros ficam em `scaler.mean_` (μ), `scaler.var_` (σ²) e `scaler.scale_` (σ). Se
+# um atributo tivesse variância zero, o scikit-learn usaria fator de escala 1 para evitar divisão por zero.
+#
+# | Método | O que faz | Uso nesta fase |
+# |---|---|---|
+# | `fit` | Aprende μ e σ de cada atributo | Executado dentro de `fit_transform` |
+# | `transform` | Aplica a fórmula com os parâmetros **já aprendidos** | `X_test` |
+# | `fit_transform` | `fit` seguido de `transform` no mesmo conjunto | `X_train` |
+#
+# ### Escala e distância
+#
+# O KNN classifica um registro pelos vizinhos mais próximos, usando por padrão a distância euclidiana
+# `d(a, b) = √Σ_j (x_aj − x_bj)²`. As diferenças de todos os atributos são somadas como números puros: uma diferença de
+# 100 ppm de `CO2` pesa 10.000 vezes mais no quadrado da distância que uma diferença de 1 °C de `Temperature`, apenas
+# por causa das unidades. Após a padronização, cada diferença é medida em desvios padrão do treino do próprio atributo.
+#
+# ### Data Leakage
+#
+# O scaler é ajustado depois da divisão da Fase 4 e somente com `X_train`. O teste é transformado com a média e o
+# desvio padrão do treino, como aconteceria com registros novos em produção. Ajustar o scaler na base completa ou no
+# teste faria estatísticas do teste participarem da preparação dos dados (BLOCO 37).
+#
+# ### Por que a Árvore de Decisão não precisa de escalonamento
+#
+# Cada divisão de uma árvore compara **um único atributo** com um limiar (na forma `Light ≤ limiar`) e escolhe a
+# divisão que melhor separa as classes. O resultado depende apenas da **ordem** dos valores daquele atributo, e as
+# diferenças de atributos distintos nunca são somadas. A padronização é uma transformação crescente (σ > 0): preserva
+# a ordem dos valores e, portanto, as mesmas separações possíveis dos registros — só o valor numérico do limiar muda.
+# Por isso, a diferença de escala entre `Light` (0 a mais de 1.000 lux) e `Temperature` (19 a 24 °C) não afeta a
+# árvore, e os dados destinados a ela permanecem **sem escalonamento**.
+#
+# ### Registros desta fase
+#
+# - Apenas os atributos de `X` são padronizados; a variável alvo `y` não é transformada.
+# - O conjunto de teste não participa do ajuste.
+# - O `StandardScaler` muda a posição e a escala de cada atributo, mas não a forma da distribuição: não torna os dados
+#   normais, não remove outliers e não altera as correlações entre os atributos.
+# - Nenhum classificador é instanciado ou treinado nesta fase.
+
+# %% [markdown]
+# ### BLOCO 49 — Inspeção das escalas originais
+#
+# As estatísticas são calculadas **somente em `X_train`**, o conjunto em que o scaler será ajustado. A variância e o
+# desvio padrão são populacionais (`ddof=0`), como no `StandardScaler`; a assimetria é a do pandas (`skew`, ajustada
+# para o tamanho da amostra), a mesma usada nas fases anteriores. Os valores armazenados não são arredondados; o
+# arredondamento é aplicado apenas na exibição.
+#
+# Os atributos têm unidades diferentes, e por isso seus desvios padrão não são comparáveis como grandezas físicas. A
+# comparação abaixo trata somente da **ordem de grandeza numérica**, que é o que a distância euclidiana enxerga, e não
+# indica importância preditiva.
+
+# %%
+# BLOCO 49 — Inspeção das escalas originais (somente treinamento)
+
+unidades_atributos = {
+    "Temperature": "°C",
+    "Humidity": "% (umidade relativa)",
+    "Light": "lux",
+    "CO2": "ppm",
+    "HumidityRatio": "kg/kg (razão de umidade)",
+    "CO2_Light_Ratio": "índice experimental",
+}
+
+tabela_escalas = pd.DataFrame({
+    "Unidade": pd.Series(unidades_atributos),
+    "Tipo": X_train.dtypes.astype(str),
+    "Observações": X_train.count(),
+    "Mínimo": X_train.min(),
+    "Máximo": X_train.max(),
+    "Amplitude": X_train.max() - X_train.min(),
+    "Média": X_train.mean(),
+    "Mediana": X_train.median(),
+    "Variância (ddof=0)": X_train.var(ddof=0),
+    "Desvio padrão (ddof=0)": X_train.std(ddof=0),
+    "Assimetria": X_train.skew(),
+}).loc[atributos_preditores]
+tabela_escalas.index.name = "Atributo"
+print(tabela_escalas.to_string(float_format=lambda valor: f"{valor:.6g}"))
+
+# Ordem de grandeza numérica dos desvios padrão (unidades diferentes)
+desvios_originais = tabela_escalas["Desvio padrão (ddof=0)"]
+atributo_maior_escala = desvios_originais.idxmax()
+atributo_menor_escala = desvios_originais.idxmin()
+print("\nAtributos ordenados pelo desvio padrão numérico:")
+print(desvios_originais.sort_values(ascending=False).map(lambda valor: f"{valor:.6g}").to_string())
+print(f"\nMaior desvio padrão numérico: {atributo_maior_escala} ({desvios_originais.max():.6g})")
+print(f"Menor desvio padrão numérico: {atributo_menor_escala} ({desvios_originais.min():.6g})")
+print(f"Razão entre o maior e o menor desvio padrão numérico: {desvios_originais.max() / desvios_originais.min():.6g}")
+
+assert (tabela_escalas["Observações"] == len(X_train)).all(), "Observações ausentes no treinamento."
+
+# %% [markdown]
+# ### BLOCO 50 — Preservação dos conjuntos originais
+#
+# Os conjuntos padronizados serão criados com **nomes novos** (`X_train_scaled` e `X_test_scaled`). Os conjuntos
+# originais continuam disponíveis para a Árvore de Decisão e para o `Pipeline` do KNN na Fase 6. Cópias independentes
+# são guardadas como referência para confirmar, ao final da fase, que nenhum valor original foi alterado.
+
+# %%
+# BLOCO 50 — Preservação dos conjuntos originais
+
+# Referências independentes (cópias profundas) para a verificação final
+X_train_referencia = X_train.copy(deep=True)
+X_test_referencia = X_test.copy(deep=True)
+y_train_referencia = y_train.copy(deep=True)
+y_test_referencia = y_test.copy(deep=True)
+X_referencia = X.copy(deep=True)
+y_referencia = y.copy(deep=True)
+rastreio_temporal_referencia = rastreio_temporal.copy(deep=True)
+# df_features_referencia foi criada no BLOCO 38
+
+# Validações dos conjuntos que serão usados no escalonamento
+assert X_train.shape == (9933, 6) and X_test.shape == (2484, 6), "Dimensões de X_train ou X_test divergentes."
+assert y_train.shape == (9933,) and y_test.shape == (2484,), "Dimensões de y_train ou y_test divergentes."
+assert X_train.index.is_unique and X_test.index.is_unique, "Índices repetidos."
+assert X_train.index.equals(y_train.index) and X_test.index.equals(y_test.index), "Índices de X e y divergentes."
+assert set(X_train.index).isdisjoint(X_test.index), "Registros presentes no treino e no teste."
+assert list(X_train.columns) == list(X_test.columns) == atributos_preditores, "Atributos ou ordem divergentes."
+assert (X_train.dtypes == "float64").all() and (X_test.dtypes == "float64").all(), "Atributo não float64."
+assert "date" not in X_train.columns and variavel_alvo not in X_train.columns, "Coluna indevida nos preditores."
+assert X_train.isna().sum().sum() == 0 and X_test.isna().sum().sum() == 0, "Existem valores ausentes."
+assert np.isinf(X_train).sum().sum() == 0 and np.isinf(X_test).sum().sum() == 0, "Existem valores infinitos."
+pd.testing.assert_frame_equal(df_features, df_features_referencia, check_exact=True)
+
+tabela_conjuntos_originais = pd.DataFrame({
+    "Dimensões": [str(conjunto.shape) for conjunto in [X_train, X_test, y_train, y_test]],
+    "Índices únicos": [conjunto.index.is_unique for conjunto in [X_train, X_test, y_train, y_test]],
+}, index=["X_train", "X_test", "y_train", "y_test"])
+print(tabela_conjuntos_originais)
+print("\nConjuntos originais validados e copiados para referência.")
+
+# %% [markdown]
+# ### BLOCO 51 — Ajuste do StandardScaler
+#
+# `StandardScaler` já está importado no BLOCO 01. Um único scaler é instanciado nesta fase. As chamadas seguem a
+# exigência do enunciado: `fit_transform` **somente** em `X_train` e `transform` em `X_test`. As saídas do scikit-learn
+# são matrizes NumPy; elas são convertidas em DataFrames com os nomes, a ordem e os índices originais, para que cada
+# registro padronizado continue rastreável até `df_features`. Os parâmetros são copiados logo após o ajuste, para
+# confirmar que a transformação do teste não os altera.
+
+# %%
+# BLOCO 51 — Ajuste do StandardScaler
+
+scaler = StandardScaler()
+
+# Ajuste (média e desvio padrão) e transformação somente no treinamento
+X_train_scaled = pd.DataFrame(
+    scaler.fit_transform(X_train),
+    columns=X_train.columns,
+    index=X_train.index,
+)
+
+# Cópia dos parâmetros logo após o ajuste
+parametros_apos_ajuste = {
+    "mean_": scaler.mean_.copy(),
+    "var_": scaler.var_.copy(),
+    "scale_": scaler.scale_.copy(),
+    "n_samples_seen_": int(scaler.n_samples_seen_),
+}
+
+# Transformação do teste com os parâmetros aprendidos no treinamento (sem novo ajuste)
+X_test_scaled = pd.DataFrame(
+    scaler.transform(X_test),
+    columns=X_test.columns,
+    index=X_test.index,
+)
+
+# Validações
+for nome_parametro in ["mean_", "var_", "scale_"]:
+    assert np.array_equal(getattr(scaler, nome_parametro), parametros_apos_ajuste[nome_parametro]), \
+        f"Parâmetro {nome_parametro} alterado pela transformação do teste."
+assert X_train_scaled.shape == (9933, 6) and X_test_scaled.shape == (2484, 6), "Dimensões padronizadas divergentes."
+assert X_train_scaled.index.equals(X_train.index) and X_test_scaled.index.equals(X_test.index), "Índices alterados."
+assert list(X_train_scaled.columns) == list(X_test_scaled.columns) == atributos_preditores, "Atributos divergentes."
+assert (X_train_scaled.dtypes == "float64").all() and (X_test_scaled.dtypes == "float64").all(), "Tipo não float64."
+assert np.isfinite(X_train_scaled.to_numpy()).all() and np.isfinite(X_test_scaled.to_numpy()).all(), \
+    "Valores ausentes ou infinitos após a padronização."
+pd.testing.assert_frame_equal(X_train, X_train_referencia, check_exact=True)
+pd.testing.assert_frame_equal(X_test, X_test_referencia, check_exact=True)
+
+print("X_train_scaled:", X_train_scaled.shape, "| X_test_scaled:", X_test_scaled.shape)
+print("Observações usadas no ajuste (n_samples_seen_):", parametros_apos_ajuste["n_samples_seen_"])
+print("\nPrimeiros registros do treinamento padronizado (índices originais):")
+print(X_train_scaled.head(3).round(4))
+
+# %% [markdown]
+# ### BLOCO 52 — Parâmetros aprendidos pelo StandardScaler
+#
+# Os parâmetros do scaler são comparados com um cálculo independente feito com o pandas sobre `X_train` (`ddof=0`). Os
+# dois algoritmos são matematicamente equivalentes, mas podem somar os valores em ordens diferentes; por isso, a
+# comparação usa tolerância relativa `rtol = 1e-10` e `atol = 0`, e não igualdade binária. A tolerância absoluta é zero
+# porque nenhum parâmetro é nulo e a variância de `HumidityRatio` é da ordem de 10⁻⁷: uma tolerância absoluta de
+# `1e-12` equivaleria, para ela, a um critério relativo muito mais frouxo. Diferenças relativas da ordem de 10⁻¹⁶ são
+# arredondamentos de ponto flutuante; uma diferença acima de 10⁻¹⁰ indicaria erro de cálculo, e não arredondamento.
+
+# %%
+# BLOCO 52 — Parâmetros aprendidos pelo StandardScaler
+
+tabela_parametros = pd.DataFrame({
+    "Média aprendida (mean_)": scaler.mean_,
+    "Variância aprendida (var_)": scaler.var_,
+    "Fator de escala (scale_)": scaler.scale_,
+}, index=pd.Index(scaler.feature_names_in_, name="Atributo"))
+print(tabela_parametros.to_string(float_format=lambda valor: f"{valor:.10g}"))
+
+print("\nn_features_in_:", scaler.n_features_in_)
+print("n_samples_seen_:", int(scaler.n_samples_seen_))
+print("feature_names_in_:", list(scaler.feature_names_in_))
+
+assert scaler.n_features_in_ == 6, "Quantidade de atributos do ajuste divergente."
+assert int(scaler.n_samples_seen_) == len(X_train) == 9933, "Quantidade de observações do ajuste divergente."
+assert list(scaler.feature_names_in_) == atributos_preditores, "Atributos ou ordem do ajuste divergentes."
+assert np.isfinite(tabela_parametros.to_numpy()).all(), "Parâmetros ausentes ou infinitos."
+assert (scaler.scale_ > 0).all(), "Fator de escala não positivo."
+
+# Atributos constantes no treinamento (variância zero)
+atributos_constantes = [atributo for atributo, variancia in zip(atributos_preditores, scaler.var_) if variancia == 0]
+print("Atributos com variância zero no treinamento:", atributos_constantes if atributos_constantes else "nenhum")
+
+# Cálculo independente, somente no treinamento (ddof=0)
+media_independente = X_train.mean()
+variancia_independente = X_train.var(ddof=0)
+desvio_independente = X_train.std(ddof=0)
+
+def diferenca_relativa(valor_scaler, valor_independente):
+    return np.abs(np.asarray(valor_scaler) - np.asarray(valor_independente)) / np.abs(np.asarray(valor_independente))
+
+tabela_comparacao_parametros = pd.DataFrame({
+    "Média (pandas)": media_independente,
+    "Dif. relativa da média": diferenca_relativa(scaler.mean_, media_independente),
+    "Variância (pandas)": variancia_independente,
+    "Dif. relativa da variância": diferenca_relativa(scaler.var_, variancia_independente),
+    "Desvio padrão (pandas)": desvio_independente,
+    "Dif. relativa do desvio": diferenca_relativa(scaler.scale_, desvio_independente),
+})
+tabela_comparacao_parametros.index.name = "Atributo"
+print("\nComparação com o cálculo independente (pandas, ddof=0):")
+print(tabela_comparacao_parametros.to_string(float_format=lambda valor: f"{valor:.6g}"))
+
+tolerancia_parametros = 1e-10
+maior_diferenca_parametros = tabela_comparacao_parametros.filter(like="Dif. relativa").to_numpy().max()
+print(f"\nMaior diferença relativa: {maior_diferenca_parametros:.3e} (tolerância: {tolerancia_parametros:.0e})")
+print("Parâmetros binariamente iguais ao cálculo independente:",
+      int((scaler.mean_ == media_independente.to_numpy()).sum()), "médias,",
+      int((scaler.var_ == variancia_independente.to_numpy()).sum()), "variâncias,",
+      int((scaler.scale_ == desvio_independente.to_numpy()).sum()), "desvios (de 6)")
+
+assert np.allclose(scaler.mean_, media_independente, rtol=tolerancia_parametros, atol=0), "Médias divergentes."
+assert np.allclose(scaler.var_, variancia_independente, rtol=tolerancia_parametros, atol=0), "Variâncias divergentes."
+assert np.allclose(scaler.scale_, desvio_independente, rtol=tolerancia_parametros, atol=0), "Desvios divergentes."
+assert np.allclose(scaler.scale_, np.sqrt(scaler.var_), rtol=tolerancia_parametros, atol=0), "scale_ ≠ √var_."
+print("Parâmetros do scaler conferidos com o cálculo independente.")
+
+# %% [markdown]
+# ### BLOCO 53 — Validação matemática da transformação
+#
+# A fórmula `(x − mean_) / scale_` é recalculada com o pandas, para o treino e para o teste, sempre com os parâmetros
+# do treino, e comparada aos DataFrames padronizados. Os valores padronizados são adimensionais e da ordem de 1; a
+# tolerância `rtol = atol = 1e-12` é, portanto, milhares de vezes maior que o arredondamento de um `float64` nessa faixa
+# (cerca de 2 × 10⁻¹⁶) e ainda muito menor que qualquer erro de fórmula. Em seguida, o cálculo é mostrado passo a passo
+# para `CO2` e `HumidityRatio` — os atributos de maior e de menor ordem de grandeza entre as medições dos sensores — nos
+# dois primeiros registros reais de `X_train`.
+
+# %%
+# BLOCO 53 — Validação matemática da transformação
+
+X_train_manual = (X_train - scaler.mean_) / scaler.scale_
+X_test_manual = (X_test - scaler.mean_) / scaler.scale_
+
+for nome_conjunto, manual, escalonado in [
+    ("Treinamento", X_train_manual, X_train_scaled),
+    ("Teste", X_test_manual, X_test_scaled),
+]:
+    assert manual.shape == escalonado.shape, "Dimensões divergentes."
+    assert manual.index.equals(escalonado.index), "Índices divergentes."
+    assert list(manual.columns) == list(escalonado.columns) == atributos_preditores, "Atributos divergentes."
+    assert (manual.dtypes == "float64").all(), "Tipo não float64."
+    assert np.isfinite(manual.to_numpy()).all(), "Valores ausentes ou infinitos."
+    pd.testing.assert_frame_equal(manual, escalonado, check_exact=False, rtol=1e-12, atol=1e-12)
+    diferenca_absoluta = (manual - escalonado).abs()
+    print(f"{nome_conjunto}: {int((diferenca_absoluta == 0).sum().sum())} de {manual.size} valores idênticos; "
+          f"maior diferença absoluta = {diferenca_absoluta.max().max():.3e}")
+
+# Exemplos reais: dois primeiros registros do treinamento
+linhas_exemplo = []
+for indice in X_train.index[:2]:
+    for atributo in ["CO2", "HumidityRatio"]:
+        posicao = atributos_preditores.index(atributo)
+        valor_original = X_train.loc[indice, atributo]
+        resultado_manual = (valor_original - scaler.mean_[posicao]) / scaler.scale_[posicao]
+        resultado_scaler = X_train_scaled.loc[indice, atributo]
+        linhas_exemplo.append({
+            "Índice": indice,
+            "Data": rastreio_temporal.loc[indice, "date"],
+            "Atributo": atributo,
+            "Valor original": valor_original,
+            "Média aprendida": scaler.mean_[posicao],
+            "Fator de escala": scaler.scale_[posicao],
+            "Resultado manual": resultado_manual,
+            "StandardScaler": resultado_scaler,
+            "Diferença": resultado_manual - resultado_scaler,
+        })
+tabela_exemplos_transformacao = pd.DataFrame(linhas_exemplo)
+print("\nExemplos de cálculo com registros reais do treinamento:")
+print(tabela_exemplos_transformacao.to_string(index=False, float_format=lambda valor: f"{valor:.10g}"))
+
+del X_train_manual, X_test_manual
+
+# %% [markdown]
+# ### BLOCO 54 — Estatísticas após a padronização
+#
+# No treinamento, os atributos não constantes devem ter média 0 e desvio padrão populacional 1, a menos de
+# arredondamentos de ponto flutuante (tolerância de `1e-10`). No teste, a média e o desvio padrão **não precisam** ser
+# 0 e 1: o teste é transformado com os parâmetros do treino, e suas estatísticas refletem a diferença entre as duas
+# amostras. O scaler não é reajustado para forçar esses valores, pois isso seria ajustar o scaler no teste.
+
+# %%
+# BLOCO 54 — Estatísticas após a padronização
+
+tabela_estatisticas_padronizadas = pd.DataFrame({
+    "Média treino original": X_train.mean(),
+    "Desvio treino original": X_train.std(ddof=0),
+    "Média treino escalonado": X_train_scaled.mean(),
+    "Desvio treino escalonado": X_train_scaled.std(ddof=0),
+    "Média teste escalonado": X_test_scaled.mean(),
+    "Desvio teste escalonado": X_test_scaled.std(ddof=0),
+})
+tabela_estatisticas_padronizadas.index.name = "Atributo"
+print(tabela_estatisticas_padronizadas.to_string(float_format=lambda valor: f"{valor:.6g}"))
+
+atributos_nao_constantes = [atributo for atributo in atributos_preditores if atributo not in atributos_constantes]
+media_abs_treino = X_train_scaled[atributos_nao_constantes].mean().abs()
+desvio_unitario_treino = (X_train_scaled[atributos_nao_constantes].std(ddof=0) - 1).abs()
+media_abs_teste = X_test_scaled.mean().abs()
+desvio_unitario_teste = (X_test_scaled.std(ddof=0) - 1).abs()
+
+tabela_desvios_numericos = pd.DataFrame({
+    "Treinamento": [
+        f"{media_abs_treino.min():.3e} ({media_abs_treino.idxmin()})",
+        f"{media_abs_treino.max():.3e} ({media_abs_treino.idxmax()})",
+        f"{desvio_unitario_treino.max():.3e} ({desvio_unitario_treino.idxmax()})",
+    ],
+    "Teste": [
+        f"{media_abs_teste.min():.4f} ({media_abs_teste.idxmin()})",
+        f"{media_abs_teste.max():.4f} ({media_abs_teste.idxmax()})",
+        f"{desvio_unitario_teste.max():.4f} ({desvio_unitario_teste.idxmax()})",
+    ],
+}, index=["Menor |média|", "Maior |média| (desvio máximo em relação a 0)", "Maior |desvio padrão − 1|"])
+print("\nDesvios em relação a média 0 e desvio padrão 1:")
+print(tabela_desvios_numericos.to_string())
+
+tolerancia_padronizacao = 1e-10
+assert media_abs_treino.max() < tolerancia_padronizacao, "Média do treino padronizado diferente de 0."
+assert desvio_unitario_treino.max() < tolerancia_padronizacao, "Desvio do treino padronizado diferente de 1."
+print("\nTreinamento padronizado: média 0 e desvio padrão 1 (tolerância de 1e-10).")
+
+# %% [markdown]
+# ### BLOCO 55 — Validação da transformação inversa
+#
+# `inverse_transform` calcula `z · scale_ + mean_` e deve reconstruir os valores originais. A subtração, a divisão, a
+# multiplicação e a soma introduzem arredondamentos legítimos, por isso a igualdade binária não é exigida. A tolerância
+# de cada atributo é `1e-12` vezes o maior valor absoluto daquele atributo no treino: um critério relativo à magnitude da
+# coluna, que acomoda poucos arredondamentos e ainda detectaria qualquer erro real. O erro relativo é calculado apenas
+# para valores originais diferentes de zero (`Light` tem muitos zeros). Os DataFrames reconstruídos são temporários e
+# descartados ao final; os dados originais não são arredondados nem substituídos.
+
+# %%
+# BLOCO 55 — Validação da transformação inversa
+
+X_train_reconstruido = pd.DataFrame(
+    scaler.inverse_transform(X_train_scaled), columns=X_train.columns, index=X_train.index
+)
+X_test_reconstruido = pd.DataFrame(
+    scaler.inverse_transform(X_test_scaled), columns=X_test.columns, index=X_test.index
+)
+
+tolerancia_inversa = 1e-12 * X_train.abs().max()
+
+def medir_inversa(original, reconstruido):
+    erro_absoluto = (reconstruido - original).abs()
+    valores_nao_nulos = original != 0
+    erro_relativo = (erro_absoluto / original.abs()).where(valores_nao_nulos)
+    return {
+        "Valores": original.size,
+        "Iguais exatamente": int((erro_absoluto == 0).sum().sum()),
+        "Valores zero (sem erro relativo)": int((~valores_nao_nulos).sum().sum()),
+        "Maior erro absoluto": erro_absoluto.max().max(),
+        "Maior erro relativo": erro_relativo.max().max(),
+        "Dentro da tolerância": bool(erro_absoluto.le(tolerancia_inversa, axis=1).all().all()),
+    }, erro_absoluto.max(), erro_relativo.max()
+
+resumo_inversa_treino, erro_por_atributo_treino, erro_relativo_por_atributo_treino = medir_inversa(
+    X_train, X_train_reconstruido
+)
+resumo_inversa_teste, erro_por_atributo_teste, erro_relativo_por_atributo_teste = medir_inversa(
+    X_test, X_test_reconstruido
+)
+
+def formatar_resumo_inversa(resumo):
+    return {chave: (f"{valor:.3e}" if isinstance(valor, float) else valor) for chave, valor in resumo.items()}
+
+tabela_inversa = pd.DataFrame({
+    "Treinamento": formatar_resumo_inversa(resumo_inversa_treino),
+    "Teste": formatar_resumo_inversa(resumo_inversa_teste),
+})
+print(tabela_inversa.to_string())
+
+tabela_erro_inversa = pd.DataFrame({
+    "Tolerância": tolerancia_inversa,
+    "Maior erro absoluto (treino)": erro_por_atributo_treino,
+    "Maior erro absoluto (teste)": erro_por_atributo_teste,
+    "Maior erro relativo (treino)": erro_relativo_por_atributo_treino,
+    "Maior erro relativo (teste)": erro_relativo_por_atributo_teste,
+})
+print("\nMaiores erros por atributo:")
+print(tabela_erro_inversa.to_string(float_format=lambda valor: f"{valor:.3e}"))
+
+assert resumo_inversa_treino["Dentro da tolerância"] and resumo_inversa_teste["Dentro da tolerância"], \
+    "A transformação inversa não reconstruiu os dados originais."
+assert X_train_reconstruido.index.equals(X_train.index) and X_test_reconstruido.index.equals(X_test.index)
+print("\nTransformação inversa validada dentro da tolerância.")
+
+del X_train_reconstruido, X_test_reconstruido
+
+# %% [markdown]
+# ### BLOCO 56 — Influência da escala nas distâncias
+#
+# Análise complementar, **sem treinar classificadores**, feita somente com `X_train` e sem usar `y_train`. São
+# sorteados 1.000 pares de registros distintos do treino (gerador NumPy com semente 42). Para cada par, calculam-se a
+# distância euclidiana antes e depois da padronização e a contribuição de cada atributo para o quadrado da distância:
+#
+# `contribuição_j = (x_aj − x_bj)² / Σ_k (x_ak − x_bk)² × 100`
+#
+# As contribuições de um par somam 100%. Pares com distância zero (medições idênticas nos seis atributos, possíveis
+# pelas repetições identificadas no BLOCO 20.3) não têm contribuição definida e são excluídos **apenas** dessa média,
+# sem nenhuma divisão por zero; nenhum registro é removido. As distâncias originais e padronizadas estão em escalas
+# diferentes e não devem ser comparadas em valor absoluto: o objetivo é medir quais atributos determinam a distância.
+
+# %%
+# BLOCO 56 — Influência da escala nas distâncias
+
+quantidade_pares = 1000
+gerador_pares = np.random.default_rng(42)
+posicao_a = gerador_pares.integers(0, len(X_train), size=quantidade_pares)
+posicao_b = gerador_pares.integers(0, len(X_train) - 1, size=quantidade_pares)
+posicao_b = posicao_b + (posicao_b >= posicao_a)  # garante dois registros distintos em cada par
+
+assert (posicao_a != posicao_b).all(), "Par com o mesmo registro."
+assert len(np.unique(np.sort(np.column_stack([posicao_a, posicao_b]), axis=1), axis=0)) == quantidade_pares, \
+    "Pares repetidos."
+
+def decompor_distancias(matriz):
+    diferencas_quadraticas = (matriz[posicao_a] - matriz[posicao_b]) ** 2
+    soma_quadrados = diferencas_quadraticas.sum(axis=1)
+    validos = soma_quadrados > 0
+    contribuicoes = diferencas_quadraticas[validos] / soma_quadrados[validos, None] * 100
+    return np.sqrt(soma_quadrados), validos, contribuicoes
+
+distancias_originais, pares_validos_originais, contribuicoes_originais = decompor_distancias(X_train.to_numpy())
+distancias_padronizadas, pares_validos_padronizados, contribuicoes_padronizadas = decompor_distancias(
+    X_train_scaled.to_numpy()
+)
+
+assert np.array_equal(pares_validos_originais, pares_validos_padronizados), "Pares válidos divergentes."
+assert np.allclose(contribuicoes_originais.sum(axis=1), 100, rtol=0, atol=1e-9), "Contribuições não somam 100%."
+assert np.allclose(contribuicoes_padronizadas.sum(axis=1), 100, rtol=0, atol=1e-9), "Contribuições não somam 100%."
+
+pares_distancia_zero = int((~pares_validos_originais).sum())
+pares_validos = int(pares_validos_originais.sum())
+print("Pares sorteados:", quantidade_pares, "| com distância zero (excluídos das contribuições):",
+      pares_distancia_zero, "| válidos:", pares_validos)
+print("Maior desvio da soma das contribuições em relação a 100%:",
+      f"{max(np.abs(contribuicoes_originais.sum(axis=1) - 100).max(), np.abs(contribuicoes_padronizadas.sum(axis=1) - 100).max()):.3e}")
+
+tabela_distancias = pd.DataFrame({
+    "Distância original (unidades mistas)": pd.Series(distancias_originais).describe(),
+    "Distância padronizada": pd.Series(distancias_padronizadas).describe(),
+})
+print("\nEstatísticas das distâncias euclidianas dos pares:")
+print(tabela_distancias.to_string(float_format=lambda valor: f"{valor:.4f}"))
+
+tabela_contribuicoes = pd.DataFrame({
+    "Antes (%)": contribuicoes_originais.mean(axis=0),
+    "Depois (%)": contribuicoes_padronizadas.mean(axis=0),
+    "Maior contribuição do par — antes": np.bincount(contribuicoes_originais.argmax(axis=1), minlength=6),
+    "Maior contribuição do par — depois": np.bincount(contribuicoes_padronizadas.argmax(axis=1), minlength=6),
+}, index=pd.Index(atributos_preditores, name="Atributo"))
+tabela_contribuicoes["Variação (p.p.)"] = tabela_contribuicoes["Depois (%)"] - tabela_contribuicoes["Antes (%)"]
+print("\nContribuição média de cada atributo para o quadrado da distância:")
+print(tabela_contribuicoes.round(4).to_string())
+
+contribuicao_dois_maiores_antes = tabela_contribuicoes["Antes (%)"].nlargest(2)
+print(f"\nDois atributos com maior contribuição antes: {list(contribuicao_dois_maiores_antes.index)} "
+      f"({contribuicao_dois_maiores_antes.sum():.2f}% somados)")
+
+# %% [markdown]
+# ### BLOCO 57 — Visualização da padronização
+#
+# A figura resume a fase em quatro painéis: (1) o desvio padrão original de cada atributo no treino, em escala
+# logarítmica apenas no eixo, pois as unidades e as ordens de grandeza são diferentes; (2) os boxplots dos atributos
+# padronizados do treino, com os outliers preservados; (3) a contribuição média de cada atributo para a distância
+# euclidiana, antes e depois da padronização (pares do BLOCO 56); e (4) a média e o desvio padrão populacional dos
+# conjuntos padronizados de treino e teste.
+
+# %%
+# BLOCO 57 — Visualização da padronização
+
+cor_antes, cor_depois = "#4C72B0", "#DD8452"
+unidades_curtas = {"Temperature": "°C", "Humidity": "%", "Light": "lux", "CO2": "ppm",
+                   "HumidityRatio": "kg/kg", "CO2_Light_Ratio": "índice"}
+posicoes_atributos = np.arange(len(atributos_preditores))
+
+def formatar_decimal(valor, casas=2):
+    return f"{valor:.{casas}f}".replace(".", ",")
+
+fig, eixos = plt.subplots(2, 2, figsize=(18, 13))
+eixo_desvio, eixo_box, eixo_contribuicao, eixo_estatisticas = eixos.ravel()
+
+# Painel 1 — Desvio padrão original (eixo logarítmico)
+eixo_desvio.barh(posicoes_atributos, desvios_originais.loc[atributos_preditores], color=cor_antes, edgecolor="black")
+for posicao, atributo in enumerate(atributos_preditores):
+    valor = desvios_originais[atributo]
+    texto_valor = f"{valor:.2e}".replace(".", ",") if valor < 0.01 else formatar_decimal(valor)
+    eixo_desvio.text(valor * 1.25, posicao, f"{texto_valor} {unidades_curtas[atributo]}", va="center", fontsize=10)
+eixo_desvio.set_xscale("log")
+eixo_desvio.set_xlim(desvios_originais.min() / 3, desvios_originais.max() * 40)
+eixo_desvio.set_yticks(posicoes_atributos, atributos_preditores)
+eixo_desvio.invert_yaxis()
+eixo_desvio.set_title("Desvio padrão original no treino (unidades diferentes)")
+eixo_desvio.set_xlabel("Desvio padrão populacional (eixo em escala logarítmica)")
+
+# Painel 2 — Boxplots dos atributos padronizados do treino
+eixo_box.boxplot(
+    [X_train_scaled[atributo] for atributo in atributos_preditores],
+    orientation="horizontal",
+    tick_labels=atributos_preditores,
+    patch_artist=True,
+    widths=0.6,
+    boxprops={"facecolor": "#8DA0CB", "edgecolor": "black"},
+    medianprops={"color": "black", "linewidth": 1.5},
+    flierprops={"marker": "o", "markersize": 2, "markerfacecolor": "#4C72B0", "markeredgecolor": "#4C72B0", "alpha": 0.5},
+)
+eixo_box.invert_yaxis()
+eixo_box.axvline(0, color="#C44E52", linestyle="--", linewidth=1.5, label="Média do treino (0)")
+eixo_box.set_title("Atributos padronizados no treino")
+eixo_box.set_xlabel("Valor padronizado (desvios padrão do treino em relação à média)")
+eixo_box.legend(loc="lower right")
+
+# Painel 3 — Contribuição média para o quadrado da distância
+altura_barra = 0.38
+for deslocamento, coluna, cor, rotulo in [(-altura_barra / 2, "Antes (%)", cor_antes, "Dados originais"),
+                                          (altura_barra / 2, "Depois (%)", cor_depois, "Dados padronizados")]:
+    valores = tabela_contribuicoes[coluna]
+    eixo_contribuicao.barh(posicoes_atributos + deslocamento, valores, height=altura_barra, color=cor,
+                           edgecolor="black", label=rotulo)
+    for posicao, valor in enumerate(valores):
+        eixo_contribuicao.text(valor + 0.8, posicao + deslocamento, f"{formatar_decimal(valor)}%", va="center",
+                               fontsize=9)
+eixo_contribuicao.axvline(100 / 6, color="gray", linestyle=":", linewidth=1.5, label="Participação igual (16,67%)")
+eixo_contribuicao.set_yticks(posicoes_atributos, atributos_preditores)
+eixo_contribuicao.invert_yaxis()
+eixo_contribuicao.set_xlim(0, tabela_contribuicoes[["Antes (%)", "Depois (%)"]].to_numpy().max() * 1.2)
+eixo_contribuicao.set_title(
+    f"Contribuição média para a distância euclidiana ({formatar_inteiro(pares_validos)} pares do treino)"
+)
+eixo_contribuicao.set_xlabel("Participação no quadrado da distância (%)")
+eixo_contribuicao.legend(loc="upper center", bbox_to_anchor=(0.5, -0.1), ncol=3, frameon=False)
+
+# Painel 4 — Média e desvio padrão após a padronização (treino e teste)
+estatisticas_painel = [
+    ("Média treino escalonado", "o", cor_antes, -0.15, "Média — treino"),
+    ("Média teste escalonado", "o", cor_depois, 0.15, "Média — teste"),
+    ("Desvio treino escalonado", "s", cor_antes, -0.15, "Desvio padrão — treino"),
+    ("Desvio teste escalonado", "s", cor_depois, 0.15, "Desvio padrão — teste"),
+]
+for coluna, marcador, cor, deslocamento, rotulo in estatisticas_painel:
+    preenchimento = cor if marcador == "o" else "white"
+    eixo_estatisticas.scatter(tabela_estatisticas_padronizadas[coluna], posicoes_atributos + deslocamento,
+                              marker=marcador, s=70, color=preenchimento, edgecolor=cor, linewidth=2, label=rotulo,
+                              zorder=3)
+eixo_estatisticas.axvline(0, color="gray", linestyle="--", linewidth=1)
+eixo_estatisticas.axvline(1, color="gray", linestyle="--", linewidth=1)
+eixo_estatisticas.set_yticks(posicoes_atributos, atributos_preditores)
+eixo_estatisticas.invert_yaxis()
+eixo_estatisticas.set_xlim(-0.25, 1.25)
+texto_desvios = (
+    f"Treino: |média| ≤ {media_abs_treino.max():.1e} e |desvio − 1| ≤ {desvio_unitario_treino.max():.1e}".replace(".", ",")
+    + f"\nTeste: |média| ≤ {formatar_decimal(media_abs_teste.max(), 4)} e "
+    + f"|desvio − 1| ≤ {formatar_decimal(desvio_unitario_teste.max(), 4)}"
+)
+eixo_estatisticas.text(
+    0.5, 0.5, texto_desvios,
+    transform=eixo_estatisticas.transAxes, ha="center", va="center", fontsize=10,
+    bbox={"boxstyle": "round", "facecolor": "white", "edgecolor": "gray"},
+)
+eixo_estatisticas.set_title("Média e desvio padrão (ddof=0) após a padronização")
+eixo_estatisticas.set_xlabel("Valor (referências: média 0 e desvio padrão 1)")
+eixo_estatisticas.legend(loc="upper center", bbox_to_anchor=(0.5, -0.1), ncol=4, frameon=False)
+
+plt.suptitle("Padronização com StandardScaler (ajuste somente no treinamento: 9.933 registros)", fontsize=16)
+plt.tight_layout()
+
+# Exportação antes da exibição
+plt.savefig(caminho_grafico_scaler, dpi=300, bbox_inches="tight")
+print("Figura salva em:", caminho_grafico_scaler)
+
+plt.show()
+
+# %% [markdown]
+# ### BLOCO 58 — Validação contra Data Leakage
+#
+# A quantidade de observações do ajuste, sozinha, não prova a ausência de vazamento: um ajuste com 9.933 registros
+# quaisquer teria o mesmo `n_samples_seen_`. Por isso, a verificação combina três evidências:
+#
+# 1. **Fluxo das chamadas no código:** `fit_transform` aparece uma única vez, no BLOCO 51, aplicado a `X_train`; `X_test`
+#    recebe somente `transform` (BLOCO 51 e a reaplicação abaixo) e `inverse_transform` (BLOCO 55), que não aprendem
+#    parâmetros. Não há `fit` em `X_test`, em `X` nem em treino e teste concatenados.
+# 2. **Parâmetros:** a média e o desvio padrão aprendidos coincidem com os de `X_train` (BLOCO 52), diferem dos da base
+#    completa e dos do teste — calculados aqui com o pandas, sem ajustar nenhum scaler — e não mudaram desde o ajuste.
+# 3. **Dados:** os conjuntos originais, os alvos e os índices continuam idênticos às referências do BLOCO 50.
+
+# %%
+# BLOCO 58 — Validação contra Data Leakage
+
+# Parâmetros inalterados desde o ajuste (após o transform do teste e todas as validações)
+for nome_parametro in ["mean_", "var_", "scale_"]:
+    assert np.array_equal(getattr(scaler, nome_parametro), parametros_apos_ajuste[nome_parametro]), \
+        f"Parâmetro {nome_parametro} alterado após o ajuste."
+assert int(scaler.n_samples_seen_) == parametros_apos_ajuste["n_samples_seen_"] == len(X_train) == 9933
+
+# Médias e desvios do treino, da base completa e do teste (pandas, sem ajustar scaler)
+tabela_origem_parametros = pd.DataFrame({
+    "Média do scaler": scaler.mean_,
+    "Média do treino": X_train.mean().to_numpy(),
+    "Média da base completa": X.mean().to_numpy(),
+    "Média do teste": X_test.mean().to_numpy(),
+    "Desvio do scaler": scaler.scale_,
+    "Desvio da base completa": X.std(ddof=0).to_numpy(),
+    "Desvio do teste": X_test.std(ddof=0).to_numpy(),
+}, index=pd.Index(atributos_preditores, name="Atributo"))
+print(tabela_origem_parametros.to_string(float_format=lambda valor: f"{valor:.6g}"))
+
+assert np.allclose(scaler.mean_, X_train.mean(), rtol=tolerancia_parametros, atol=0), "Média diferente do treino."
+assert np.allclose(scaler.scale_, X_train.std(ddof=0), rtol=tolerancia_parametros, atol=0), "Desvio diferente do treino."
+assert not np.allclose(scaler.mean_, X.mean(), rtol=tolerancia_parametros, atol=0), "Média igual à da base completa."
+assert not np.allclose(scaler.mean_, X_test.mean(), rtol=tolerancia_parametros, atol=0), "Média igual à do teste."
+
+# Reaplicação do transform (sem ajuste): o teste padronizado é reproduzido exatamente com os parâmetros do treino
+pd.testing.assert_frame_equal(
+    pd.DataFrame(scaler.transform(X_test), columns=X_test.columns, index=X_test.index), X_test_scaled, check_exact=True
+)
+
+# Conjuntos originais, alvos e índices preservados
+pd.testing.assert_frame_equal(X_train, X_train_referencia, check_exact=True)
+pd.testing.assert_frame_equal(X_test, X_test_referencia, check_exact=True)
+pd.testing.assert_series_equal(y_train, y_train_referencia, check_exact=True)
+pd.testing.assert_series_equal(y_test, y_test_referencia, check_exact=True)
+pd.testing.assert_frame_equal(X, X_referencia, check_exact=True)
+pd.testing.assert_series_equal(y, y_referencia, check_exact=True)
+pd.testing.assert_frame_equal(rastreio_temporal, rastreio_temporal_referencia, check_exact=True)
+pd.testing.assert_frame_equal(df_features, df_features_referencia, check_exact=True)
+assert X_train_scaled.index.equals(y_train.index) and X_test_scaled.index.equals(y_test.index), "Índices divergentes."
+assert set(y_train.unique()) == set(y_test.unique()) == {0, 1} and y_train.dtype == y_test.dtype == "int64", \
+    "Variável alvo alterada."
+
+tabela_validacao_leakage = pd.Series({
+    "Observações do ajuste (n_samples_seen_)": int(scaler.n_samples_seen_),
+    "Parâmetros iguais às estatísticas do treino": True,
+    "Parâmetros diferentes da base completa": True,
+    "Parâmetros diferentes do teste": True,
+    "Parâmetros inalterados após o transform do teste": True,
+    "Teste reproduzido apenas com transform": True,
+    "X_train, X_test, X, rastreio_temporal e df_features inalterados": True,
+    "y_train, y_test e y inalterados (não escalonados)": True,
+})
+print("\nVerificações contra Data Leakage:")
+print(tabela_validacao_leakage.to_string())
+
+# %% [markdown]
+# ### BLOCO 59 — Resumo consolidado da Fase 5
+#
+# Os conjuntos permanecem em memória e são reproduzidos pela execução sequencial do script. Nenhum conjunto padronizado
+# é exportado em CSV, e o objeto `scaler` não é salvo em arquivo (`pickle` ou `joblib`).
+#
+# **Regras para a Fase 6:**
+#
+# - **KNN:** usar um `Pipeline` com `StandardScaler` e `KNeighborsClassifier`, que recebe `X_train` **original**. Na
+#   validação cruzada, o scaler interno é reajustado na parte de treino de cada divisão (*fold*), sem ver a parte de
+#   validação. Por isso, `X_train_scaled` e `X_test_scaled` **não** devem ser fornecidos a um `Pipeline` que já tenha
+#   `StandardScaler` (escalonamento duplicado), e o `scaler` desta fase não deve ser reaproveitado nos *folds*. O valor
+#   de K será escolhido dentro do treino, antes de consultar o teste.
+# - **Árvore de Decisão:** usar `X_train` e `X_test` originais, sem escalonamento; os valores de `max_depth` exigidos
+#   pelo enunciado serão avaliados com a seleção feita dentro do treino.
+# - **Atributos:** a comparação com e sem `CO2_Light_Ratio` será feita dentro do treino, sem usar o teste para escolher
+#   a combinação.
+# - **Dependência temporal:** o split oficial é preservado; a validação cruzada aleatória não equivale a independência
+#   temporal, e uma validação temporal complementar será planejada.
+
+# %%
+# BLOCO 59 — Resumo consolidado da Fase 5
+
+tabela_conjuntos_fase5 = pd.DataFrame({
+    "Dimensões": [str(conjunto.shape) for conjunto in
+                  [X_train, X_test, X_train_scaled, X_test_scaled, y_train, y_test]],
+    "Escalonamento": ["Não", "Não", "Sim", "Sim", "Não", "Não"],
+    "Finalidade": [
+        "Árvore de Decisão e entrada do Pipeline do KNN",
+        "Árvore de Decisão e entrada do Pipeline do KNN",
+        "Demonstração do escalonamento e KNN direto, quando pertinente",
+        "Demonstração do escalonamento e KNN direto, quando pertinente",
+        "Alvo de treinamento",
+        "Alvo de avaliação",
+    ],
+}, index=pd.Index(["X_train", "X_test", "X_train_scaled", "X_test_scaled", "y_train", "y_test"], name="Estrutura"))
+print(tabela_conjuntos_fase5.to_string())
+
+tabela_resumo_fase5 = pd.Series({
+    "Observações usadas no ajuste": int(scaler.n_samples_seen_),
+    "Maior |média| do treino padronizado": f"{media_abs_treino.max():.3e}",
+    "Maior |desvio − 1| do treino padronizado": f"{desvio_unitario_treino.max():.3e}",
+    "Maior |média| do teste padronizado": f"{media_abs_teste.max():.4f}",
+    "Maior |desvio − 1| do teste padronizado": f"{desvio_unitario_teste.max():.4f}",
+    "Maior erro absoluto da inversa (treino / teste)":
+        f"{resumo_inversa_treino['Maior erro absoluto']:.3e} / {resumo_inversa_teste['Maior erro absoluto']:.3e}",
+    "Pares válidos na análise de distâncias": pares_validos,
+    "Conjuntos originais preservados": X_train.equals(X_train_referencia) and X_test.equals(X_test_referencia),
+})
+print("\nResumo da Fase 5:")
+print(tabela_resumo_fase5.to_string())
+
+# %% [markdown]
+# ## BLOCO 60 — Interpretação e conclusão do escalonamento
+#
+# ### 60.1 — Diferenças de escala dos atributos
+#
+# | Atributo (treino, 9.933 registros) | Unidade | Mínimo | Máximo | Média | Desvio padrão (ddof=0) |
+# |---|---|---:|---:|---:|---:|
+# | Temperature | °C | 19,50 | 24,41 | 21,09 | 1,04 |
+# | Humidity | % | 21,87 | 39,50 | 28,92 | 4,13 |
+# | Light | lux | 0,00 | 1.581,00 | 137,87 | 219,17 |
+# | CO2 | ppm | 427,50 | 2.076,50 | 746,50 | 297,49 |
+# | HumidityRatio | kg/kg | 0,00327 | 0,00577 | 0,00447 | 0,000595 |
+# | CO2_Light_Ratio | índice | 0,56 | 2.076,50 | 426,77 | 404,49 |
+#
+# Numericamente, o maior desvio padrão (`CO2_Light_Ratio`, 404,49) é cerca de 679 mil vezes o menor
+# (`HumidityRatio`, 0,000595). Essa razão não compara grandezas físicas — as unidades são diferentes — e não indica
+# importância preditiva; ela mostra apenas quanto cada atributo varia como número. Como a distância euclidiana soma
+# os quadrados das diferenças como números puros, os atributos de maior dispersão numérica determinam a distância, e
+# os de menor dispersão praticamente não participam, independentemente da informação que carregam.
+#
+# ### 60.2 — Funcionamento matemático do StandardScaler
+#
+# O scaler foi ajustado com as 9.933 observações de `X_train` e aprendeu, para cada atributo, a média (`mean_`), a
+# variância populacional (`var_`, divisor `n`) e o fator de escala (`scale_`), que é a raiz quadrada da variância — o
+# desvio padrão populacional. A variância está na unidade ao quadrado (por exemplo, 88.497,51 ppm² em `CO2`), e o
+# desvio padrão, na unidade original (297,49 ppm); por isso a divisão usa o desvio padrão. Nenhum atributo tem
+# variância zero.
+#
+# Os parâmetros foram comparados com um cálculo independente do pandas (`ddof=0`): as 18 quantidades (6 médias, 6
+# variâncias e 6 desvios) foram **binariamente iguais** nas versões testadas, bem abaixo da tolerância relativa de
+# `1e-10`. Exemplos reais do treinamento:
+#
+# | Registro | Atributo | Valor original | Média aprendida | Fator de escala | Valor padronizado |
+# |---|---|---:|---:|---:|---:|
+# | 10164 (16/02/2015 19:46:59) | CO2 | 760,6666667 | 746,49934 | 297,4853061 | 0,0476236 |
+# | 10164 | HumidityRatio | 0,0045977054 | 0,0044683535 | 0,0005953432 | 0,2172728 |
+# | 986 (03/02/2015 06:45:00) | CO2 | 436,8 | 746,49934 | 297,4853061 | −1,0410576 |
+# | 986 | HumidityRatio | 0,0033523233 | 0,0044683535 | 0,0005953432 | −1,8745996 |
+#
+# O cálculo manual coincidiu exatamente com o `StandardScaler` nos quatro casos (diferença 0), e a fórmula recalculada
+# para todos os valores reproduziu os 59.598 valores do treino e os 14.904 do teste sem nenhuma diferença. O registro
+# 986 tem `CO2` 1,04 desvio padrão abaixo da média e `HumidityRatio` 1,87 abaixo: depois da padronização, as duas
+# medições, antes separadas por seis ordens de grandeza, passam a ser expressas na mesma escala.
+#
+# ### 60.3 — Resultados do treinamento padronizado
+#
+# Nos seis atributos, a média do treino padronizado ficou entre 3,0 × 10⁻¹⁷ (`Light`) e 2,5 × 10⁻¹⁵ em valor absoluto
+# (`Temperature`), e o desvio padrão populacional diferiu de 1 em no máximo 2,2 × 10⁻¹⁶ (`CO2`). Esses resíduos não são
+# zero porque a média é calculada com somas de números `float64`, cuja precisão relativa é de cerca de 2,2 × 10⁻¹⁶;
+# somar quase 10 mil valores acumula erros dessa ordem. Eles estão muito abaixo da tolerância de `1e-10` e confirmam
+# média 0 e desvio padrão 1, como esperado para o conjunto em que o scaler foi ajustado.
+#
+# ### 60.4 — Resultados do teste padronizado
+#
+# | Atributo | Média do teste padronizado | Desvio padrão do teste padronizado |
+# |---|---:|---:|
+# | Temperature | 0,0001 | 1,0027 |
+# | Humidity | −0,0014 | 0,9988 |
+# | Light | 0,0059 | 1,0141 |
+# | CO2 | −0,0144 | 0,9830 |
+# | HumidityRatio | −0,0012 | 1,0011 |
+# | CO2_Light_Ratio | −0,0079 | 0,9830 |
+#
+# O teste foi transformado com a média e o desvio padrão do **treino**; por isso, suas estatísticas mostram quanto a
+# amostra de teste difere da de treino, em desvios padrão do treino. A maior diferença de média ocorre em `CO2`
+# (−0,0144, isto é, a média do teste, 742,23 ppm, está 4,27 ppm abaixo da do treino), e a maior diferença de desvio,
+# em `CO2_Light_Ratio` (0,9830, desvio 1,70% menor). As diferenças são pequenas, o que é coerente com a divisão
+# aleatória estratificada de uma mesma base. Forçar média 0 e desvio 1 no teste exigiria ajustar o scaler no teste, o
+# que seria vazamento de dados.
+#
+# ### 60.5 — Influência nas distâncias
+#
+# | Atributo | Contribuição média antes | Contribuição média depois | Pares em que domina (antes → depois) |
+# |---|---:|---:|---:|
+# | Temperature | 0,02% | 16,63% | 0 → 165 |
+# | Humidity | 1,00% | 20,76% | 10 → 235 |
+# | Light | 15,95% | 13,63% | 109 → 192 |
+# | CO2 | 34,31% | 14,27% | 509 → 153 |
+# | HumidityRatio | < 0,0001% | 20,08% | 0 → 154 |
+# | CO2_Light_Ratio | 48,72% | 14,64% | 372 → 101 |
+#
+# Nos 1.000 pares de treino sorteados (nenhum com distância zero, portanto nenhum excluído das contribuições; as
+# contribuições de cada par somaram 100% com desvio máximo de 4,3 × 10⁻¹⁴), `CO2_Light_Ratio` e `CO2` respondiam
+# juntos por 83,03% do quadrado da distância antes da padronização, e `CO2` ou `CO2_Light_Ratio` era o maior termo em
+# 881 pares. `Temperature` (0,02%) e `HumidityRatio` (menos de 0,0001%) praticamente não participavam: na prática, um
+# KNN sem escalonamento ignoraria esses atributos. Depois da padronização, as contribuições médias ficaram entre
+# 13,63% e 20,76%, e todos os atributos passaram a dominar uma parte dos pares.
+#
+# As contribuições não ficaram iguais (16,67% cada): a padronização iguala a variância, e não a importância. `Humidity`
+# e `HumidityRatio`, fortemente correlacionadas (0,89 na EDA), somam 40,84% das distâncias padronizadas, e a umidade
+# passa a ter um peso conjunto maior. As distâncias absolutas (média de 603,13 em unidades mistas e de 3,15 em desvios
+# padrão) pertencem a escalas diferentes e não são comparáveis. Esta análise não mede desempenho: nenhum KNN foi
+# treinado, e o efeito na acurácia será avaliado na Fase 6.
+#
+# ### 60.6 — Prevenção de Data Leakage
+#
+# A divisão da Fase 4 foi feita antes do ajuste, e o scaler aprendeu seus parâmetros somente em `X_train`. As
+# verificações do BLOCO 58 combinaram a inspeção do fluxo das chamadas (`fit_transform` apenas em `X_train`; somente
+# `transform` e `inverse_transform` em `X_test`), a coincidência dos parâmetros com as estatísticas do treino, a
+# diferença em relação à base completa (média de `CO2`: 746,50 ppm no scaler e 745,64 ppm na base) e ao teste
+# (742,23 ppm), a estabilidade dos parâmetros após o `transform` do teste e a preservação dos conjuntos originais.
+#
+# Este ajuste é uma **demonstração** da exigência do enunciado. Na validação cruzada da Fase 6, o `StandardScaler`
+# estará dentro de um `Pipeline` e será reajustado na parte de treino de cada divisão, sem ver a parte de validação;
+# o scaler desta fase não será reaproveitado nos *folds*. Os riscos registrados anteriormente continuam: a EDA e as
+# decisões das Fases 2 e 3 usaram a base completa, e a dependência temporal entre treino e teste (96,10% dos registros
+# de teste com vizinho imediato no treino) permanece.
+#
+# ### 60.7 — KNN versus Árvore de Decisão
+#
+# | Aspecto | KNN | Árvore de Decisão |
+# |---|---|---|
+# | Como decide | Pelos vizinhos mais próximos, segundo uma distância que soma as diferenças de todos os atributos | Por perguntas sucessivas sobre um atributo de cada vez (`atributo ≤ limiar`) |
+# | Efeito da escala | Decisivo: sem padronização, `CO2_Light_Ratio` e `CO2` responderam por 83,03% das distâncias | Nenhum: a divisão depende só da ordem dos valores, que a padronização preserva |
+# | Dados na Fase 6 | `Pipeline` com `StandardScaler` e `KNeighborsClassifier`, recebendo `X_train` original | `X_train` e `X_test` originais, sem escalonamento |
+#
+# A árvore compara `Light` apenas com limiares de `Light` e `Temperature` apenas com limiares de `Temperature`; a
+# diferença entre 0 a 1.581 lux e 19,50 a 24,41 °C não interfere, pois os atributos nunca são somados.
+#
+# ### 60.8 — Limitações do StandardScaler
+#
+# - **Valores extremos:** a média e o desvio padrão são sensíveis a outliers. `Light` chega a 6,58 desvios padrão
+#   acima da média e `CO2` a 4,47, e esses valores continuam extremos após a padronização (painel 2 da figura).
+# - **Forma e correlações:** a transformação é linear; não torna as distribuições normais, não remove a assimetria e
+#   preserva as correlações entre os atributos.
+# - **Redundância:** atributos correlacionados continuam somando informação semelhante na distância (60.5).
+# - **Classes:** o escalonamento não altera `y`; o desequilíbrio de 24,33% de ocupados permanece.
+# - **Desempenho:** a padronização equilibra a escala, mas não garante melhor classificação; o ganho será medido.
+# - **Dependência temporal:** o escalonamento não altera a proximidade temporal entre treino e teste (Fase 4).
+#
+# ### 60.9 — Integridade e próximos passos
+#
+# `X_train`, `X_test`, `y_train`, `y_test`, `X`, `y`, `rastreio_temporal` e `df_features` permaneceram idênticos às
+# referências (`check_exact=True`). `X_train_scaled` (9.933 × 6) e `X_test_scaled` (2.484 × 6) mantêm os índices, a
+# ordem e o tipo `float64` dos atributos, sem ausentes nem infinitos. A transformação inversa reconstruiu 93,01% dos
+# valores do treino e 93,06% dos do teste de forma binariamente idêntica; nos demais, o maior erro absoluto foi de
+# 4,5 × 10⁻¹³ e o maior erro relativo, de 1,5 × 10⁻¹³, ambos em `CO2_Light_Ratio`, cujos menores valores (0,56)
+# convivem com média de 426,77 — diferenças de arredondamento, dentro da tolerância relativa à magnitude de cada
+# atributo.
+#
+# Os conjuntos estão prontos para a Fase 6, na qual serão treinados o KNN (com `Pipeline`) e a Árvore de Decisão,
+# seguindo as regras do BLOCO 59. Nenhum classificador foi instanciado ou treinado nesta fase.
