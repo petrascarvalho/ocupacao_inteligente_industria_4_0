@@ -1,313 +1,313 @@
 protocolo,modelo,hiperparametro,valor_hiperparametro,configuracao_atributos,quantidade_atributos,fold,conjunto,metrica,resultado,observacoes_avaliadas,observacoes_ajuste,semente_folds
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,5 atributos,5,1,treino,acuracia,0.9949660206393154,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,5 atributos,5,1,treino,f1_ocupado,0.9896854048478597,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,5 atributos,5,1,treino,balanced_accuracy,0.9940428519039136,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,5 atributos,5,1,validacao,acuracia,0.9934574735782586,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,5 atributos,5,1,validacao,f1_ocupado,0.9865841073271414,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,5 atributos,5,1,validacao,balanced_accuracy,0.9921644420950619,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,5 atributos,5,2,treino,acuracia,0.9960986659954694,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,5 atributos,5,2,treino,f1_ocupado,0.992004126902244,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,5 atributos,5,2,treino,balanced_accuracy,0.9956671305979654,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,5 atributos,5,1,treino,acuracia,0.9950918701233324,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,5 atributos,5,1,treino,f1_ocupado,0.9899458623356535,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,5 atributos,5,1,treino,balanced_accuracy,0.9943013834447616,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,5 atributos,5,1,validacao,acuracia,0.9944640161046804,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,5 atributos,5,1,validacao,f1_ocupado,0.9886480908152735,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,5 atributos,5,1,validacao,balanced_accuracy,0.9935320855909431,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,5 atributos,5,2,treino,acuracia,0.9957211175434181,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,5 atributos,5,2,treino,f1_ocupado,0.9912280701754386,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,5 atributos,5,2,treino,balanced_accuracy,0.9950666468555929,7946,7946,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,5 atributos,5,2,validacao,acuracia,0.9889280322093609,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,5 atributos,5,2,validacao,f1_ocupado,0.977319587628866,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,5 atributos,5,2,validacao,balanced_accuracy,0.9856774055195394,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,5 atributos,5,3,treino,acuracia,0.9953435690913667,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,5 atributos,5,3,treino,f1_ocupado,0.9904614591389533,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,5 atributos,5,3,treino,balanced_accuracy,0.9948171873511857,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,5 atributos,5,3,validacao,acuracia,0.9929542023150478,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,5 atributos,5,3,validacao,f1_ocupado,0.9855371900826446,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,5 atributos,5,3,validacao,balanced_accuracy,0.9904399190599518,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,5 atributos,5,4,treino,acuracia,0.996099156914559,7947,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,5 atributos,5,4,treino,f1_ocupado,0.992,7947,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,5 atributos,5,4,treino,balanced_accuracy,0.9953177113152458,7947,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,5 atributos,5,2,validacao,f1_ocupado,0.977366255144033,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,5 atributos,5,2,validacao,balanced_accuracy,0.9863777953734405,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,5 atributos,5,3,treino,acuracia,0.9949660206393154,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,5 atributos,5,3,treino,f1_ocupado,0.9896960329726945,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,5 atributos,5,3,treino,balanced_accuracy,0.9945677278467786,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,5 atributos,5,3,validacao,acuracia,0.9939607448414696,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,5 atributos,5,3,validacao,f1_ocupado,0.987603305785124,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,5 atributos,5,3,validacao,balanced_accuracy,0.9918056449085301,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,5 atributos,5,4,treino,acuracia,0.995847489618724,7947,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,5 atributos,5,4,treino,f1_ocupado,0.9914882641217436,7947,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,5 atributos,5,4,treino,balanced_accuracy,0.9951514049789744,7947,7947,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,5 atributos,5,4,validacao,acuracia,0.9909365558912386,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,5 atributos,5,4,validacao,f1_ocupado,0.9815573770491803,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,5 atributos,5,4,validacao,balanced_accuracy,0.9912018612877764,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,5 atributos,5,5,treino,acuracia,0.995847489618724,7947,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,5 atributos,5,5,treino,f1_ocupado,0.9915014164305949,7947,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,5 atributos,5,5,treino,balanced_accuracy,0.9956775400971112,7947,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,5 atributos,5,5,validacao,acuracia,0.9909365558912386,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,5 atributos,5,5,validacao,f1_ocupado,0.9813278008298755,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,5 atributos,5,5,validacao,balanced_accuracy,0.9869866891475847,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,5 atributos,5,1,treino,acuracia,0.99345582683111,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,5 atributos,5,1,treino,f1_ocupado,0.9866461222393426,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,5 atributos,5,1,treino,balanced_accuracy,0.9933955769949243,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,5 atributos,5,4,validacao,f1_ocupado,0.9815195071868583,1986,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,5 atributos,5,4,validacao,balanced_accuracy,0.9904993325977445,1986,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,5 atributos,5,5,treino,acuracia,0.9954699886749717,7947,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,5 atributos,5,5,treino,f1_ocupado,0.990726429675425,7947,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,5 atributos,5,5,treino,balanced_accuracy,0.9950773238472795,7947,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,5 atributos,5,5,validacao,acuracia,0.9904330312185297,1986,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,5 atributos,5,5,validacao,f1_ocupado,0.9803108808290155,1986,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,5 atributos,5,5,validacao,balanced_accuracy,0.9866540211502461,1986,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,5 atributos,5,1,treino,acuracia,0.9937075257991442,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,5 atributos,5,1,treino,f1_ocupado,0.987146529562982,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,5 atributos,5,1,treino,balanced_accuracy,0.9933865464520804,7946,7946,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,5 atributos,5,1,validacao,acuracia,0.9944640161046804,1987,7946,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,5 atributos,5,1,validacao,f1_ocupado,0.9886947584789312,1987,7946,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,5 atributos,5,1,validacao,balanced_accuracy,0.9949375853486631,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,5 atributos,5,2,treino,acuracia,0.9943367732192298,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,5 atributos,5,2,treino,f1_ocupado,0.9884467265725289,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,5 atributos,5,2,treino,balanced_accuracy,0.9948540104820311,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,5 atributos,5,2,validacao,acuracia,0.9899345747357826,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,5 atributos,5,2,validacao,f1_ocupado,0.9795501022494888,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,5 atributos,5,2,validacao,balanced_accuracy,0.9898446907837217,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,5 atributos,5,3,treino,acuracia,0.9940850742511955,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,5 atributos,5,3,treino,f1_ocupado,0.9879084126575766,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,5 atributos,5,3,treino,balanced_accuracy,0.993810143550846,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,5 atributos,5,2,treino,acuracia,0.9944626227032469,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,5 atributos,5,2,treino,f1_ocupado,0.9886947584789312,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,5 atributos,5,2,treino,balanced_accuracy,0.9947616515311841,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,5 atributos,5,2,validacao,acuracia,0.9909411172622044,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,5 atributos,5,2,validacao,f1_ocupado,0.9815950920245399,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,5 atributos,5,2,validacao,balanced_accuracy,0.9912104166323001,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,5 atributos,5,3,treino,acuracia,0.9939592247671785,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,5 atributos,5,3,treino,f1_ocupado,0.9876479670612455,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,5 atributos,5,3,treino,balanced_accuracy,0.9935514782637275,7946,7946,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,5 atributos,5,3,validacao,acuracia,0.9914443885254152,1987,7946,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,5 atributos,5,3,validacao,f1_ocupado,0.9824198552223371,1987,7946,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,5 atributos,5,3,validacao,balanced_accuracy,0.9880411353601337,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,5 atributos,5,4,treino,acuracia,0.994463319491632,7947,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,5 atributos,5,4,treino,f1_ocupado,0.988677303139475,7947,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,5 atributos,5,4,treino,balanced_accuracy,0.9940613417567693,7947,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,5 atributos,5,4,validacao,acuracia,0.9894259818731118,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,5 atributos,5,4,validacao,f1_ocupado,0.9785056294779939,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,5 atributos,5,4,validacao,balanced_accuracy,0.9895013286057286,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,5 atributos,5,5,treino,acuracia,0.9937083176041274,7947,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,5 atributos,5,5,treino,f1_ocupado,0.9871794871794872,7947,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,5 atributos,5,5,treino,balanced_accuracy,0.9942639362388042,7947,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,5 atributos,5,5,validacao,acuracia,0.9929506545820745,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,5 atributos,5,5,validacao,f1_ocupado,0.98559670781893,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,5 atributos,5,5,validacao,balanced_accuracy,0.9925325332771311,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,5 atributos,5,1,treino,acuracia,0.9921973319909388,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,5 atributos,5,1,treino,f1_ocupado,0.9841107124551512,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,5 atributos,5,1,treino,balanced_accuracy,0.9923885424600644,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,5 atributos,5,1,validacao,acuracia,0.9944640161046804,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,5 atributos,5,1,validacao,f1_ocupado,0.9887179487179487,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,5 atributos,5,1,validacao,balanced_accuracy,0.9956403352275229,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,5 atributos,5,2,treino,acuracia,0.9930782783790586,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,5 atributos,5,2,treino,f1_ocupado,0.9859082756853702,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,5 atributos,5,2,treino,balanced_accuracy,0.9938469666816914,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,5 atributos,5,2,validacao,acuracia,0.9899345747357826,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,5 atributos,5,2,validacao,f1_ocupado,0.9795918367346939,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,5 atributos,5,2,validacao,balanced_accuracy,0.9905450806376228,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,5 atributos,5,3,treino,acuracia,0.9919456330229046,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,5 atributos,5,3,treino,f1_ocupado,0.9836065573770492,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,5 atributos,5,3,treino,balanced_accuracy,0.9923965396925389,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,5 atributos,5,3,validacao,acuracia,0.9914443885254152,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,5 atributos,5,3,validacao,f1_ocupado,0.9825282631038027,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,5 atributos,5,3,validacao,balanced_accuracy,0.9901423049218367,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,5 atributos,5,4,treino,acuracia,0.9945891531395495,7947,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,5 atributos,5,4,treino,f1_ocupado,0.9889431730521985,7947,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,5 atributos,5,4,treino,balanced_accuracy,0.9944952516703296,7947,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,5 atributos,5,4,validacao,acuracia,0.9889224572004028,1986,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,5 atributos,5,4,validacao,f1_ocupado,0.9774590163934426,1986,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,5 atributos,5,4,validacao,balanced_accuracy,0.9884661319183579,1986,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,5 atributos,5,5,treino,acuracia,0.9940858185478797,7947,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,5 atributos,5,5,treino,f1_ocupado,0.9879394405953298,7947,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,5 atributos,5,5,treino,balanced_accuracy,0.9945133957432113,7947,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,5 atributos,5,5,validacao,acuracia,0.9924471299093656,1986,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,5 atributos,5,5,validacao,f1_ocupado,0.984552008238929,1986,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,5 atributos,5,5,validacao,balanced_accuracy,0.9914973365897605,1986,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,5 atributos,5,1,treino,acuracia,0.9925748804429901,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,5 atributos,5,1,treino,f1_ocupado,0.9848756729043835,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,5 atributos,5,1,treino,balanced_accuracy,0.9928134079995816,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,5 atributos,5,1,validacao,acuracia,0.9949672873678913,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,5 atributos,5,1,validacao,f1_ocupado,0.9897540983606558,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,5 atributos,5,1,validacao,balanced_accuracy,0.9966755319148937,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,5 atributos,5,2,treino,acuracia,0.9929524288950415,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,5 atributos,5,2,treino,f1_ocupado,0.985655737704918,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,5 atributos,5,2,treino,balanced_accuracy,0.9937638135135556,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,5 atributos,5,2,validacao,acuracia,0.9904378459989934,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,5 atributos,5,2,validacao,f1_ocupado,0.9805924412665986,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,5 atributos,5,2,validacao,balanced_accuracy,0.9908777486349615,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,5 atributos,5,3,treino,acuracia,0.9918197835388874,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,5 atributos,5,3,treino,f1_ocupado,0.9833290587330085,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,5 atributos,5,3,treino,balanced_accuracy,0.9917868501674549,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,5 atributos,5,3,validacao,acuracia,0.9904378459989934,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,5 atributos,5,3,validacao,f1_ocupado,0.98043254376931,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,5 atributos,5,3,validacao,balanced_accuracy,0.9880761892193575,1987,7946,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,5 atributos,5,4,treino,acuracia,0.9932049830124575,7947,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,5 atributos,5,4,treino,f1_ocupado,0.9861538461538462,7947,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,5 atributos,5,4,treino,balanced_accuracy,0.9935805668208368,7947,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,5 atributos,5,4,validacao,acuracia,0.9889224572004028,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,5 atributos,5,4,validacao,f1_ocupado,0.9775967413441955,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,5 atributos,5,4,validacao,balanced_accuracy,0.9905737179884537,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,5 atributos,5,5,treino,acuracia,0.9927016484207877,7947,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,5 atributos,5,5,treino,f1_ocupado,0.9851586489252815,7947,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,5 atributos,5,5,treino,balanced_accuracy,0.9935987108937185,7947,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,5 atributos,5,4,treino,f1_ocupado,0.9861609431060995,7947,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,5 atributos,5,4,treino,balanced_accuracy,0.9937559451935492,7947,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,5 atributos,5,4,validacao,acuracia,0.9884189325276939,1986,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,5 atributos,5,4,validacao,f1_ocupado,0.9765545361875637,1986,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,5 atributos,5,4,validacao,balanced_accuracy,0.9895385213010831,1986,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,5 atributos,5,5,treino,acuracia,0.9929533157166226,7947,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,5 atributos,5,5,treino,f1_ocupado,0.9856704196519959,7947,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,5 atributos,5,5,treino,balanced_accuracy,0.9939403956027022,7947,7947,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,5 atributos,5,5,validacao,acuracia,0.9924471299093656,1986,7947,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,5 atributos,5,5,validacao,f1_ocupado,0.9846153846153847,1986,7947,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,5 atributos,5,5,validacao,balanced_accuracy,0.9929023939698243,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,5 atributos,5,1,treino,acuracia,0.991316385602819,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,5 atributos,5,1,treino,f1_ocupado,0.9823664707385638,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,5 atributos,5,1,treino,balanced_accuracy,0.9921571025477484,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,5 atributos,5,1,validacao,acuracia,0.9949672873678913,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,5 atributos,5,1,validacao,f1_ocupado,0.9897540983606558,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,5 atributos,5,1,validacao,balanced_accuracy,0.9966755319148937,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,5 atributos,5,2,treino,acuracia,0.9923231814749559,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,5 atributos,5,2,treino,f1_ocupado,0.9843949859299054,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,5 atributos,5,2,treino,balanced_accuracy,0.9933480476728771,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,5 atributos,5,2,validacao,acuracia,0.9894313034725717,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,5 atributos,5,2,validacao,f1_ocupado,0.9785932721712538,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,5 atributos,5,2,validacao,balanced_accuracy,0.9902124126402843,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,5 atributos,5,3,treino,acuracia,0.9915680845708532,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,5 atributos,5,3,treino,f1_ocupado,0.9828600665131747,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,5 atributos,5,3,treino,balanced_accuracy,0.9923225923071146,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,5 atributos,5,3,validacao,acuracia,0.9914443885254152,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,5 atributos,5,3,validacao,f1_ocupado,0.9825282631038027,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,5 atributos,5,3,validacao,balanced_accuracy,0.9901423049218367,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,5 atributos,5,1,treino,acuracia,0.9908129876667505,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,5 atributos,5,1,treino,f1_ocupado,0.9813251470964441,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,5 atributos,5,1,treino,balanced_accuracy,0.9911229763843564,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,5 atributos,5,1,validacao,acuracia,0.9944640161046804,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,5 atributos,5,1,validacao,f1_ocupado,0.9887179487179487,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,5 atributos,5,1,validacao,balanced_accuracy,0.9956403352275229,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,5 atributos,5,2,treino,acuracia,0.9919456330229046,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,5 atributos,5,2,treino,f1_ocupado,0.9836149513568868,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,5 atributos,5,2,treino,balanced_accuracy,0.9925720518115217,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,5 atributos,5,2,validacao,acuracia,0.9909411172622044,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,5 atributos,5,2,validacao,f1_ocupado,0.9816326530612245,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,5 atributos,5,2,validacao,balanced_accuracy,0.9919108064862011,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,5 atributos,5,3,treino,acuracia,0.9914422350868362,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,5 atributos,5,3,treino,f1_ocupado,0.9825819672131147,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,5 atributos,5,3,treino,balanced_accuracy,0.9917129027820306,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,5 atributos,5,3,validacao,acuracia,0.9904378459989934,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,5 atributos,5,3,validacao,f1_ocupado,0.98043254376931,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,5 atributos,5,3,validacao,balanced_accuracy,0.9880761892193575,1987,7946,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,5 atributos,5,4,treino,acuracia,0.9925758147728703,7947,7947,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,5 atributos,5,4,treino,f1_ocupado,0.9848756729043835,7947,7947,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,5 atributos,5,4,treino,balanced_accuracy,0.9928140442347337,7947,7947,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,5 atributos,5,4,validacao,acuracia,0.9879154078549849,1986,7947,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,5 atributos,5,4,validacao,f1_ocupado,0.9755102040816327,1986,7947,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,5 atributos,5,4,validacao,balanced_accuracy,0.9885033246137125,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,5 atributos,5,5,treino,acuracia,0.991946646533283,7947,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,5 atributos,5,5,treino,f1_ocupado,0.9836567926455567,7947,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,5 atributos,5,5,treino,balanced_accuracy,0.9932751702576166,7947,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,5 atributos,5,5,validacao,acuracia,0.9924471299093656,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,5 atributos,5,5,validacao,f1_ocupado,0.9846153846153847,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,5 atributos,5,5,validacao,balanced_accuracy,0.9929023939698243,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,5 atributos,5,1,treino,acuracia,0.9910646866347848,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,5 atributos,5,1,treino,f1_ocupado,0.9818553539483772,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,5 atributos,5,1,treino,balanced_accuracy,0.9918154040075657,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,5 atributos,5,1,validacao,acuracia,0.9949672873678913,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,5 atributos,5,1,validacao,f1_ocupado,0.9897540983606558,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,5 atributos,5,1,validacao,balanced_accuracy,0.9966755319148937,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,5 atributos,5,2,treino,acuracia,0.9916939340548704,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,5 atributos,5,2,treino,f1_ocupado,0.9830855971296771,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,5 atributos,5,2,treino,balanced_accuracy,0.991879209118302,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,5 atributos,5,2,validacao,acuracia,0.9894313034725717,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,5 atributos,5,2,validacao,f1_ocupado,0.9785932721712538,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,5 atributos,5,2,validacao,balanced_accuracy,0.9902124126402843,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,5 atributos,5,3,treino,acuracia,0.991316385602819,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,5 atributos,5,3,treino,f1_ocupado,0.9823393908369593,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,5 atributos,5,3,treino,balanced_accuracy,0.9918052617328776,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,5 atributos,5,3,validacao,acuracia,0.9909411172622044,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,5 atributos,5,3,validacao,f1_ocupado,0.9814814814814815,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,5 atributos,5,3,validacao,balanced_accuracy,0.9891092470705971,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,5 atributos,5,4,treino,acuracia,0.9923241474770353,7947,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,5 atributos,5,4,treino,f1_ocupado,0.9843709966692288,7947,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,5 atributos,5,4,treino,balanced_accuracy,0.9926477378984624,7947,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,5 atributos,5,4,validacao,acuracia,0.9879154078549849,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,5 atributos,5,4,validacao,f1_ocupado,0.9755102040816327,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,5 atributos,5,4,validacao,balanced_accuracy,0.9885033246137125,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,5 atributos,5,5,treino,acuracia,0.9916949792374481,7947,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,5 atributos,5,5,treino,f1_ocupado,0.9831374552887072,7947,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,5 atributos,5,5,treino,balanced_accuracy,0.9927581071759206,7947,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,5 atributos,5,5,treino,acuracia,0.9915691455895307,7947,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,5 atributos,5,5,treino,f1_ocupado,0.9828688315008949,7947,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,5 atributos,5,5,treino,balanced_accuracy,0.9923241972623604,7947,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,5 atributos,5,5,validacao,acuracia,0.9919436052366566,1986,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,5 atributos,5,5,validacao,f1_ocupado,0.9835728952772074,1986,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,5 atributos,5,5,validacao,balanced_accuracy,0.9918671972824538,1986,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,5 atributos,5,1,treino,acuracia,0.9906871381827335,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,5 atributos,5,1,treino,f1_ocupado,0.981064483111566,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,5 atributos,5,1,treino,balanced_accuracy,0.9908644448435084,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,5 atributos,5,1,validacao,acuracia,0.9944640161046804,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,5 atributos,5,1,validacao,f1_ocupado,0.9887179487179487,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,5 atributos,5,1,validacao,balanced_accuracy,0.9956403352275229,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,5 atributos,5,2,treino,acuracia,0.991316385602819,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,5 atributos,5,2,treino,f1_ocupado,0.9822940723633564,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,5 atributos,5,2,treino,balanced_accuracy,0.9909277011379638,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,5 atributos,5,2,validacao,acuracia,0.9889280322093609,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,5 atributos,5,2,validacao,f1_ocupado,0.9775510204081632,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,5 atributos,5,2,validacao,balanced_accuracy,0.9891793547890445,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,5 atributos,5,3,treino,acuracia,0.9914422350868362,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,5 atributos,5,3,treino,f1_ocupado,0.9825819672131147,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,5 atributos,5,3,treino,balanced_accuracy,0.9917129027820306,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,5 atributos,5,3,validacao,acuracia,0.9904378459989934,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,5 atributos,5,3,validacao,f1_ocupado,0.98043254376931,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,5 atributos,5,3,validacao,balanced_accuracy,0.9880761892193575,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,5 atributos,5,4,treino,acuracia,0.9921983138291179,7947,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,5 atributos,5,4,treino,f1_ocupado,0.9840944073884043,7947,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,5 atributos,5,4,treino,balanced_accuracy,0.9920384496121898,7947,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,5 atributos,5,4,validacao,acuracia,0.9884189325276939,1986,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,5 atributos,5,4,validacao,f1_ocupado,0.9765066394279878,1986,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,5 atributos,5,4,validacao,balanced_accuracy,0.9888359926110513,1986,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,5 atributos,5,5,treino,acuracia,0.9911916446457782,7947,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,5 atributos,5,5,treino,f1_ocupado,0.9820971867007673,7947,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,5 atributos,5,5,treino,balanced_accuracy,0.9917239810125287,7947,7947,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,5 atributos,5,5,validacao,acuracia,0.9919436052366566,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,5 atributos,5,5,validacao,f1_ocupado,0.9836065573770492,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,5 atributos,5,5,validacao,balanced_accuracy,0.9925697259724857,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,6 atributos,6,1,treino,acuracia,0.9949660206393154,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,6 atributos,6,1,treino,f1_ocupado,0.9896854048478597,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,6 atributos,6,1,treino,balanced_accuracy,0.9940428519039136,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,6 atributos,6,1,validacao,acuracia,0.9934574735782586,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,6 atributos,6,1,validacao,f1_ocupado,0.9865841073271414,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,6 atributos,6,1,validacao,balanced_accuracy,0.9921644420950619,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,6 atributos,6,2,treino,acuracia,0.9960986659954694,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,6 atributos,6,2,treino,f1_ocupado,0.992004126902244,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,6 atributos,6,2,treino,balanced_accuracy,0.9956671305979654,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,5 atributos,5,5,validacao,f1_ocupado,0.9835728952772074,1986,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,5 atributos,5,5,validacao,balanced_accuracy,0.9918671972824538,1986,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,6 atributos,6,1,treino,acuracia,0.9950918701233324,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,6 atributos,6,1,treino,f1_ocupado,0.9899458623356535,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,6 atributos,6,1,treino,balanced_accuracy,0.9943013834447616,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,6 atributos,6,1,validacao,acuracia,0.9944640161046804,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,6 atributos,6,1,validacao,f1_ocupado,0.9886480908152735,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,6 atributos,6,1,validacao,balanced_accuracy,0.9935320855909431,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,6 atributos,6,2,treino,acuracia,0.9957211175434181,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,6 atributos,6,2,treino,f1_ocupado,0.9912280701754386,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,6 atributos,6,2,treino,balanced_accuracy,0.9950666468555929,7946,7946,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,6 atributos,6,2,validacao,acuracia,0.9889280322093609,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,6 atributos,6,2,validacao,f1_ocupado,0.977319587628866,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,6 atributos,6,2,validacao,balanced_accuracy,0.9856774055195394,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,6 atributos,6,3,treino,acuracia,0.9953435690913667,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,6 atributos,6,3,treino,f1_ocupado,0.9904614591389533,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,6 atributos,6,3,treino,balanced_accuracy,0.9948171873511857,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,6 atributos,6,3,validacao,acuracia,0.9929542023150478,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,6 atributos,6,3,validacao,f1_ocupado,0.9855371900826446,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,6 atributos,6,3,validacao,balanced_accuracy,0.9904399190599518,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,6 atributos,6,4,treino,acuracia,0.996099156914559,7947,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,6 atributos,6,4,treino,f1_ocupado,0.992,7947,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,6 atributos,6,4,treino,balanced_accuracy,0.9953177113152458,7947,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,6 atributos,6,2,validacao,f1_ocupado,0.977366255144033,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,6 atributos,6,2,validacao,balanced_accuracy,0.9863777953734405,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,6 atributos,6,3,treino,acuracia,0.9949660206393154,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,6 atributos,6,3,treino,f1_ocupado,0.9896960329726945,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,6 atributos,6,3,treino,balanced_accuracy,0.9945677278467786,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,6 atributos,6,3,validacao,acuracia,0.9939607448414696,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,6 atributos,6,3,validacao,f1_ocupado,0.987603305785124,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,6 atributos,6,3,validacao,balanced_accuracy,0.9918056449085301,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,6 atributos,6,4,treino,acuracia,0.995847489618724,7947,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,6 atributos,6,4,treino,f1_ocupado,0.9914882641217436,7947,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,6 atributos,6,4,treino,balanced_accuracy,0.9951514049789744,7947,7947,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,6 atributos,6,4,validacao,acuracia,0.9909365558912386,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,6 atributos,6,4,validacao,f1_ocupado,0.9815573770491803,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,6 atributos,6,4,validacao,balanced_accuracy,0.9912018612877764,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,6 atributos,6,5,treino,acuracia,0.995847489618724,7947,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,6 atributos,6,5,treino,f1_ocupado,0.9915014164305949,7947,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,6 atributos,6,5,treino,balanced_accuracy,0.9956775400971112,7947,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,6 atributos,6,5,validacao,acuracia,0.9909365558912386,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,6 atributos,6,5,validacao,f1_ocupado,0.9813278008298755,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,6 atributos,6,5,validacao,balanced_accuracy,0.9869866891475847,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,6 atributos,6,1,treino,acuracia,0.99345582683111,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,6 atributos,6,1,treino,f1_ocupado,0.9866461222393426,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,6 atributos,6,1,treino,balanced_accuracy,0.9933955769949243,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,6 atributos,6,4,validacao,f1_ocupado,0.9815195071868583,1986,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,6 atributos,6,4,validacao,balanced_accuracy,0.9904993325977445,1986,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,6 atributos,6,5,treino,acuracia,0.9954699886749717,7947,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,6 atributos,6,5,treino,f1_ocupado,0.990726429675425,7947,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,6 atributos,6,5,treino,balanced_accuracy,0.9950773238472795,7947,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,6 atributos,6,5,validacao,acuracia,0.9904330312185297,1986,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,6 atributos,6,5,validacao,f1_ocupado,0.9803108808290155,1986,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,3,6 atributos,6,5,validacao,balanced_accuracy,0.9866540211502461,1986,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,6 atributos,6,1,treino,acuracia,0.9937075257991442,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,6 atributos,6,1,treino,f1_ocupado,0.987146529562982,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,6 atributos,6,1,treino,balanced_accuracy,0.9933865464520804,7946,7946,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,6 atributos,6,1,validacao,acuracia,0.9944640161046804,1987,7946,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,6 atributos,6,1,validacao,f1_ocupado,0.9886947584789312,1987,7946,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,6 atributos,6,1,validacao,balanced_accuracy,0.9949375853486631,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,6 atributos,6,2,treino,acuracia,0.9943367732192298,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,6 atributos,6,2,treino,f1_ocupado,0.9884467265725289,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,6 atributos,6,2,treino,balanced_accuracy,0.9948540104820311,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,6 atributos,6,2,validacao,acuracia,0.9899345747357826,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,6 atributos,6,2,validacao,f1_ocupado,0.9795501022494888,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,6 atributos,6,2,validacao,balanced_accuracy,0.9898446907837217,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,6 atributos,6,3,treino,acuracia,0.9940850742511955,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,6 atributos,6,3,treino,f1_ocupado,0.9879084126575766,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,6 atributos,6,3,treino,balanced_accuracy,0.993810143550846,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,6 atributos,6,2,treino,acuracia,0.9944626227032469,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,6 atributos,6,2,treino,f1_ocupado,0.9886947584789312,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,6 atributos,6,2,treino,balanced_accuracy,0.9947616515311841,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,6 atributos,6,2,validacao,acuracia,0.9909411172622044,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,6 atributos,6,2,validacao,f1_ocupado,0.9815950920245399,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,6 atributos,6,2,validacao,balanced_accuracy,0.9912104166323001,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,6 atributos,6,3,treino,acuracia,0.9939592247671785,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,6 atributos,6,3,treino,f1_ocupado,0.9876479670612455,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,6 atributos,6,3,treino,balanced_accuracy,0.9935514782637275,7946,7946,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,6 atributos,6,3,validacao,acuracia,0.9914443885254152,1987,7946,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,6 atributos,6,3,validacao,f1_ocupado,0.9824198552223371,1987,7946,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,6 atributos,6,3,validacao,balanced_accuracy,0.9880411353601337,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,6 atributos,6,4,treino,acuracia,0.994463319491632,7947,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,6 atributos,6,4,treino,f1_ocupado,0.988677303139475,7947,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,6 atributos,6,4,treino,balanced_accuracy,0.9940613417567693,7947,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,6 atributos,6,4,validacao,acuracia,0.9894259818731118,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,6 atributos,6,4,validacao,f1_ocupado,0.9785056294779939,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,6 atributos,6,4,validacao,balanced_accuracy,0.9895013286057286,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,6 atributos,6,5,treino,acuracia,0.9937083176041274,7947,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,6 atributos,6,5,treino,f1_ocupado,0.9871794871794872,7947,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,6 atributos,6,5,treino,balanced_accuracy,0.9942639362388042,7947,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,6 atributos,6,5,validacao,acuracia,0.9929506545820745,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,6 atributos,6,5,validacao,f1_ocupado,0.98559670781893,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,6 atributos,6,5,validacao,balanced_accuracy,0.9925325332771311,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,6 atributos,6,1,treino,acuracia,0.9921973319909388,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,6 atributos,6,1,treino,f1_ocupado,0.9841107124551512,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,6 atributos,6,1,treino,balanced_accuracy,0.9923885424600644,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,6 atributos,6,1,validacao,acuracia,0.9944640161046804,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,6 atributos,6,1,validacao,f1_ocupado,0.9887179487179487,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,6 atributos,6,1,validacao,balanced_accuracy,0.9956403352275229,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,6 atributos,6,2,treino,acuracia,0.9930782783790586,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,6 atributos,6,2,treino,f1_ocupado,0.9859082756853702,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,6 atributos,6,2,treino,balanced_accuracy,0.9938469666816914,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,6 atributos,6,2,validacao,acuracia,0.9899345747357826,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,6 atributos,6,2,validacao,f1_ocupado,0.9795918367346939,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,6 atributos,6,2,validacao,balanced_accuracy,0.9905450806376228,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,6 atributos,6,3,treino,acuracia,0.9919456330229046,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,6 atributos,6,3,treino,f1_ocupado,0.9836065573770492,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,6 atributos,6,3,treino,balanced_accuracy,0.9923965396925389,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,6 atributos,6,3,validacao,acuracia,0.9914443885254152,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,6 atributos,6,3,validacao,f1_ocupado,0.9825282631038027,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,6 atributos,6,3,validacao,balanced_accuracy,0.9901423049218367,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,6 atributos,6,4,treino,acuracia,0.9945891531395495,7947,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,6 atributos,6,4,treino,f1_ocupado,0.9889431730521985,7947,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,6 atributos,6,4,treino,balanced_accuracy,0.9944952516703296,7947,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,6 atributos,6,4,validacao,acuracia,0.9889224572004028,1986,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,6 atributos,6,4,validacao,f1_ocupado,0.9774590163934426,1986,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,6 atributos,6,4,validacao,balanced_accuracy,0.9884661319183579,1986,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,6 atributos,6,5,treino,acuracia,0.9940858185478797,7947,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,6 atributos,6,5,treino,f1_ocupado,0.9879394405953298,7947,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,6 atributos,6,5,treino,balanced_accuracy,0.9945133957432113,7947,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,6 atributos,6,5,validacao,acuracia,0.9924471299093656,1986,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,6 atributos,6,5,validacao,f1_ocupado,0.984552008238929,1986,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,5,6 atributos,6,5,validacao,balanced_accuracy,0.9914973365897605,1986,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,6 atributos,6,1,treino,acuracia,0.9925748804429901,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,6 atributos,6,1,treino,f1_ocupado,0.9848756729043835,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,6 atributos,6,1,treino,balanced_accuracy,0.9928134079995816,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,6 atributos,6,1,validacao,acuracia,0.9949672873678913,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,6 atributos,6,1,validacao,f1_ocupado,0.9897540983606558,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,6 atributos,6,1,validacao,balanced_accuracy,0.9966755319148937,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,6 atributos,6,2,treino,acuracia,0.9929524288950415,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,6 atributos,6,2,treino,f1_ocupado,0.985655737704918,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,6 atributos,6,2,treino,balanced_accuracy,0.9937638135135556,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,6 atributos,6,2,validacao,acuracia,0.9904378459989934,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,6 atributos,6,2,validacao,f1_ocupado,0.9805924412665986,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,6 atributos,6,2,validacao,balanced_accuracy,0.9908777486349615,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,6 atributos,6,3,treino,acuracia,0.9918197835388874,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,6 atributos,6,3,treino,f1_ocupado,0.9833290587330085,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,6 atributos,6,3,treino,balanced_accuracy,0.9917868501674549,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,6 atributos,6,3,validacao,acuracia,0.9904378459989934,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,6 atributos,6,3,validacao,f1_ocupado,0.98043254376931,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,6 atributos,6,3,validacao,balanced_accuracy,0.9880761892193575,1987,7946,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,6 atributos,6,4,treino,acuracia,0.9932049830124575,7947,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,6 atributos,6,4,treino,f1_ocupado,0.9861538461538462,7947,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,6 atributos,6,4,treino,balanced_accuracy,0.9935805668208368,7947,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,6 atributos,6,4,validacao,acuracia,0.9889224572004028,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,6 atributos,6,4,validacao,f1_ocupado,0.9775967413441955,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,6 atributos,6,4,validacao,balanced_accuracy,0.9905737179884537,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,6 atributos,6,5,treino,acuracia,0.9927016484207877,7947,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,6 atributos,6,5,treino,f1_ocupado,0.9851586489252815,7947,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,6 atributos,6,5,treino,balanced_accuracy,0.9935987108937185,7947,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,6 atributos,6,4,treino,f1_ocupado,0.9861609431060995,7947,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,6 atributos,6,4,treino,balanced_accuracy,0.9937559451935492,7947,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,6 atributos,6,4,validacao,acuracia,0.9884189325276939,1986,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,6 atributos,6,4,validacao,f1_ocupado,0.9765545361875637,1986,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,6 atributos,6,4,validacao,balanced_accuracy,0.9895385213010831,1986,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,6 atributos,6,5,treino,acuracia,0.9929533157166226,7947,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,6 atributos,6,5,treino,f1_ocupado,0.9856704196519959,7947,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,6 atributos,6,5,treino,balanced_accuracy,0.9939403956027022,7947,7947,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,6 atributos,6,5,validacao,acuracia,0.9924471299093656,1986,7947,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,6 atributos,6,5,validacao,f1_ocupado,0.9846153846153847,1986,7947,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,7,6 atributos,6,5,validacao,balanced_accuracy,0.9929023939698243,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,6 atributos,6,1,treino,acuracia,0.991316385602819,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,6 atributos,6,1,treino,f1_ocupado,0.9823664707385638,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,6 atributos,6,1,treino,balanced_accuracy,0.9921571025477484,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,6 atributos,6,1,validacao,acuracia,0.9949672873678913,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,6 atributos,6,1,validacao,f1_ocupado,0.9897540983606558,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,6 atributos,6,1,validacao,balanced_accuracy,0.9966755319148937,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,6 atributos,6,2,treino,acuracia,0.9923231814749559,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,6 atributos,6,2,treino,f1_ocupado,0.9843949859299054,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,6 atributos,6,2,treino,balanced_accuracy,0.9933480476728771,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,6 atributos,6,2,validacao,acuracia,0.9894313034725717,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,6 atributos,6,2,validacao,f1_ocupado,0.9785932721712538,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,6 atributos,6,2,validacao,balanced_accuracy,0.9902124126402843,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,6 atributos,6,3,treino,acuracia,0.9915680845708532,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,6 atributos,6,3,treino,f1_ocupado,0.9828600665131747,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,6 atributos,6,3,treino,balanced_accuracy,0.9923225923071146,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,6 atributos,6,3,validacao,acuracia,0.9914443885254152,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,6 atributos,6,3,validacao,f1_ocupado,0.9825282631038027,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,6 atributos,6,3,validacao,balanced_accuracy,0.9901423049218367,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,6 atributos,6,1,treino,acuracia,0.9908129876667505,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,6 atributos,6,1,treino,f1_ocupado,0.9813251470964441,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,6 atributos,6,1,treino,balanced_accuracy,0.9911229763843564,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,6 atributos,6,1,validacao,acuracia,0.9944640161046804,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,6 atributos,6,1,validacao,f1_ocupado,0.9887179487179487,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,6 atributos,6,1,validacao,balanced_accuracy,0.9956403352275229,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,6 atributos,6,2,treino,acuracia,0.9919456330229046,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,6 atributos,6,2,treino,f1_ocupado,0.9836149513568868,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,6 atributos,6,2,treino,balanced_accuracy,0.9925720518115217,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,6 atributos,6,2,validacao,acuracia,0.9909411172622044,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,6 atributos,6,2,validacao,f1_ocupado,0.9816326530612245,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,6 atributos,6,2,validacao,balanced_accuracy,0.9919108064862011,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,6 atributos,6,3,treino,acuracia,0.9914422350868362,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,6 atributos,6,3,treino,f1_ocupado,0.9825819672131147,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,6 atributos,6,3,treino,balanced_accuracy,0.9917129027820306,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,6 atributos,6,3,validacao,acuracia,0.9904378459989934,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,6 atributos,6,3,validacao,f1_ocupado,0.98043254376931,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,6 atributos,6,3,validacao,balanced_accuracy,0.9880761892193575,1987,7946,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,6 atributos,6,4,treino,acuracia,0.9925758147728703,7947,7947,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,6 atributos,6,4,treino,f1_ocupado,0.9848756729043835,7947,7947,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,6 atributos,6,4,treino,balanced_accuracy,0.9928140442347337,7947,7947,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,6 atributos,6,4,validacao,acuracia,0.9879154078549849,1986,7947,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,6 atributos,6,4,validacao,f1_ocupado,0.9755102040816327,1986,7947,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,6 atributos,6,4,validacao,balanced_accuracy,0.9885033246137125,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,6 atributos,6,5,treino,acuracia,0.991946646533283,7947,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,6 atributos,6,5,treino,f1_ocupado,0.9836567926455567,7947,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,6 atributos,6,5,treino,balanced_accuracy,0.9932751702576166,7947,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,6 atributos,6,5,validacao,acuracia,0.9924471299093656,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,6 atributos,6,5,validacao,f1_ocupado,0.9846153846153847,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,6 atributos,6,5,validacao,balanced_accuracy,0.9929023939698243,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,6 atributos,6,1,treino,acuracia,0.9910646866347848,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,6 atributos,6,1,treino,f1_ocupado,0.9818553539483772,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,6 atributos,6,1,treino,balanced_accuracy,0.9918154040075657,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,6 atributos,6,1,validacao,acuracia,0.9949672873678913,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,6 atributos,6,1,validacao,f1_ocupado,0.9897540983606558,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,6 atributos,6,1,validacao,balanced_accuracy,0.9966755319148937,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,6 atributos,6,2,treino,acuracia,0.9916939340548704,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,6 atributos,6,2,treino,f1_ocupado,0.9830855971296771,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,6 atributos,6,2,treino,balanced_accuracy,0.991879209118302,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,6 atributos,6,2,validacao,acuracia,0.9894313034725717,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,6 atributos,6,2,validacao,f1_ocupado,0.9785932721712538,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,6 atributos,6,2,validacao,balanced_accuracy,0.9902124126402843,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,6 atributos,6,3,treino,acuracia,0.991316385602819,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,6 atributos,6,3,treino,f1_ocupado,0.9823393908369593,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,6 atributos,6,3,treino,balanced_accuracy,0.9918052617328776,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,6 atributos,6,3,validacao,acuracia,0.9909411172622044,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,6 atributos,6,3,validacao,f1_ocupado,0.9814814814814815,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,6 atributos,6,3,validacao,balanced_accuracy,0.9891092470705971,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,6 atributos,6,4,treino,acuracia,0.9923241474770353,7947,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,6 atributos,6,4,treino,f1_ocupado,0.9843709966692288,7947,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,6 atributos,6,4,treino,balanced_accuracy,0.9926477378984624,7947,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,6 atributos,6,4,validacao,acuracia,0.9879154078549849,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,6 atributos,6,4,validacao,f1_ocupado,0.9755102040816327,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,6 atributos,6,4,validacao,balanced_accuracy,0.9885033246137125,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,6 atributos,6,5,treino,acuracia,0.9916949792374481,7947,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,6 atributos,6,5,treino,f1_ocupado,0.9831374552887072,7947,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,6 atributos,6,5,treino,balanced_accuracy,0.9927581071759206,7947,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,6 atributos,6,5,treino,acuracia,0.9915691455895307,7947,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,6 atributos,6,5,treino,f1_ocupado,0.9828688315008949,7947,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,6 atributos,6,5,treino,balanced_accuracy,0.9923241972623604,7947,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,6 atributos,6,5,validacao,acuracia,0.9919436052366566,1986,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,6 atributos,6,5,validacao,f1_ocupado,0.9835728952772074,1986,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,9,6 atributos,6,5,validacao,balanced_accuracy,0.9918671972824538,1986,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,6 atributos,6,1,treino,acuracia,0.9906871381827335,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,6 atributos,6,1,treino,f1_ocupado,0.981064483111566,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,6 atributos,6,1,treino,balanced_accuracy,0.9908644448435084,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,6 atributos,6,1,validacao,acuracia,0.9944640161046804,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,6 atributos,6,1,validacao,f1_ocupado,0.9887179487179487,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,6 atributos,6,1,validacao,balanced_accuracy,0.9956403352275229,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,6 atributos,6,2,treino,acuracia,0.991316385602819,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,6 atributos,6,2,treino,f1_ocupado,0.9822940723633564,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,6 atributos,6,2,treino,balanced_accuracy,0.9909277011379638,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,6 atributos,6,2,validacao,acuracia,0.9889280322093609,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,6 atributos,6,2,validacao,f1_ocupado,0.9775510204081632,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,6 atributos,6,2,validacao,balanced_accuracy,0.9891793547890445,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,6 atributos,6,3,treino,acuracia,0.9914422350868362,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,6 atributos,6,3,treino,f1_ocupado,0.9825819672131147,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,6 atributos,6,3,treino,balanced_accuracy,0.9917129027820306,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,6 atributos,6,3,validacao,acuracia,0.9904378459989934,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,6 atributos,6,3,validacao,f1_ocupado,0.98043254376931,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,6 atributos,6,3,validacao,balanced_accuracy,0.9880761892193575,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,6 atributos,6,4,treino,acuracia,0.9921983138291179,7947,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,6 atributos,6,4,treino,f1_ocupado,0.9840944073884043,7947,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,6 atributos,6,4,treino,balanced_accuracy,0.9920384496121898,7947,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,6 atributos,6,4,validacao,acuracia,0.9884189325276939,1986,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,6 atributos,6,4,validacao,f1_ocupado,0.9765066394279878,1986,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,6 atributos,6,4,validacao,balanced_accuracy,0.9888359926110513,1986,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,6 atributos,6,5,treino,acuracia,0.9911916446457782,7947,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,6 atributos,6,5,treino,f1_ocupado,0.9820971867007673,7947,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,6 atributos,6,5,treino,balanced_accuracy,0.9917239810125287,7947,7947,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,6 atributos,6,5,validacao,acuracia,0.9919436052366566,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,6 atributos,6,5,validacao,f1_ocupado,0.9836065573770492,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,6 atributos,6,5,validacao,balanced_accuracy,0.9925697259724857,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,3,5 atributos,5,1,treino,acuracia,0.9906871381827335,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,3,5 atributos,5,1,treino,f1_ocupado,0.9811224489795919,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,3,5 atributos,5,1,treino,balanced_accuracy,0.9919166320925883,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,3,5 atributos,5,1,validacao,acuracia,0.9929542023150478,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,3,5 atributos,5,1,validacao,f1_ocupado,0.9856262833675564,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,3,5 atributos,5,1,validacao,balanced_accuracy,0.9932374950442712,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,3,5 atributos,5,2,treino,acuracia,0.9923231814749559,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,3,5 atributos,5,2,treino,f1_ocupado,0.9843949859299054,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,3,5 atributos,5,2,treino,balanced_accuracy,0.9933480476728771,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,6 atributos,6,5,validacao,f1_ocupado,0.9835728952772074,1986,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",KNN,n_neighbors,11,6 atributos,6,5,validacao,balanced_accuracy,0.9918671972824538,1986,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,3,5 atributos,5,1,treino,acuracia,0.9905612886987163,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,3,5 atributos,5,1,treino,f1_ocupado,0.980862464914519,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,3,5 atributos,5,1,treino,balanced_accuracy,0.9916581005517404,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,3,5 atributos,5,1,validacao,acuracia,0.9924509310518369,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,3,5 atributos,5,1,validacao,f1_ocupado,0.9846153846153847,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,3,5 atributos,5,1,validacao,balanced_accuracy,0.9929050482357605,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,3,5 atributos,5,2,treino,acuracia,0.9928265794110244,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,3,5 atributos,5,2,treino,f1_ocupado,0.985418265541059,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,3,5 atributos,5,2,treino,balanced_accuracy,0.9940316845833854,7946,7946,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,3,5 atributos,5,2,validacao,acuracia,0.9889280322093609,1987,7946,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,3,5 atributos,5,2,validacao,f1_ocupado,0.9775967413441955,1987,7946,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,3,5 atributos,5,2,validacao,balanced_accuracy,0.9898797446429455,1987,7946,42
@@ -330,29 +330,29 @@ protocolo,modelo,hiperparametro,valor_hiperparametro,configuracao_atributos,quan
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,3,5 atributos,5,5,validacao,f1_ocupado,0.9815195071868583,1986,7947,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,3,5 atributos,5,5,validacao,balanced_accuracy,0.9904993325977445,1986,7947,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,5 atributos,5,1,treino,acuracia,0.99345582683111,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,5 atributos,5,1,treino,f1_ocupado,0.9866666666666667,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,5 atributos,5,1,treino,balanced_accuracy,0.9939216706194642,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,5 atributos,5,1,validacao,acuracia,0.9934574735782586,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,5 atributos,5,1,validacao,f1_ocupado,0.9865841073271414,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,5 atributos,5,1,validacao,balanced_accuracy,0.9921644420950619,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,5 atributos,5,2,treino,acuracia,0.9940850742511955,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,5 atributos,5,2,treino,f1_ocupado,0.9879394405953298,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,5 atributos,5,2,treino,balanced_accuracy,0.9946877041457598,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,5 atributos,5,2,validacao,acuracia,0.98842476094615,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,5 atributos,5,2,validacao,f1_ocupado,0.9764102564102564,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,5 atributos,5,2,validacao,balanced_accuracy,0.9867455172300028,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,5 atributos,5,3,treino,acuracia,0.9932041278630758,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,5 atributos,5,3,treino,f1_ocupado,0.9861467419189328,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,5 atributos,5,3,treino,balanced_accuracy,0.9935790956118615,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,5 atributos,5,3,validacao,acuracia,0.9914443885254152,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,5 atributos,5,3,validacao,f1_ocupado,0.9825641025641025,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,5 atributos,5,3,validacao,balanced_accuracy,0.9908426947757378,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,5 atributos,5,4,treino,acuracia,0.9939599848999623,7947,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,5 atributos,5,4,treino,f1_ocupado,0.9876796714579056,7947,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,5 atributos,5,4,treino,balanced_accuracy,0.9942548642023633,7947,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,5 atributos,5,4,validacao,acuracia,0.9899295065458208,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,5 atributos,5,4,validacao,f1_ocupado,0.9795918367346939,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,5 atributos,5,4,validacao,balanced_accuracy,0.9912390539831311,1986,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,5 atributos,5,1,treino,f1_ocupado,0.9866529774127311,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,5 atributos,5,1,treino,balanced_accuracy,0.9935709415364377,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,5 atributos,5,1,validacao,acuracia,0.9919476597886261,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,5 atributos,5,1,validacao,f1_ocupado,0.9835051546391752,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,5 atributos,5,1,validacao,balanced_accuracy,0.9904643517906699,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,5 atributos,5,2,treino,acuracia,0.9937075257991442,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,5 atributos,5,2,treino,f1_ocupado,0.9871991807475679,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,5 atributos,5,2,treino,balanced_accuracy,0.9949647809983009,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,5 atributos,5,2,validacao,acuracia,0.9899345747357826,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,5 atributos,5,2,validacao,f1_ocupado,0.9796334012219959,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,5 atributos,5,2,validacao,balanced_accuracy,0.9912454704915239,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,5 atributos,5,3,treino,acuracia,0.9928265794110244,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,5 atributos,5,3,treino,f1_ocupado,0.9853583354739276,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,5 atributos,5,3,treino,balanced_accuracy,0.9926275876315234,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,5 atributos,5,3,validacao,acuracia,0.9904378459989934,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,5 atributos,5,3,validacao,f1_ocupado,0.9804727646454265,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,5 atributos,5,3,validacao,balanced_accuracy,0.9887765790732584,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,5 atributos,5,4,treino,acuracia,0.9934566503082924,7947,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,5 atributos,5,4,treino,f1_ocupado,0.9866323907455012,7947,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,5 atributos,5,4,treino,balanced_accuracy,0.9930453596662592,7947,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,5 atributos,5,4,validacao,acuracia,0.9889224572004028,1986,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,5 atributos,5,4,validacao,f1_ocupado,0.9774590163934426,1986,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,5 atributos,5,4,validacao,balanced_accuracy,0.9884661319183579,1986,7947,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,5 atributos,5,5,treino,acuracia,0.9930791493645401,7947,7947,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,5 atributos,5,5,treino,f1_ocupado,0.9859082756853702,7947,7947,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,5 atributos,5,5,treino,balanced_accuracy,0.9936727920254134,7947,7947,42
@@ -360,74 +360,74 @@ protocolo,modelo,hiperparametro,valor_hiperparametro,configuracao_atributos,quan
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,5 atributos,5,5,validacao,f1_ocupado,0.9835051546391752,1986,7947,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,5 atributos,5,5,validacao,balanced_accuracy,0.9904621399023898,1986,7947,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,5 atributos,5,1,treino,acuracia,0.9974830103196577,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,5 atributos,5,1,treino,f1_ocupado,0.9948559670781894,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,5 atributos,5,1,treino,balanced_accuracy,0.9983366600133068,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,5 atributos,5,1,validacao,acuracia,0.9904378459989934,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,5 atributos,5,1,validacao,f1_ocupado,0.980269989615784,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,5 atributos,5,1,validacao,balanced_accuracy,0.9859532619708382,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,5 atributos,5,2,treino,acuracia,0.9973571608356405,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,5 atributos,5,2,treino,f1_ocupado,0.9945918104558331,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,5 atributos,5,2,treino,balanced_accuracy,0.9979027592311847,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,5 atributos,5,2,validacao,acuracia,0.9854051333668847,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,5 atributos,5,2,validacao,f1_ocupado,0.9701952723535457,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,5 atributos,5,2,validacao,balanced_accuracy,0.9819479498303668,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,5 atributos,5,3,treino,acuracia,0.9971054618676063,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,5 atributos,5,3,treino,f1_ocupado,0.9940828402366864,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,5 atributos,5,3,treino,balanced_accuracy,0.997911965013896,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,5 atributos,5,3,validacao,acuracia,0.9904378459989934,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,5 atributos,5,3,validacao,f1_ocupado,0.98043254376931,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,5 atributos,5,3,validacao,balanced_accuracy,0.9880761892193575,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,5 atributos,5,4,treino,acuracia,0.9976091606895684,7947,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,5 atributos,5,4,treino,f1_ocupado,0.9951068761267061,7947,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,5 atributos,5,4,treino,balanced_accuracy,0.998069333059997,7947,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,5 atributos,5,4,validacao,acuracia,0.9909365558912386,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,5 atributos,5,4,validacao,f1_ocupado,0.9815950920245399,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,5 atributos,5,4,validacao,balanced_accuracy,0.9919043899778084,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,5 atributos,5,5,treino,acuracia,0.9976091606895684,7947,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,5 atributos,5,5,treino,f1_ocupado,0.9951093951093951,7947,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,5 atributos,5,5,treino,balanced_accuracy,0.9982447114327093,7947,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,5 atributos,5,5,validacao,acuracia,0.9904330312185297,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,5 atributos,5,5,validacao,f1_ocupado,0.980269989615784,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,5 atributos,5,5,validacao,balanced_accuracy,0.9859514924602142,1986,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,5 atributos,5,1,treino,f1_ocupado,0.9948506694129763,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,5 atributos,5,1,treino,balanced_accuracy,0.9979859309302801,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,5 atributos,5,1,validacao,acuracia,0.9909411172622044,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,5 atributos,5,1,validacao,f1_ocupado,0.9813664596273292,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,5 atributos,5,1,validacao,balanced_accuracy,0.9876912085370688,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,5 atributos,5,2,treino,acuracia,0.9969796123835892,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,5 atributos,5,2,treino,f1_ocupado,0.9938271604938271,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,5 atributos,5,2,treino,balanced_accuracy,0.9978288118457603,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,5 atributos,5,2,validacao,acuracia,0.98842476094615,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,5 atributos,5,2,validacao,f1_ocupado,0.9764585465711362,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,5 atributos,5,2,validacao,balanced_accuracy,0.9874459070839039,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,5 atributos,5,3,treino,acuracia,0.9973571608356405,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,5 atributos,5,3,treino,f1_ocupado,0.9945918104558331,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,5 atributos,5,3,treino,balanced_accuracy,0.9979027592311847,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,5 atributos,5,3,validacao,acuracia,0.9889280322093609,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,5 atributos,5,3,validacao,f1_ocupado,0.9772256728778468,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,5 atributos,5,3,validacao,balanced_accuracy,0.9842766258117375,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,5 atributos,5,4,treino,acuracia,0.9981124952812382,7947,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,5 atributos,5,4,treino,f1_ocupado,0.9961370074684522,7947,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,5 atributos,5,4,treino,balanced_accuracy,0.9987527024779644,7947,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,5 atributos,5,4,validacao,acuracia,0.9899295065458208,1986,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,5 atributos,5,4,validacao,f1_ocupado,0.9795501022494888,1986,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,5 atributos,5,4,validacao,balanced_accuracy,0.9905365252930991,1986,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,5 atributos,5,5,treino,acuracia,0.9973574933937335,7947,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,5 atributos,5,5,treino,f1_ocupado,0.9946001542813062,7947,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,5 atributos,5,5,treino,balanced_accuracy,0.9982537834691502,7947,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,5 atributos,5,5,validacao,acuracia,0.9919436052366566,1986,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,5 atributos,5,5,validacao,f1_ocupado,0.9834368530020704,1986,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,5 atributos,5,5,validacao,balanced_accuracy,0.9890570825223259,1986,7947,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,5 atributos,5,1,treino,acuracia,1.0,7946,7946,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,5 atributos,5,1,treino,f1_ocupado,1.0,7946,7946,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,5 atributos,5,1,treino,balanced_accuracy,1.0,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,5 atributos,5,1,validacao,acuracia,0.9894313034725717,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,5 atributos,5,1,validacao,f1_ocupado,0.9781021897810219,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,5 atributos,5,1,validacao,balanced_accuracy,0.9831801187172371,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,5 atributos,5,1,validacao,acuracia,0.9919476597886261,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,5 atributos,5,1,validacao,f1_ocupado,0.983402489626556,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,5 atributos,5,1,validacao,balanced_accuracy,0.9883561021540901,1987,7946,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,5 atributos,5,2,treino,acuracia,1.0,7946,7946,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,5 atributos,5,2,treino,f1_ocupado,1.0,7946,7946,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,5 atributos,5,2,treino,balanced_accuracy,1.0,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,5 atributos,5,2,validacao,acuracia,0.9854051333668847,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,5 atributos,5,2,validacao,f1_ocupado,0.9701338825952626,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,5 atributos,5,2,validacao,balanced_accuracy,0.9812475599764658,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,5 atributos,5,2,validacao,acuracia,0.9874182184197282,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,5 atributos,5,2,validacao,f1_ocupado,0.9742533470648815,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,5 atributos,5,2,validacao,balanced_accuracy,0.9839790116736225,1987,7946,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,5 atributos,5,3,treino,acuracia,1.0,7946,7946,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,5 atributos,5,3,treino,f1_ocupado,1.0,7946,7946,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,5 atributos,5,3,treino,balanced_accuracy,1.0,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,5 atributos,5,3,validacao,acuracia,0.9894313034725717,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,5 atributos,5,3,validacao,f1_ocupado,0.9782383419689119,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,5 atributos,5,3,validacao,balanced_accuracy,0.984609293809076,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,5 atributos,5,3,validacao,acuracia,0.9879214896829391,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,5 atributos,5,3,validacao,f1_ocupado,0.975,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,5 atributos,5,3,validacao,balanced_accuracy,0.980809730401456,1987,7946,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,5 atributos,5,4,treino,acuracia,1.0,7947,7947,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,5 atributos,5,4,treino,f1_ocupado,1.0,7947,7947,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,5 atributos,5,4,treino,balanced_accuracy,1.0,7947,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,5 atributos,5,4,validacao,acuracia,0.9894259818731118,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,5 atributos,5,4,validacao,f1_ocupado,0.9784172661870504,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,5 atributos,5,4,validacao,balanced_accuracy,0.9880962712256647,1986,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,5 atributos,5,4,validacao,acuracia,0.9909365558912386,1986,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,5 atributos,5,4,validacao,f1_ocupado,0.9815573770491803,1986,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,5 atributos,5,4,validacao,balanced_accuracy,0.9912018612877764,1986,7947,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,5 atributos,5,5,treino,acuracia,1.0,7947,7947,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,5 atributos,5,5,treino,f1_ocupado,1.0,7947,7947,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,5 atributos,5,5,treino,balanced_accuracy,1.0,7947,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,5 atributos,5,5,validacao,acuracia,0.9904330312185297,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,5 atributos,5,5,validacao,f1_ocupado,0.980269989615784,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,5 atributos,5,5,validacao,balanced_accuracy,0.9859514924602142,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,3,6 atributos,6,1,treino,acuracia,0.9908129876667505,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,3,6 atributos,6,1,treino,f1_ocupado,0.9813823004335629,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,3,6 atributos,6,1,treino,balanced_accuracy,0.9921751636334364,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,5 atributos,5,5,validacao,acuracia,0.9929506545820745,1986,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,5 atributos,5,5,validacao,f1_ocupado,0.9854771784232366,1986,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,5 atributos,5,5,validacao,balanced_accuracy,0.9897224185170033,1986,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,3,6 atributos,6,1,treino,acuracia,0.9906871381827335,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,3,6 atributos,6,1,treino,f1_ocupado,0.9811224489795919,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,3,6 atributos,6,1,treino,balanced_accuracy,0.9919166320925883,7946,7946,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,3,6 atributos,6,1,validacao,acuracia,0.9929542023150478,1987,7946,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,3,6 atributos,6,1,validacao,f1_ocupado,0.9856262833675564,1987,7946,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,3,6 atributos,6,1,validacao,balanced_accuracy,0.9932374950442712,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,3,6 atributos,6,2,treino,acuracia,0.9924490309589731,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,3,6 atributos,6,2,treino,f1_ocupado,0.9846547314578005,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,3,6 atributos,6,2,treino,balanced_accuracy,0.9936067129599956,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,3,6 atributos,6,2,treino,acuracia,0.9925748804429901,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,3,6 atributos,6,2,treino,f1_ocupado,0.984898899411313,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,3,6 atributos,6,2,treino,balanced_accuracy,0.9935143540091484,7946,7946,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,3,6 atributos,6,2,validacao,acuracia,0.9889280322093609,1987,7946,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,3,6 atributos,6,2,validacao,f1_ocupado,0.9775967413441955,1987,7946,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,3,6 atributos,6,2,validacao,balanced_accuracy,0.9898797446429455,1987,7946,42
@@ -450,92 +450,92 @@ protocolo,modelo,hiperparametro,valor_hiperparametro,configuracao_atributos,quan
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,3,6 atributos,6,5,validacao,f1_ocupado,0.9815195071868583,1986,7947,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,3,6 atributos,6,5,validacao,balanced_accuracy,0.9904993325977445,1986,7947,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,6 atributos,6,1,treino,acuracia,0.99345582683111,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,6 atributos,6,1,treino,f1_ocupado,0.9866666666666667,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,6 atributos,6,1,treino,balanced_accuracy,0.9939216706194642,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,6 atributos,6,1,validacao,acuracia,0.9934574735782586,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,6 atributos,6,1,validacao,f1_ocupado,0.9865841073271414,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,6 atributos,6,1,validacao,balanced_accuracy,0.9921644420950619,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,6 atributos,6,2,treino,acuracia,0.9940850742511955,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,6 atributos,6,2,treino,f1_ocupado,0.9879394405953298,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,6 atributos,6,2,treino,balanced_accuracy,0.9946877041457598,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,6 atributos,6,2,validacao,acuracia,0.98842476094615,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,6 atributos,6,2,validacao,f1_ocupado,0.9764102564102564,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,6 atributos,6,2,validacao,balanced_accuracy,0.9867455172300028,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,6 atributos,6,3,treino,acuracia,0.9930782783790586,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,6 atributos,6,3,treino,f1_ocupado,0.9858938189279303,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,6 atributos,6,3,treino,balanced_accuracy,0.9934959424437257,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,6 atributos,6,3,validacao,acuracia,0.9914443885254152,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,6 atributos,6,3,validacao,f1_ocupado,0.9825641025641025,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,6 atributos,6,3,validacao,balanced_accuracy,0.9908426947757378,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,6 atributos,6,4,treino,acuracia,0.9938341512520448,7947,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,6 atributos,6,4,treino,f1_ocupado,0.9874197689345314,7947,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,6 atributos,6,4,treino,balanced_accuracy,0.9939963326615153,7947,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,6 atributos,6,4,validacao,acuracia,0.9894259818731118,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,6 atributos,6,4,validacao,f1_ocupado,0.9785495403472931,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,6 atributos,6,4,validacao,balanced_accuracy,0.9902038572957604,1986,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,6 atributos,6,1,treino,f1_ocupado,0.9866529774127311,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,6 atributos,6,1,treino,balanced_accuracy,0.9935709415364377,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,6 atributos,6,1,validacao,acuracia,0.9924509310518369,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,6 atributos,6,1,validacao,f1_ocupado,0.9845201238390093,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,6 atributos,6,1,validacao,balanced_accuracy,0.9907967985991806,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,6 atributos,6,2,treino,acuracia,0.9935816763151271,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,6 atributos,6,2,treino,f1_ocupado,0.9869398207426376,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,6 atributos,6,2,treino,balanced_accuracy,0.9947061157111825,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,6 atributos,6,2,validacao,acuracia,0.9894313034725717,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,6 atributos,6,2,validacao,f1_ocupado,0.9785932721712538,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,6 atributos,6,2,validacao,balanced_accuracy,0.9902124126402843,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,6 atributos,6,3,treino,acuracia,0.9928265794110244,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,6 atributos,6,3,treino,f1_ocupado,0.9853583354739276,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,6 atributos,6,3,treino,balanced_accuracy,0.9926275876315234,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,6 atributos,6,3,validacao,acuracia,0.9909411172622044,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,6 atributos,6,3,validacao,f1_ocupado,0.9814432989690721,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,6 atributos,6,3,validacao,balanced_accuracy,0.9884088572166961,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,6 atributos,6,4,treino,acuracia,0.993330816660375,7947,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,6 atributos,6,4,treino,f1_ocupado,0.9863718179480586,7947,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,6 atributos,6,4,treino,balanced_accuracy,0.9927868281254111,7947,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,6 atributos,6,4,validacao,acuracia,0.9889224572004028,1986,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,6 atributos,6,4,validacao,f1_ocupado,0.9774590163934426,1986,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,6 atributos,6,4,validacao,balanced_accuracy,0.9884661319183579,1986,7947,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,6 atributos,6,5,treino,acuracia,0.9929533157166226,7947,7947,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,6 atributos,6,5,treino,f1_ocupado,0.9856483854433624,7947,7947,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,6 atributos,6,5,treino,balanced_accuracy,0.9934142604845655,7947,7947,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,6 atributos,6,5,validacao,acuracia,0.9919436052366566,1986,7947,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,6 atributos,6,5,validacao,f1_ocupado,0.9835051546391752,1986,7947,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,5,6 atributos,6,5,validacao,balanced_accuracy,0.9904621399023898,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,6 atributos,6,1,treino,acuracia,0.9974830103196577,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,6 atributos,6,1,treino,f1_ocupado,0.9948559670781894,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,6 atributos,6,1,treino,balanced_accuracy,0.9983366600133068,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,6 atributos,6,1,validacao,acuracia,0.9904378459989934,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,6 atributos,6,1,validacao,f1_ocupado,0.9803108808290155,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,6 atributos,6,1,validacao,balanced_accuracy,0.9866560118496983,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,6 atributos,6,2,treino,acuracia,0.9973571608356405,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,6 atributos,6,2,treino,f1_ocupado,0.9945918104558331,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,6 atributos,6,2,treino,balanced_accuracy,0.9979027592311847,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,6 atributos,6,2,validacao,acuracia,0.9849018621036739,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,6 atributos,6,2,validacao,f1_ocupado,0.9691991786447639,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,6 atributos,6,2,validacao,balanced_accuracy,0.9816152818330282,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,6 atributos,6,3,treino,acuracia,0.9968537628995721,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,6 atributos,6,3,treino,f1_ocupado,0.9935583612471013,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,6 atributos,6,3,treino,balanced_accuracy,0.9970436102016935,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,6 atributos,6,3,validacao,acuracia,0.9894313034725717,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,6 atributos,6,3,validacao,f1_ocupado,0.978328173374613,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,6 atributos,6,3,validacao,balanced_accuracy,0.9860100735168781,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,6 atributos,6,4,treino,acuracia,0.9976091606895684,7947,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,6 atributos,6,4,treino,f1_ocupado,0.9951068761267061,7947,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,6 atributos,6,4,treino,balanced_accuracy,0.998069333059997,7947,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,6 atributos,6,4,validacao,acuracia,0.9899295065458208,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,6 atributos,6,4,validacao,f1_ocupado,0.9795501022494888,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,6 atributos,6,4,validacao,balanced_accuracy,0.9905365252930991,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,6 atributos,6,5,treino,acuracia,0.9976091606895684,7947,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,6 atributos,6,5,treino,f1_ocupado,0.9951093951093951,7947,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,6 atributos,6,5,treino,balanced_accuracy,0.9982447114327093,7947,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,6 atributos,6,5,validacao,acuracia,0.9889224572004028,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,6 atributos,6,5,validacao,f1_ocupado,0.9770833333333333,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,6 atributos,6,5,validacao,balanced_accuracy,0.9828459023981023,1986,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,6 atributos,6,1,treino,acuracia,0.9971054618676063,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,6 atributos,6,1,treino,f1_ocupado,0.9940889231560011,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,6 atributos,6,1,treino,balanced_accuracy,0.9980871590153026,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,6 atributos,6,1,validacao,acuracia,0.9919476597886261,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,6 atributos,6,1,validacao,f1_ocupado,0.9834710743801653,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,6 atributos,6,1,validacao,balanced_accuracy,0.9897616019118101,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,6 atributos,6,2,treino,acuracia,0.9969796123835892,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,6 atributos,6,2,treino,f1_ocupado,0.9938271604938271,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,6 atributos,6,2,treino,balanced_accuracy,0.9978288118457603,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,6 atributos,6,2,validacao,acuracia,0.9879214896829391,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,6 atributos,6,2,validacao,f1_ocupado,0.9754098360655737,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,6 atributos,6,2,validacao,balanced_accuracy,0.9864128492326643,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,6 atributos,6,3,treino,acuracia,0.9972313113516235,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,6 atributos,6,3,treino,f1_ocupado,0.994335736354274,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,6 atributos,6,3,treino,balanced_accuracy,0.997819606063049,7946,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,6 atributos,6,3,validacao,acuracia,0.9889280322093609,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,6 atributos,6,3,validacao,f1_ocupado,0.9771784232365145,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,6 atributos,6,3,validacao,balanced_accuracy,0.9835762359578364,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,6 atributos,6,4,treino,acuracia,0.9981124952812382,7947,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,6 atributos,6,4,treino,f1_ocupado,0.9961370074684522,7947,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,6 atributos,6,4,treino,balanced_accuracy,0.9987527024779644,7947,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,6 atributos,6,4,validacao,acuracia,0.9889224572004028,1986,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,6 atributos,6,4,validacao,f1_ocupado,0.9774590163934426,1986,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,6 atributos,6,4,validacao,balanced_accuracy,0.9884661319183579,1986,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,6 atributos,6,5,treino,acuracia,0.9969799924499811,7947,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,6 atributos,6,5,treino,f1_ocupado,0.9938335046248715,7947,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,6 atributos,6,5,treino,balanced_accuracy,0.998004323964743,7947,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,6 atributos,6,5,validacao,acuracia,0.9919436052366566,1986,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,6 atributos,6,5,validacao,f1_ocupado,0.9834368530020704,1986,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,10,6 atributos,6,5,validacao,balanced_accuracy,0.9890570825223259,1986,7947,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,6 atributos,6,1,treino,acuracia,1.0,7946,7946,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,6 atributos,6,1,treino,f1_ocupado,1.0,7946,7946,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,6 atributos,6,1,treino,balanced_accuracy,1.0,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,6 atributos,6,1,validacao,acuracia,0.9899345747357826,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,6 atributos,6,1,validacao,f1_ocupado,0.9791666666666666,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,6 atributos,6,1,validacao,balanced_accuracy,0.9842153154046077,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,6 atributos,6,1,validacao,acuracia,0.9934574735782586,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,6 atributos,6,1,validacao,f1_ocupado,0.9864724245577523,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,6 atributos,6,1,validacao,balanced_accuracy,0.989353442579622,1987,7946,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,6 atributos,6,2,treino,acuracia,1.0,7946,7946,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,6 atributos,6,2,treino,f1_ocupado,1.0,7946,7946,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,6 atributos,6,2,treino,balanced_accuracy,1.0,7946,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,6 atributos,6,2,validacao,acuracia,0.9854051333668847,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,6 atributos,6,2,validacao,f1_ocupado,0.9701952723535457,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,6 atributos,6,2,validacao,balanced_accuracy,0.9819479498303668,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,6 atributos,6,2,validacao,acuracia,0.9864116758933065,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,6 atributos,6,2,validacao,f1_ocupado,0.9721362229102167,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,6 atributos,6,2,validacao,balanced_accuracy,0.9819128959711432,1987,7946,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,6 atributos,6,3,treino,acuracia,1.0,7946,7946,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,6 atributos,6,3,treino,f1_ocupado,1.0,7946,7946,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,6 atributos,6,3,treino,balanced_accuracy,1.0,7946,7946,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,6 atributos,6,3,validacao,acuracia,0.9889280322093609,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,6 atributos,6,3,validacao,f1_ocupado,0.9771784232365145,1987,7946,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,6 atributos,6,3,validacao,balanced_accuracy,0.9835762359578364,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,6 atributos,6,3,validacao,f1_ocupado,0.9770833333333333,1987,7946,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,6 atributos,6,3,validacao,balanced_accuracy,0.9821754562500344,1987,7946,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,6 atributos,6,4,treino,acuracia,1.0,7947,7947,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,6 atributos,6,4,treino,f1_ocupado,1.0,7947,7947,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,6 atributos,6,4,treino,balanced_accuracy,1.0,7947,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,6 atributos,6,4,validacao,acuracia,0.9894259818731118,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,6 atributos,6,4,validacao,f1_ocupado,0.9784172661870504,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,6 atributos,6,4,validacao,balanced_accuracy,0.9880962712256647,1986,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,6 atributos,6,4,validacao,acuracia,0.9889224572004028,1986,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,6 atributos,6,4,validacao,f1_ocupado,0.977366255144033,1986,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,6 atributos,6,4,validacao,balanced_accuracy,0.987061074538294,1986,7947,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,6 atributos,6,5,treino,acuracia,1.0,7947,7947,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,6 atributos,6,5,treino,f1_ocupado,1.0,7947,7947,42
 "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,6 atributos,6,5,treino,balanced_accuracy,1.0,7947,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,6 atributos,6,5,validacao,acuracia,0.9889224572004028,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,6 atributos,6,5,validacao,f1_ocupado,0.9770833333333333,1986,7947,42
-"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,6 atributos,6,5,validacao,balanced_accuracy,0.9828459023981023,1986,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,6 atributos,6,5,validacao,acuracia,0.9904330312185297,1986,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,6 atributos,6,5,validacao,f1_ocupado,0.980269989615784,1986,7947,42
+"StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",Árvore de Decisão,max_depth,None,6 atributos,6,5,validacao,balanced_accuracy,0.9859514924602142,1986,7947,42

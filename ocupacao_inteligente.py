@@ -38,8 +38,19 @@
 # | Licença | Creative Commons Attribution 4.0 (CC BY 4.0) |
 # | Arquivos utilizados | `datatest.txt` (2.665) e `datatest2.txt` (9.752) |
 # | Arquivo preservado e não utilizado | `datatraining.txt` (8.143) |
-# | Base consolidada | 12.417 registros e 7 colunas |
+# | Base consolidada | 12.417 registros e 7 colunas, com a precisão original das fontes |
+# | Base tratada e base de Feature Engineering | 12.417 registros, com precisão decimal padronizada na Fase 2 (BLOCO 19.1) |
 # | Atribuição e hashes SHA-256 | `dados/README.md` |
+#
+# ### Revisão metodológica da precisão decimal
+#
+# Após a conclusão da primeira versão das sete fases, o estudante solicitou a padronização da quantidade de casas
+# decimais dos atributos (`Temperature` 1, `Humidity` 2, `Light` 1, `CO2` 1 e `HumidityRatio` 5). A regra é uma decisão
+# metodológica deste projeto, e não uma exigência do enunciado. Ela foi incorporada à Fase 2, e todas as fases seguintes
+# foram reprocessadas. Como o teste oficial e o `datatraining.txt` já haviam sido avaliados na versão anterior, a
+# comparação entre as versões (BLOCOS 103 a 108) é uma análise de sensibilidade posterior, e não uma avaliação
+# independente. Os resultados da versão anterior estão preservados em
+# `resultados/referencia_historica/resultados_versao_precisao_integral.csv`.
 
 # %% [markdown]
 # # PREPARAÇÃO INICIAL E ETL (BLOCOS 01 A 09)
@@ -54,10 +65,11 @@
 #
 # | Grupo | Bibliotecas |
 # |---|---|
-# | Padrão do Python | `os`, `zipfile`, `urllib.request`, `hashlib` |
+# | Padrão do Python | `os`, `zipfile`, `urllib.request`, `hashlib`, `time`, `decimal` (análise dos empates de arredondamento, Fase 2) |
 # | Análise e manipulação | `pandas`, `numpy` |
 # | Visualização | `matplotlib.pyplot`, `matplotlib.dates`, `seaborn` |
-# | Machine Learning | `train_test_split`, `StratifiedKFold`, `TimeSeriesSplit`, `cross_validate`, `StandardScaler`, `Pipeline`, `DecisionTreeClassifier`, `KNeighborsClassifier`, métricas, `check_is_fitted` |
+# | Machine Learning | `train_test_split`, `StratifiedKFold`, `TimeSeriesSplit`, `cross_validate`, `StandardScaler`, `Pipeline`, `DecisionTreeClassifier`, `export_text`, `KNeighborsClassifier`, `DummyClassifier`, métricas, `check_is_fitted` |
+# | Estatística | `scipy.stats.binomtest` (teste exato de McNemar, Fase 7) |
 #
 # Versões no ambiente `.venv`: Python 3.14.4, pandas 3.0.2, NumPy 2.4.4, Matplotlib 3.10.9, Seaborn 0.13.2, scikit-learn 1.8.0.
 
@@ -69,6 +81,8 @@ import os
 import zipfile
 import urllib.request
 import hashlib
+import time
+from decimal import Decimal, ROUND_HALF_EVEN, ROUND_HALF_UP
 
 # Análise e manipulação de dados
 import pandas as pd
@@ -83,11 +97,15 @@ import seaborn as sns
 from sklearn.model_selection import train_test_split, StratifiedKFold, TimeSeriesSplit, cross_validate
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
-from sklearn.tree import DecisionTreeClassifier
+from sklearn.tree import DecisionTreeClassifier, export_text
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.dummy import DummyClassifier
 from sklearn.metrics import (accuracy_score, balanced_accuracy_score, classification_report, confusion_matrix,
-                             f1_score)
+                             f1_score, precision_score, recall_score)
 from sklearn.utils.validation import check_is_fitted
+
+# Estatística
+from scipy.stats import binomtest
 
 
 # %% [markdown]
@@ -143,6 +161,12 @@ print(plt.rcParams["figure.figsize"])
 # | `caminho_grafico_feature_engineering` | `resultados/graficos/modelagem_02_impacto_feature_engineering.png` (Fase 6) |
 # | `caminho_grafico_validacao_temporal` | `resultados/graficos/modelagem_03_validacao_temporal.png` (Fase 6) |
 # | `caminho_cv_hiperparametros` / `caminho_cv_feature_engineering` / `caminho_cv_temporal` | `resultados/modelagem/cv_hiperparametros.csv`, `cv_feature_engineering.csv` e `cv_temporal.csv` (Fase 6) |
+# | `caminho_grafico_matrizes` / `caminho_grafico_metricas` / `caminho_grafico_erros` / `caminho_grafico_generalizacao` | `resultados/graficos/avaliacao_01_matrizes_confusao.png` a `avaliacao_04_generalizacao_modelos.png` (Fase 7) |
+# | `caminho_metricas_avaliacao_final` / `caminho_previsoes_teste` / `caminho_analise_erros_teste` | `resultados/modelagem/metricas_avaliacao_final.csv`, `previsoes_teste.csv` e `analise_erros_teste.csv` (Fase 7) |
+# | `caminho_metricas_avaliacao_complementar` / `caminho_previsoes_avaliacao_complementar` | `resultados/modelagem/metricas_avaliacao_complementar.csv` e `previsoes_avaliacao_complementar.csv` (Fase 7) |
+# | `caminho_grafico_precisao` / `caminho_auditoria_precisao` | `resultados/graficos/prep_02_padronizacao_precisao_decimal.png` e `resultados/modelagem/auditoria_precisao_decimal.csv` (Fase 2) |
+# | `caminho_referencia_historica` | `resultados/referencia_historica/resultados_versao_precisao_integral.csv` (somente leitura; resultados preservados da versão anterior à regra decimal) |
+# | `caminho_grafico_revisao` / `caminho_comparacao_precisao` | `resultados/graficos/revisao_01_impacto_precisao_decimal.png` e `resultados/modelagem/comparacao_precisao_decimal.csv` (revisão, BLOCOS 103 a 108) |
 # | `pasta_graficos` / `pasta_metricas` / `pasta_modelagem` | `resultados/graficos` / `resultados/metricas` / `resultados/modelagem` |
 #
 # Conceitos: o item 5.1 do enunciado proíbe caminhos absolutos; `os.makedirs(..., exist_ok=True)` cria as pastas sem erro
@@ -199,6 +223,24 @@ caminho_cv_hiperparametros = f"{pasta_modelagem}/cv_hiperparametros.csv"
 caminho_cv_feature_engineering = f"{pasta_modelagem}/cv_feature_engineering.csv"
 caminho_cv_temporal = f"{pasta_modelagem}/cv_temporal.csv"
 
+# Definindo os caminhos dos gráficos e dos resultados da avaliação final (Fase 7)
+caminho_grafico_matrizes = f"{pasta_graficos}/avaliacao_01_matrizes_confusao.png"
+caminho_grafico_metricas = f"{pasta_graficos}/avaliacao_02_comparacao_metricas.png"
+caminho_grafico_erros = f"{pasta_graficos}/avaliacao_03_analise_erros.png"
+caminho_grafico_generalizacao = f"{pasta_graficos}/avaliacao_04_generalizacao_modelos.png"
+caminho_metricas_avaliacao_final = f"{pasta_modelagem}/metricas_avaliacao_final.csv"
+caminho_previsoes_teste = f"{pasta_modelagem}/previsoes_teste.csv"
+caminho_analise_erros_teste = f"{pasta_modelagem}/analise_erros_teste.csv"
+caminho_metricas_avaliacao_complementar = f"{pasta_modelagem}/metricas_avaliacao_complementar.csv"
+caminho_previsoes_avaliacao_complementar = f"{pasta_modelagem}/previsoes_avaliacao_complementar.csv"
+
+# Definindo os caminhos da padronização da precisão decimal (Fase 2) e da revisão metodológica
+caminho_grafico_precisao = f"{pasta_graficos}/prep_02_padronizacao_precisao_decimal.png"
+caminho_auditoria_precisao = f"{pasta_modelagem}/auditoria_precisao_decimal.csv"
+caminho_referencia_historica = "resultados/referencia_historica/resultados_versao_precisao_integral.csv"
+caminho_grafico_revisao = f"{pasta_graficos}/revisao_01_impacto_precisao_decimal.png"
+caminho_comparacao_precisao = f"{pasta_modelagem}/comparacao_precisao_decimal.csv"
+
 # Validando o diretório de trabalho
 print("Diretório atual:", os.getcwd())
 
@@ -210,6 +252,7 @@ print("Arquivo datatraining:", os.path.exists(caminho_datatraining))
 print("Arquivo consolidado:", os.path.exists(caminho_csv))
 print("Arquivo tratado:", os.path.exists(caminho_tratado))
 print("Arquivo de features:", os.path.exists(caminho_features))
+print("Referência histórica da versão anterior:", os.path.exists(caminho_referencia_historica))
 
 
 # %% [markdown]
@@ -918,6 +961,12 @@ print((mudanca_classe & transicao_mesmo_segmento).groupby(segmentos).sum())
 # %% [markdown]
 # ## BLOCO 17 — Interpretação dos resultados da EDA
 #
+# **Camada analisada:** todas as estatísticas, gráficos e correlações desta fase descrevem a **base consolidada**, com a
+# precisão original das fontes. Elas foram preservadas como diagnóstico dessa camada. A padronização decimal ocorre na
+# Fase 2 (BLOCO 19.1), e a comparação entre a base consolidada e a base tratada está no BLOCO 25.4: as médias, os
+# desvios padrão e as correlações mudam de forma residual (por exemplo, a correlação de `Light` com `Occupancy`
+# permanece 0,9197), de modo que as interpretações abaixo continuam válidas para a base tratada.
+#
 # ### 17.1 — Estrutura e qualidade inicial dos dados
 #
 # **Evidências (BLOCOS 11 e 12):**
@@ -1193,13 +1242,15 @@ print((mudanca_classe & transicao_mesmo_segmento).groupby(segmentos).sum())
 # |---|---|
 # | Nenhum valor ausente na inspeção inicial | Confirmar ausentes e infinitos na base de trabalho (BLOCO 21) |
 # | 12.417 timestamps distintos | Confirmar a unicidade temporal e investigar duplicidades (BLOCO 20) |
+# | Quantidades muito diferentes de casas decimais entre os atributos | Padronizar a precisão decimal por uma regra explícita e auditada (BLOCO 19.1) |
 # | Diferenças de escala entre os sensores | Avaliar tipos e precisão; o escalonamento ocorrerá após a divisão treino/teste (BLOCOS 22 e 23) |
 # | Indícios de valores extremos em `Light` e `CO2` | Construir boxplots e investigar potenciais outliers pelo IQR (BLOCOS 24 e 25) |
 #
 # ### Preservação das fontes
 #
-# Os arquivos de `dados/brutos/` e a base consolidada `dados/consolidados/occupancy.csv` não são alterados. O
-# tratamento é realizado sobre uma cópia de trabalho e exportado para `dados/tratados/occupancy_tratado.csv`.
+# Os arquivos de `dados/brutos/` e a base consolidada `dados/consolidados/occupancy.csv` não são alterados e mantêm a
+# precisão original. O tratamento, incluindo a padronização decimal, é realizado sobre uma cópia de trabalho e
+# exportado para `dados/tratados/occupancy_tratado.csv`.
 
 # %% [markdown]
 # ### BLOCO 19 — Criação da base de trabalho
@@ -1219,6 +1270,252 @@ print(df_tratado.head())
 
 # Confirmação da equivalência inicial entre as bases
 print("\nBase de trabalho equivalente à base consolidada:", df_tratado.equals(df_consolidado))
+
+# %% [markdown]
+# ### BLOCO 19.1 — Padronização da precisão decimal dos atributos numéricos
+#
+# **Origem da regra:** a padronização foi solicitada pelo estudante depois da inspeção visual de
+# `dados/consolidados/occupancy.csv` e `dados/features/occupancy_features.csv`, nos quais os atributos apareciam com
+# quantidades muito diferentes de casas decimais (por exemplo, `Light` = 572.666666666667 e `HumidityRatio` =
+# 0.0047641630241641). **A regra é uma decisão metodológica deste projeto**: o enunciado, a rubrica e os materiais
+# MUS01 e MUS02 tratam da limpeza, da verificação de tipos, de ausentes, de duplicidades e de outliers e da padronização
+# de escala (`StandardScaler`), mas não definem quantidades de casas decimais para os sensores.
+#
+# | Atributo | Unidade | Casas decimais adotadas | Maior alteração possível por valor |
+# |---|---|---:|---:|
+# | `Temperature` | °C | 1 | 0,05 °C |
+# | `Humidity` | % | 2 | 0,005 p.p. |
+# | `Light` | lux | 1 | 0,05 lux |
+# | `CO2` | ppm | 1 | 0,05 ppm |
+# | `HumidityRatio` | kg/kg | 5 | 0,000005 kg/kg |
+#
+# `Occupancy` (inteiro) e `date` não são alterados, assim como os índices, a ordem das observações e os tipos
+# (`float64`). A regra é aplicada somente às cinco colunas listadas, nunca a todas as colunas da base.
+#
+# **Justificativas:**
+#
+# | Aspecto | Justificativa |
+# |---|---|
+# | Consistência | Cada atributo passa a ser representado com uma quantidade fixa de casas decimais, independentemente de como o valor foi registrado na fonte |
+# | Legibilidade | Tabelas, CSVs e relatórios ficam mais fáceis de ler e comparar |
+# | Governança | A transformação é explícita (dicionário `casas_decimais`), uniforme e reproduzível |
+# | Rastreabilidade | Os arquivos brutos e o CSV consolidado mantêm a precisão original, permitindo comparar e auditar a transformação |
+# | Precisão numérica | Evita a apresentação de dígitos que sugerem uma precisão física não demonstrada (valores como 572.666666666667 resultam de médias calculadas na fonte, e não de uma resolução de 10⁻¹² lux) |
+#
+# **Quatro noções diferentes de precisão:**
+#
+# | Noção | Significado neste projeto |
+# |---|---|
+# | Precisão textual | Quantidade de dígitos com que o valor foi escrito no arquivo de origem (inspecionada abaixo) |
+# | Precisão de armazenamento | O `float64` guarda cerca de 15 a 17 algarismos significativos; números como 0.1 não têm representação binária exata |
+# | Precisão física dos sensores | **Não documentada** na página da UCI consultada; por isso, a regra não é apresentada como a resolução real dos equipamentos |
+# | Casas exibidas | Formatação de apresentação; não altera o valor armazenado |
+#
+# **Arredondamento não é formatação:** `df_tratado.round(casas_decimais)` substitui cada valor pelo `float64` mais
+# próximo do número decimal arredondado. Todas as fases seguintes usam esses valores. A formatação com zeros à direita
+# (por exemplo, `26.30`) é aplicada somente na exportação do CSV (BLOCO 27), em uma cópia textual.
+#
+# **Empates e representação binária:** o pandas usa `numpy.round`, que multiplica o valor por 10^casas, arredonda para o
+# inteiro par mais próximo em caso de empate exato (*round half to even*) e divide novamente. Como o valor armazenado é
+# binário, um empate do texto decimal (por exemplo, 20.25 com uma casa) pode não ser um empate exato do `float64`, e o
+# resultado depende da representação binária. Os empates textuais são contados e conferidos abaixo com o módulo
+# `decimal`.
+#
+# **Diferença em relação ao StandardScaler:** o arredondamento reduz a resolução de cada valor, registro a registro, sem
+# aprender nenhum parâmetro dos dados; por isso pode ser aplicado antes da divisão treino/teste sem Data Leakage. O
+# `StandardScaler` (Fase 5) muda a escala dos atributos com média e desvio aprendidos no treino e não reduz a precisão.
+#
+# **Limitações:** o arredondamento é uma transformação com perda potencial de informação. Pode aumentar a quantidade de
+# valores repetidos, alterar estatísticas, correlações, limites de outliers, distâncias do KNN, limiares da árvore e os
+# hiperparâmetros selecionados, e pode melhorar ou piorar o desempenho observado. Não se afirma, antecipadamente,
+# nenhum ganho preditivo. A regra foi definida **depois** da primeira avaliação completa dos modelos (BLOCO 103) e
+# permanece fixa, independentemente do efeito nas métricas.
+#
+# **Camadas de dados:**
+#
+# | Camada | Arquivo | Precisão |
+# |---|---|---|
+# | Dados brutos | `dados/brutos/*.txt` e ZIP da UCI | Original |
+# | Dados consolidados | `dados/consolidados/occupancy.csv` | Original (referência rastreável das fontes) |
+# | Dados tratados | `dados/tratados/occupancy_tratado.csv` | Padronizada por esta regra |
+# | Feature Engineering | `dados/features/occupancy_features.csv` | Atributos tratados; `CO2_Light_Ratio` recalculada com precisão integral |
+# | Modelagem | Conjuntos em memória (Fases 4 a 7) | Atributos tratados |
+#
+# O CSV consolidado **não** contém os valores tratados: ele permanece como a cópia fiel das fontes.
+
+# %%
+# BLOCO 19.1 — Inspeção da precisão original (conteúdo textual das fontes)
+
+# Regra decimal da revisão (decisão metodológica do estudante; aplicada somente a estes cinco atributos)
+casas_decimais = {"Temperature": 1, "Humidity": 2, "Light": 1, "CO2": 1, "HumidityRatio": 5}
+assert list(casas_decimais) == colunas_numericas, "A regra deve cobrir exatamente os cinco atributos ambientais."
+
+# Leitura textual das duas fontes consolidadas, na mesma ordem da consolidação
+texto_fontes = pd.concat(
+    [pd.read_csv(caminho_datatest, dtype=str), pd.read_csv(caminho_datatest2, dtype=str)], ignore_index=True
+)
+assert len(texto_fontes) == len(df_tratado), "Quantidade de registros textuais divergente."
+
+# O texto convertido de forma exata (float do Python) é comparado com a base consolidada. O conversor padrão do
+# read_csv (BLOCO 05) não garante o float64 mais próximo de textos com 17 algarismos significativos (mesmo efeito
+# documentado no BLOCO 35); as diferenças são medidas, e não ignoradas
+linhas_conversao = []
+for coluna in colunas_numericas:
+    convertido_exato = texto_fontes[coluna].map(float).to_numpy()
+    valores_consolidados = df_consolidado[coluna].to_numpy()
+    diferentes = convertido_exato != valores_consolidados
+    nao_nulos = valores_consolidados != 0
+    diferenca_relativa_conversao = np.abs(convertido_exato - valores_consolidados)[nao_nulos] / valores_consolidados[nao_nulos]
+    linhas_conversao.append({"Atributo": coluna, "Valores diferentes da conversão exata": int(diferentes.sum()),
+                             "Maior diferença relativa": diferenca_relativa_conversao.max()})
+    assert diferenca_relativa_conversao.max() < 1e-13, f"O texto de {coluna} não reproduz a base consolidada."
+tabela_conversao_texto = pd.DataFrame(linhas_conversao).set_index("Atributo")
+print("Base consolidada × conversão exata do texto das fontes:")
+print(tabela_conversao_texto.to_string(float_format=lambda valor: f"{valor:.3e}"))
+
+
+def casas_no_texto(serie_texto):
+    """Quantidade de dígitos após o ponto decimal, como escrito no arquivo de origem."""
+    return serie_texto.str.partition(".")[2].str.len()
+
+
+linhas_precisao_original = []
+for coluna, casas in casas_decimais.items():
+    casas_texto = casas_no_texto(texto_fontes[coluna])
+    posicao_exemplo = casas_texto.idxmax()
+    linhas_precisao_original.append({
+        "Atributo": coluna,
+        "Casas adotadas": casas,
+        "Valores distintos": df_consolidado[coluna].nunique(),
+        "Mínimo": df_consolidado[coluna].min(),
+        "Máximo": df_consolidado[coluna].max(),
+        "Casas no texto (mín.)": int(casas_texto.min()),
+        "Casas no texto (mediana)": float(casas_texto.median()),
+        "Casas no texto (máx.)": int(casas_texto.max()),
+        "Textos com até as casas adotadas": int((casas_texto <= casas).sum()),
+        "Textos com mais casas": int((casas_texto > casas).sum()),
+        "Exemplo com mais casas": texto_fontes.loc[posicao_exemplo, coluna],
+    })
+tabela_precisao_original = pd.DataFrame(linhas_precisao_original).set_index("Atributo")
+print("Precisão textual das fontes (datatest.txt + datatest2.txt):")
+print(tabela_precisao_original.to_string())
+
+print("\nDistribuição da quantidade de casas decimais no texto das fontes (registros):")
+distribuicao_casas = pd.DataFrame({
+    coluna: casas_no_texto(texto_fontes[coluna]).value_counts() for coluna in colunas_numericas
+}).fillna(0).astype(int).sort_index()
+distribuicao_casas.index.name = "Casas no texto"
+print(distribuicao_casas.to_string())
+
+# Empates textuais: o texto termina exatamente na metade da última casa adotada (ex.: 20.25 com 1 casa)
+linhas_empates = []
+for coluna, casas in casas_decimais.items():
+    quantum = Decimal(1).scaleb(-casas)
+    decimais = texto_fontes[coluna].map(Decimal)
+    empate = decimais.map(lambda valor: valor.scaleb(casas) % 1 == Decimal("0.5"))
+    arredondado_numpy = df_consolidado[coluna].round(casas)
+    meio_par = decimais.map(lambda valor: float(valor.quantize(quantum, rounding=ROUND_HALF_EVEN)))
+    meio_cima = decimais.map(lambda valor: float(valor.quantize(quantum, rounding=ROUND_HALF_UP)))
+    linhas_empates.append({
+        "Atributo": coluna,
+        "Empates textuais": int(empate.sum()),
+        "Empates iguais ao meio-par decimal": int((arredondado_numpy[empate] == meio_par[empate]).sum()),
+        "Empates iguais ao meio-para-cima decimal": int((arredondado_numpy[empate] == meio_cima[empate]).sum()),
+        "Divergências fora de empates (numpy × decimal)": int((arredondado_numpy[~empate] != meio_par[~empate]).sum()),
+    })
+tabela_empates = pd.DataFrame(linhas_empates).set_index("Atributo")
+print("\nEmpates de arredondamento no texto das fontes e resultado do numpy.round:")
+print(tabela_empates.to_string())
+
+# %%
+# BLOCO 19.2 — Aplicação da regra decimal na base de trabalho
+
+# Referência da base de trabalho antes da regra (idêntica à base consolidada)
+df_tratado_antes_arredondamento = df_tratado.copy(deep=True)
+
+# Arredondamento somente das cinco colunas autorizadas; date e Occupancy não participam
+df_tratado = df_tratado.round(casas_decimais)
+
+print("Regra aplicada:", casas_decimais)
+print("Tipos após a regra:")
+print(df_tratado.dtypes.to_string())
+print("\nPrimeiro registro antes e depois:")
+print(pd.DataFrame({
+    "Antes": df_tratado_antes_arredondamento.loc[0, colunas_numericas],
+    "Depois": df_tratado.loc[0, colunas_numericas],
+}).to_string(float_format=lambda valor: repr(float(valor))))
+
+# %%
+# BLOCO 19.3 — Validação matemática do arredondamento
+
+linhas_auditoria = []
+exemplos_maior_alteracao = []
+for coluna, casas in casas_decimais.items():
+    antes = df_tratado_antes_arredondamento[coluna]
+    depois = df_tratado[coluna]
+    diferenca = depois - antes
+    diferenca_abs = diferenca.abs()
+    limite_teorico = 0.5 * 10.0 ** (-casas)
+    # Tolerância para a representação binária: poucos ulps da maior magnitude da coluna
+    tolerancia_binaria = 4 * np.finfo(np.float64).eps * antes.abs().max()
+    modificados = depois != antes
+    nao_nulos = antes != 0
+    erro_relativo = diferenca_abs[nao_nulos] / antes[nao_nulos].abs()
+    linhas_auditoria.append({
+        "Atributo": coluna,
+        "Casas decimais": casas,
+        "Limite teórico": limite_teorico,
+        "Registros": len(antes),
+        "Modificados": int(modificados.sum()),
+        "Modificados (%)": modificados.mean() * 100,
+        "Inalterados": int((~modificados).sum()),
+        "Diferença média com sinal": diferenca.mean(),
+        "Diferença absoluta média": diferenca_abs.mean(),
+        "Mediana da diferença absoluta": diferenca_abs.median(),
+        "Maior diferença absoluta": diferenca_abs.max(),
+        "Erro quadrático médio": (diferenca ** 2).mean(),
+        "Erro relativo médio (valores ≠ 0)": erro_relativo.mean(),
+        "Maior erro relativo (valores ≠ 0)": erro_relativo.max(),
+        "Dentro do limite": bool((diferenca_abs <= limite_teorico + tolerancia_binaria).all()),
+        "Valores distintos antes": antes.nunique(),
+        "Valores distintos depois": depois.nunique(),
+        "Zeros antes": int((antes == 0).sum()),
+        "Zeros depois": int((depois == 0).sum()),
+    })
+    posicao = diferenca_abs.idxmax()
+    exemplos_maior_alteracao.append({"Atributo": coluna, "Índice": posicao,
+                                     "Texto na fonte": texto_fontes.loc[posicao, coluna],
+                                     "Antes (float64)": antes[posicao], "Depois": depois[posicao],
+                                     "Diferença": diferenca[posicao]})
+tabela_auditoria_arredondamento = pd.DataFrame(linhas_auditoria).set_index("Atributo")
+print("Auditoria do arredondamento por atributo:")
+print(tabela_auditoria_arredondamento.T.to_string(float_format=lambda valor: f"{valor:.6g}"))
+
+print("\nRegistros com a maior alteração absoluta em cada atributo:")
+print(pd.DataFrame(exemplos_maior_alteracao).to_string(index=False, float_format=lambda valor: f"{valor:.10g}"))
+
+# Validações bloqueantes
+assert tabela_auditoria_arredondamento["Dentro do limite"].all(), "Alteração acima do limite teórico."
+assert len(df_tratado) == len(df_tratado_antes_arredondamento) == 12417, "Quantidade de registros alterada."
+assert df_tratado.index.equals(df_tratado_antes_arredondamento.index), "Índices ou ordem alterados."
+assert list(df_tratado.columns) == list(df_consolidado.columns), "Colunas alteradas."
+assert (df_tratado[colunas_numericas].dtypes == "float64").all(), "Tipo diferente de float64."
+assert df_tratado.isna().sum().sum() == 0, "Valores ausentes introduzidos."
+assert np.isfinite(df_tratado[colunas_numericas].to_numpy()).all(), "Valores infinitos introduzidos."
+pd.testing.assert_series_equal(df_tratado["Occupancy"], df_consolidado["Occupancy"], check_exact=True)
+pd.testing.assert_series_equal(df_tratado["date"], df_consolidado["date"], check_exact=True)
+assert df_tratado["Occupancy"].dtype == "int64", "Occupancy deixou de ser inteiro."
+
+# Idempotência: aplicar a mesma regra novamente não altera nenhum valor
+pd.testing.assert_frame_equal(df_tratado.round(casas_decimais), df_tratado, check_exact=True)
+
+# Cada valor é exatamente o float64 do número decimal com as casas adotadas
+for coluna, casas in casas_decimais.items():
+    reconstruido = df_tratado[coluna].map(lambda valor: float(f"{valor:.{casas}f}"))
+    assert np.array_equal(reconstruido.to_numpy(), df_tratado[coluna].to_numpy()), f"{coluna}: valor não decimal."
+
+print("\nValidações aprovadas: limites teóricos, 12.417 registros, índices e ordem, tipos float64, nenhum ausente ou")
+print("infinito, Occupancy e date idênticos à base consolidada, idempotência e representação decimal exata.")
 
 # %% [markdown]
 # ### BLOCO 20 — Identificação e tratamento de duplicidades
@@ -1483,8 +1780,10 @@ print("Tipo de date em df_consolidado (preservado):", df_consolidado["date"].dty
 # ### BLOCO 23 — Avaliação da precisão numérica
 #
 # A precisão armazenada é diferente da formatação exibida: o pandas mostra apenas algumas casas decimais, mas o valor
-# em memória mantém a precisão completa do `float64`. Nenhum arredondamento é aplicado aos dados. A conversão para um
-# tipo de menor precisão (`float32`) é testada apenas para demonstrar a perda que ela provocaria.
+# em memória é um `float64`. Desde o BLOCO 19.2, os atributos ambientais contêm os valores arredondados pela regra
+# decimal; este bloco confirma que eles correspondem exatamente à base consolidada arredondada e que nenhuma outra
+# perda de precisão foi introduzida. A conversão para um tipo de menor precisão (`float32`) é testada apenas para
+# demonstrar a perda adicional que ela provocaria; o tipo `float64` é mantido.
 
 # %%
 # BLOCO 23 — Avaliação da precisão numérica
@@ -1505,9 +1804,13 @@ erro_relativo_float32 = (
 print("\nErro relativo máximo se os dados fossem convertidos para float32:")
 print(erro_relativo_float32)
 
-# Confirmação de que os valores numéricos não foram alterados
-print("\nValores numéricos idênticos à base consolidada:",
+# Confirmação de que a única alteração numérica é a regra decimal do BLOCO 19.2
+print("\nValores numéricos idênticos à base consolidada arredondada pela regra decimal:",
+      df_tratado[colunas_numericas].equals(df_consolidado[colunas_numericas].round(casas_decimais)))
+print("Valores numéricos idênticos à base consolidada sem arredondamento:",
       df_tratado[colunas_numericas].equals(df_consolidado[colunas_numericas]))
+print("HumidityRatio (registro 0) — valor original na base consolidada:",
+      repr(float(df_consolidado.loc[0, "HumidityRatio"])))
 
 # %% [markdown]
 # ### BLOCO 24 — Construção dos boxplots
@@ -1617,8 +1920,247 @@ print(df_tratado[colunas_numericas].agg(["min", "max"]).T)
 # Nenhuma observação é removida ou transformada: os valores sinalizados pelo IQR são fisicamente plausíveis
 print("Registros antes da decisão:", len(df_tratado))
 print("Observações removidas por outliers: 0")
-print("Valores numéricos preservados:",
-      df_tratado[colunas_numericas].equals(df_consolidado[colunas_numericas]))
+print("Valores numéricos preservados (iguais à base consolidada com a regra decimal):",
+      df_tratado[colunas_numericas].equals(df_consolidado[colunas_numericas].round(casas_decimais)))
+
+# %% [markdown]
+# ### BLOCO 25.4 — Impacto da padronização decimal na qualidade dos dados
+#
+# A base consolidada (precisão original) é comparada com a base tratada (precisão padronizada) nas mesmas 12.417
+# observações. As estatísticas da EDA (Fase 1) continuam descrevendo a camada consolidada; as dos BLOCOS 20 a 25
+# descrevem a camada tratada. São comparadas a distribuição de cada atributo, a cardinalidade, os novos zeros, as
+# repetições de vetores de sensores, as correlações com `Occupancy` (Pearson e Spearman) e os potenciais outliers pelo
+# mesmo critério IQR do BLOCO 25. Uma diferença numérica não significa melhoria nem piora: ela apenas mede o efeito da
+# transformação. O resultado é salvo em `resultados/modelagem/auditoria_precisao_decimal.csv`, com precisão integral, e
+# resumido na figura `resultados/graficos/prep_02_padronizacao_precisao_decimal.png`.
+
+# %%
+# BLOCO 25.4 — Comparação entre a base consolidada e a base tratada
+
+
+def estatisticas_atributo(serie, alvo):
+    """Estatísticas descritivas, cardinalidade, correlações com o alvo e outliers pelo IQR (critério do BLOCO 25)."""
+    q1, q3 = serie.quantile(0.25), serie.quantile(0.75)
+    iqr = q3 - q1
+    return {
+        "Média": serie.mean(),
+        "Mediana": serie.median(),
+        "Variância": serie.var(),
+        "Desvio padrão": serie.std(),
+        "Mínimo": serie.min(),
+        "Primeiro quartil (Q1)": q1,
+        "Terceiro quartil (Q3)": q3,
+        "Máximo": serie.max(),
+        "Amplitude": serie.max() - serie.min(),
+        "Assimetria": serie.skew(),
+        "Valores distintos": serie.nunique(),
+        "Zeros": int((serie == 0).sum()),
+        "Pearson com Occupancy": serie.corr(alvo, method="pearson"),
+        "Spearman com Occupancy": serie.corr(alvo, method="spearman"),
+        "Limite inferior IQR": q1 - 1.5 * iqr,
+        "Limite superior IQR": q3 + 1.5 * iqr,
+        "Potenciais outliers IQR": int(((serie < q1 - 1.5 * iqr) | (serie > q3 + 1.5 * iqr)).sum()),
+    }
+
+
+linhas_comparacao_dados = []
+for coluna in colunas_numericas:
+    antes = estatisticas_atributo(df_consolidado[coluna], df_consolidado["Occupancy"])
+    depois = estatisticas_atributo(df_tratado[coluna], df_tratado["Occupancy"])
+    for indicador in antes:
+        linhas_comparacao_dados.append({"Atributo": coluna, "Indicador": indicador, "Antes": antes[indicador],
+                                        "Depois": depois[indicador], "Diferença": depois[indicador] - antes[indicador]})
+tabela_comparacao_dados = pd.DataFrame(linhas_comparacao_dados)
+for coluna in colunas_numericas:
+    print(f"\n{coluna} — base consolidada (antes) × base tratada (depois):")
+    print(tabela_comparacao_dados.query("Atributo == @coluna").set_index("Indicador")[["Antes", "Depois", "Diferença"]]
+          .to_string(float_format=lambda valor: f"{valor:.10g}"))
+
+
+def resumir_repeticoes(base):
+    """Duplicidades integrais, timestamps repetidos e repetições de vetores dos cinco sensores."""
+    repetidos = base.duplicated(subset=colunas_numericas, keep=False)
+    classes_por_vetor = base.groupby(colunas_numericas)["Occupancy"].nunique()
+    return {
+        "Linhas integralmente duplicadas": int(base.duplicated().sum()),
+        "Timestamps repetidos": int(base["date"].duplicated().sum()),
+        "Vetores de sensores repetidos (ocorrências excedentes)": int(base.duplicated(subset=colunas_numericas).sum()),
+        "Grupos de vetores repetidos": int(base.loc[repetidos].groupby(colunas_numericas).ngroups),
+        "Registros envolvidos em repetições": int(repetidos.sum()),
+        "Vetores associados a classes diferentes": int((classes_por_vetor > 1).sum()),
+        "Vetores distintos": int(len(classes_por_vetor)),
+    }
+
+
+tabela_repeticoes_precisao = pd.DataFrame({
+    "Antes": resumir_repeticoes(df_consolidado),
+    "Depois": resumir_repeticoes(df_tratado),
+})
+tabela_repeticoes_precisao["Diferença"] = tabela_repeticoes_precisao["Depois"] - tabela_repeticoes_precisao["Antes"]
+print("\nRepetições e duplicidades:")
+print(tabela_repeticoes_precisao.to_string())
+
+# Coincidências criadas pelo arredondamento: vetores originalmente distintos que passaram a ser iguais
+vetores_originais_distintos = df_consolidado[colunas_numericas].drop_duplicates()
+vetores_originais_por_grupo = vetores_originais_distintos.round(casas_decimais).value_counts()
+grupos_com_fusao = vetores_originais_por_grupo[vetores_originais_por_grupo > 1]
+print("\nVetores arredondados que reúnem dois ou mais vetores originalmente distintos:", len(grupos_com_fusao))
+print("Vetores originais distintos envolvidos nessas fusões:", int(grupos_com_fusao.sum()))
+
+# Maior alteração nas correlações de Pearson entre todas as variáveis numéricas (inclui Occupancy)
+colunas_correlacao = colunas_numericas + ["Occupancy"]
+diferenca_correlacoes = (df_tratado[colunas_correlacao].corr() - df_consolidado[colunas_correlacao].corr()).abs()
+print(f"Maior alteração absoluta na matriz de correlação de Pearson: {diferenca_correlacoes.to_numpy().max():.3e}")
+
+# Exportação da auditoria (precisão integral, formato longo)
+linhas_exportacao_precisao = []
+for coluna, linha in tabela_precisao_original.iterrows():
+    for indicador in ["Valores distintos", "Casas no texto (mín.)", "Casas no texto (mediana)",
+                      "Casas no texto (máx.)", "Textos com até as casas adotadas", "Textos com mais casas"]:
+        linhas_exportacao_precisao.append({"grupo": "precisao_textual_original", "atributo": coluna,
+                                           "indicador": indicador, "antes": np.nan, "depois": np.nan,
+                                           "diferenca": np.nan, "valor": float(linha[indicador])})
+for tabela_origem, grupo in [(tabela_empates, "empates_arredondamento"),
+                             (tabela_auditoria_arredondamento.drop(columns=["Dentro do limite"]), "auditoria_arredondamento")]:
+    for coluna, linha in tabela_origem.iterrows():
+        for indicador, valor in linha.items():
+            linhas_exportacao_precisao.append({"grupo": grupo, "atributo": coluna, "indicador": indicador,
+                                               "antes": np.nan, "depois": np.nan, "diferenca": np.nan,
+                                               "valor": float(valor)})
+for coluna, linha in tabela_auditoria_arredondamento.iterrows():
+    linhas_exportacao_precisao.append({"grupo": "auditoria_arredondamento", "atributo": coluna,
+                                       "indicador": "Dentro do limite", "antes": np.nan, "depois": np.nan,
+                                       "diferenca": np.nan, "valor": float(linha["Dentro do limite"])})
+for _, linha in tabela_comparacao_dados.iterrows():
+    linhas_exportacao_precisao.append({"grupo": "estatisticas_antes_depois", "atributo": linha["Atributo"],
+                                       "indicador": linha["Indicador"], "antes": float(linha["Antes"]),
+                                       "depois": float(linha["Depois"]), "diferenca": float(linha["Diferença"]),
+                                       "valor": np.nan})
+for indicador, linha in tabela_repeticoes_precisao.iterrows():
+    linhas_exportacao_precisao.append({"grupo": "repeticoes_antes_depois", "atributo": "cinco sensores",
+                                       "indicador": indicador, "antes": float(linha["Antes"]),
+                                       "depois": float(linha["Depois"]), "diferenca": float(linha["Diferença"]),
+                                       "valor": np.nan})
+linhas_exportacao_precisao.append({"grupo": "repeticoes_antes_depois", "atributo": "cinco sensores",
+                                   "indicador": "Vetores arredondados com fusão de vetores originais",
+                                   "antes": np.nan, "depois": np.nan, "diferenca": np.nan,
+                                   "valor": float(len(grupos_com_fusao))})
+linhas_exportacao_precisao.append({"grupo": "correlacoes", "atributo": "cinco sensores e Occupancy",
+                                   "indicador": "Maior alteração absoluta na matriz de Pearson", "antes": np.nan,
+                                   "depois": np.nan, "diferenca": np.nan,
+                                   "valor": float(diferenca_correlacoes.to_numpy().max())})
+auditoria_precisao_exportacao = pd.DataFrame(linhas_exportacao_precisao)
+assert not auditoria_precisao_exportacao.duplicated(subset=["grupo", "atributo", "indicador"]).any()
+auditoria_precisao_exportacao.to_csv(caminho_auditoria_precisao, index=False)
+pd.testing.assert_frame_equal(pd.read_csv(caminho_auditoria_precisao, float_precision="round_trip"),
+                              auditoria_precisao_exportacao, check_exact=True, check_dtype=False)
+print("\nAuditoria exportada:", caminho_auditoria_precisao, auditoria_precisao_exportacao.shape)
+
+# %%
+# BLOCO 25.5 — Visualização da padronização decimal
+
+fig, eixos_precisao = plt.subplots(2, 3, figsize=(20, 11))
+(eixo_exemplos, eixo_modificados, eixo_alteracoes), (eixo_cardinalidade, eixo_repeticoes, eixo_outliers) = eixos_precisao
+posicoes_precisao = np.arange(len(colunas_numericas))
+rotulos_precisao = [f"{coluna}\n({casas} casa{'s' if casas > 1 else ''})" for coluna, casas in casas_decimais.items()]
+
+# Painel 1 — Exemplos reais (registro 0 da base) antes e depois
+eixo_exemplos.axis("off")
+linhas_tabela_exemplos = [[coluna, texto_fontes.loc[0, coluna], f"{df_tratado.loc[0, coluna]:.{casas}f}"]
+                          for coluna, casas in casas_decimais.items()]
+tabela_figura = eixo_exemplos.table(cellText=linhas_tabela_exemplos,
+                                    colLabels=["Atributo", "Fonte (texto)", "Tratado"],
+                                    loc="center", cellLoc="center", colWidths=[0.32, 0.42, 0.26])
+tabela_figura.auto_set_font_size(False)
+tabela_figura.set_fontsize(11)
+tabela_figura.scale(1, 2.2)
+eixo_exemplos.set_title(f"Exemplo real: registro 0 ({df_consolidado.loc[0, 'date']})")
+
+# Painel 2 — Percentual de valores modificados
+percentual_modificados = tabela_auditoria_arredondamento["Modificados (%)"]
+barras = eixo_modificados.bar(posicoes_precisao, percentual_modificados, color="#4C72B0", edgecolor="black")
+for barra, valor in zip(barras, percentual_modificados):
+    eixo_modificados.annotate(f"{valor:.2f}%".replace(".", ","), (barra.get_x() + barra.get_width() / 2, valor),
+                              ha="center", va="bottom", xytext=(0, 3), textcoords="offset points", fontsize=10)
+eixo_modificados.set_xticks(posicoes_precisao, rotulos_precisao, fontsize=9)
+eixo_modificados.set_ylim(0, 110)
+eixo_modificados.set_ylabel("Valores modificados (%)")
+eixo_modificados.set_title("Valores alterados pela regra decimal")
+
+# Painel 3 — Alterações média e máxima relativas ao limite teórico de cada atributo
+media_relativa = tabela_auditoria_arredondamento["Diferença absoluta média"] / tabela_auditoria_arredondamento["Limite teórico"]
+maxima_relativa = tabela_auditoria_arredondamento["Maior diferença absoluta"] / tabela_auditoria_arredondamento["Limite teórico"]
+eixo_alteracoes.bar(posicoes_precisao - 0.18, media_relativa * 100, width=0.36, color="#55A868", edgecolor="black",
+                    label="Alteração absoluta média")
+eixo_alteracoes.bar(posicoes_precisao + 0.18, maxima_relativa * 100, width=0.36, color="#DD8452", edgecolor="black",
+                    label="Maior alteração absoluta")
+eixo_alteracoes.axhline(100, color="#C44E52", linestyle="--", linewidth=1.2, label="Limite teórico (meia unidade)")
+eixo_alteracoes.set_xticks(posicoes_precisao, rotulos_precisao, fontsize=9)
+eixo_alteracoes.set_ylim(0, 125)
+eixo_alteracoes.set_ylabel("Percentual do limite teórico (%)")
+eixo_alteracoes.set_title("Alterações em relação ao limite de cada atributo")
+eixo_alteracoes.legend(loc="upper center", bbox_to_anchor=(0.5, -0.16), ncol=2, frameon=False, fontsize=9)
+
+# Painel 4 — Cardinalidade antes e depois
+distintos_antes = tabela_auditoria_arredondamento["Valores distintos antes"]
+distintos_depois = tabela_auditoria_arredondamento["Valores distintos depois"]
+for deslocamento, valores, cor, rotulo in [(-0.18, distintos_antes, "#4C72B0", "Base consolidada"),
+                                           (0.18, distintos_depois, "#DD8452", "Base tratada")]:
+    barras = eixo_cardinalidade.bar(posicoes_precisao + deslocamento, valores, width=0.36, color=cor,
+                                    edgecolor="black", label=rotulo)
+    for barra, valor in zip(barras, valores):
+        eixo_cardinalidade.annotate(f"{int(valor):,}".replace(",", "."), (barra.get_x() + barra.get_width() / 2, valor),
+                                    ha="center", va="bottom", xytext=(0, 2), textcoords="offset points", fontsize=8,
+                                    rotation=90)
+eixo_cardinalidade.set_xticks(posicoes_precisao, rotulos_precisao, fontsize=9)
+eixo_cardinalidade.set_ylim(0, max(distintos_antes.max(), distintos_depois.max()) * 1.3)
+eixo_cardinalidade.set_ylabel("Valores distintos")
+eixo_cardinalidade.set_title("Cardinalidade de cada atributo")
+eixo_cardinalidade.legend(loc="upper left", fontsize=9)
+
+# Painel 5 — Repetições de vetores dos cinco sensores
+indicadores_repeticao = ["Vetores de sensores repetidos (ocorrências excedentes)", "Grupos de vetores repetidos",
+                         "Registros envolvidos em repetições"]
+rotulos_repeticao = ["Ocorrências\nexcedentes", "Grupos de\nvetores repetidos", "Registros\nenvolvidos"]
+posicoes_repeticao = np.arange(len(indicadores_repeticao))
+for deslocamento, coluna_tabela, cor, rotulo in [(-0.18, "Antes", "#4C72B0", "Base consolidada"),
+                                                 (0.18, "Depois", "#DD8452", "Base tratada")]:
+    valores = tabela_repeticoes_precisao.loc[indicadores_repeticao, coluna_tabela]
+    barras = eixo_repeticoes.bar(posicoes_repeticao + deslocamento, valores, width=0.36, color=cor,
+                                 edgecolor="black", label=rotulo)
+    for barra, valor in zip(barras, valores):
+        eixo_repeticoes.annotate(f"{int(valor):,}".replace(",", "."), (barra.get_x() + barra.get_width() / 2, valor),
+                                 ha="center", va="bottom", xytext=(0, 2), textcoords="offset points", fontsize=9)
+eixo_repeticoes.set_xticks(posicoes_repeticao, rotulos_repeticao, fontsize=9)
+eixo_repeticoes.set_ylim(0, tabela_repeticoes_precisao.loc[indicadores_repeticao].to_numpy().max() * 1.2)
+eixo_repeticoes.set_ylabel("Quantidade")
+eixo_repeticoes.set_title("Vetores dos cinco sensores repetidos (sem date)")
+eixo_repeticoes.legend(loc="upper left", fontsize=9)
+
+# Painel 6 — Potenciais outliers pelo IQR antes e depois
+outliers_antes = tabela_comparacao_dados.query("Indicador == 'Potenciais outliers IQR'").set_index("Atributo")["Antes"]
+outliers_depois = tabela_comparacao_dados.query("Indicador == 'Potenciais outliers IQR'").set_index("Atributo")["Depois"]
+for deslocamento, valores, cor, rotulo in [(-0.18, outliers_antes, "#4C72B0", "Base consolidada"),
+                                           (0.18, outliers_depois, "#DD8452", "Base tratada")]:
+    barras = eixo_outliers.bar(posicoes_precisao + deslocamento, valores.loc[colunas_numericas], width=0.36, color=cor,
+                               edgecolor="black", label=rotulo)
+    for barra, valor in zip(barras, valores.loc[colunas_numericas]):
+        eixo_outliers.annotate(f"{int(valor):,}".replace(",", "."), (barra.get_x() + barra.get_width() / 2, valor),
+                               ha="center", va="bottom", xytext=(0, 2), textcoords="offset points", fontsize=9)
+eixo_outliers.set_xticks(posicoes_precisao, rotulos_precisao, fontsize=9)
+eixo_outliers.set_ylim(0, max(outliers_antes.max(), outliers_depois.max()) * 1.2 + 1)
+eixo_outliers.set_ylabel("Registros fora dos limites 1,5 × IQR")
+eixo_outliers.set_title("Potenciais outliers (critério do BLOCO 25)")
+eixo_outliers.legend(loc="upper left", fontsize=9)
+
+plt.suptitle("Padronização da precisão decimal: base consolidada (original) × base tratada", fontsize=16)
+plt.tight_layout()
+
+# Exportação antes da exibição
+plt.savefig(caminho_grafico_precisao, dpi=300, bbox_inches="tight")
+print("Figura salva em:", caminho_grafico_precisao)
+
+plt.show()
 
 # %% [markdown]
 # ### BLOCO 26 — Validação da base tratada
@@ -1662,30 +2204,70 @@ assert df_tratado["date"].is_unique, "Existem timestamps repetidos."
 assert set(df_tratado["Occupancy"].unique()) <= {0, 1}, "Occupancy possui valores fora de {0, 1}."
 assert pd.api.types.is_datetime64_any_dtype(df_tratado["date"]), "date não está em formato datetime."
 
-# Preservação dos valores originais quando nenhum registro foi removido
+# Correspondência com a base consolidada quando nenhum registro foi removido
 if len(df_tratado) == len(df_consolidado):
     pd.testing.assert_frame_equal(
-        df_tratado[colunas_sensores_classe], df_consolidado[colunas_sensores_classe], check_exact=True
+        df_tratado[colunas_numericas], df_consolidado[colunas_numericas].round(casas_decimais), check_exact=True
     )
-    print("\nValores dos sensores e da variável alvo idênticos à base consolidada.")
+    pd.testing.assert_series_equal(df_tratado["Occupancy"], df_consolidado["Occupancy"], check_exact=True)
+    pd.testing.assert_series_equal(
+        df_tratado["date"], pd.to_datetime(df_consolidado["date"], format="%Y-%m-%d %H:%M:%S"), check_exact=True
+    )
+    print("\nSensores idênticos à base consolidada arredondada pela regra decimal; Occupancy e date idênticos à base "
+          "consolidada.")
 
 print("Validação da base tratada concluída com sucesso!")
 
 # %% [markdown]
 # ### BLOCO 27 — Exportação e validação da base tratada
 #
-# A exportação utiliza `index=False` e preserva os segundos da coluna `date` (`%Y-%m-%d %H:%M:%S`), sem formatação
-# das casas decimais. Após a recarga, `date` é convertida novamente para `datetime` e a equivalência é verificada com
-# `check_exact=True`.
+# A exportação utiliza `index=False` e preserva os segundos da coluna `date` (`%Y-%m-%d %H:%M:%S`). Para que o arquivo
+# mostre exatamente a quantidade de casas decimais da regra (por exemplo, `26.30` em `Humidity`), cada atributo é
+# convertido em texto com a sua própria quantidade de casas em uma **cópia exclusiva para exportação**; não se usa um
+# `float_format` global, que imporia a mesma precisão a todas as colunas. O DataFrame analítico `df_tratado` continua
+# numérico. O conteúdo textual do arquivo é conferido coluna a coluna, e a recarga com `float_precision="round_trip"`,
+# com `date` convertida novamente para `datetime`, deve reproduzir a base tratada com `check_exact=True`: a formatação
+# não introduz nenhuma perda além do arredondamento já aplicado. O visualizador de CSV do VS Code apenas exibe o texto
+# gravado; o valor usado na análise é o `float64` recarregado.
 
 # %%
 # BLOCO 27 — Exportação e validação da base tratada
 
-df_tratado.to_csv(caminho_tratado, index=False, date_format="%Y-%m-%d %H:%M:%S")
+
+def formatar_para_exportacao(base, regra_casas):
+    """Cópia exclusiva para exportação: cada atributo da regra vira texto com a sua quantidade fixa de casas."""
+    copia = base.copy(deep=True)
+    for coluna, casas in regra_casas.items():
+        copia[coluna] = base[coluna].map(lambda valor: f"{valor:.{casas}f}")
+    return copia
+
+
+def conferir_texto_exportado(caminho, regra_casas):
+    """Confere, no texto gravado, a quantidade exata de casas de cada atributo e o inteiro de Occupancy."""
+    texto = pd.read_csv(caminho, dtype=str)
+    resultado = {}
+    for coluna, casas in regra_casas.items():
+        resultado[coluna] = bool(texto[coluna].str.fullmatch(rf"\d+\.\d{{{casas}}}").all())
+    resultado["Occupancy"] = bool(texto["Occupancy"].str.fullmatch(r"[01]").all())
+    resultado["date"] = bool(texto["date"].str.fullmatch(r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}").all())
+    return pd.Series(resultado, name="Formato textual correto"), texto
+
+
+formatar_para_exportacao(df_tratado, casas_decimais).to_csv(
+    caminho_tratado, index=False, date_format="%Y-%m-%d %H:%M:%S"
+)
 print("Base tratada exportada:", caminho_tratado)
 
-# Recarga e conversão da coluna temporal
-df_tratado_recarregado = pd.read_csv(caminho_tratado)
+# Conferência do conteúdo textual gravado
+formato_texto_tratado, texto_tratado = conferir_texto_exportado(caminho_tratado, casas_decimais)
+print("\nFormato textual por coluna:")
+print(formato_texto_tratado.to_string())
+assert formato_texto_tratado.all(), "O CSV tratado não segue a quantidade de casas definida."
+print("\nPrimeiras linhas do texto gravado:")
+print(texto_tratado.head(3).to_string(index=False))
+
+# Recarga numérica exata e conversão da coluna temporal
+df_tratado_recarregado = pd.read_csv(caminho_tratado, float_precision="round_trip")
 df_tratado_recarregado["date"] = pd.to_datetime(
     df_tratado_recarregado["date"], format="%Y-%m-%d %H:%M:%S", errors="coerce"
 )
@@ -1712,17 +2294,67 @@ print("SHA-256:", hash_tratado)
 # ### 28.1 — Qualidade inicial da base
 #
 # A base de trabalho foi criada como cópia independente da base consolidada, com 12.417 registros e 7 colunas, e
-# confirmada como equivalente a ela (`True`). Todas as verificações desta fase partiram, portanto, dos mesmos dados
-# analisados na EDA, enquanto `df_consolidado` permaneceu inalterado como referência.
+# confirmada como equivalente a ela (`True`). Em seguida, recebeu a padronização da precisão decimal (BLOCO 19.2);
+# todas as verificações dos BLOCOS 20 a 27 descrevem, portanto, a **base tratada**, enquanto `df_consolidado`
+# permaneceu inalterado como referência da precisão original e a EDA (Fase 1) continua descrevendo a camada
+# consolidada.
 #
-# ### 28.2 — Investigação de duplicidades
+# ### 28.2 — Padronização da precisão decimal
+#
+# **Precisão textual das fontes.** As fontes registram os atributos com quantidades muito variáveis de casas
+# decimais: de 0 a 13 em `Temperature` e `Humidity`, de 0 a 14 em `Light`, de 0 a 12 em `CO2` e de 13 a 17 em
+# `HumidityRatio` (11.158 dos 12.417 textos com 17 casas). Os valores com muitas casas (por exemplo, `Light` =
+# 9.33333333333333 e `CO2` = 769.666666666667) são compatíveis com médias calculadas na origem, e não com uma
+# resolução física dos sensores, que não está documentada na página da UCI consultada.
+#
+# | Atributo | Casas adotadas | Modificados | Inalterados | Diferença absoluta média | Maior diferença | Distintos antes → depois |
+# |---|---:|---:|---:|---:|---:|---:|
+# | `Temperature` | 1 | 7.045 (56,74%) | 5.372 | 0,0118 °C | 0,05 °C | 444 → 50 |
+# | `Humidity` | 2 | 3.708 (29,86%) | 8.709 | 0,00116 % | 0,005 % | 1.815 → 1.134 |
+# | `Light` | 1 | 855 (6,89%) | 11.562 | 0,00286 lux | 0,05 lux | 1.439 → 1.424 |
+# | `CO2` | 1 | 3.376 (27,19%) | 9.041 | 0,0111 ppm | 0,05 ppm | 4.262 → 4.114 |
+# | `HumidityRatio` | 5 | 12.417 (100%) | 0 | 2,49 × 10⁻⁶ | 5,0 × 10⁻⁶ | 6.220 → 250 |
+#
+# Exemplos reais: no registro 0 (02/02/2015 14:19), `Humidity` passou de 26.272 para 26.27 e `HumidityRatio` de
+# 0.00476416302416414 (texto da fonte) para 0.00476; `Temperature` (23.7), `Light` (585.2) e `CO2` (749.2) já tinham
+# as casas adotadas. As maiores alterações ocorreram em empates exatos, como `Temperature` 23.15 → 23.2 e `CO2`
+# 2065.75 → 2065.8. Nenhuma alteração ultrapassou o limite teórico de meia unidade da última casa (`Dentro do limite`
+# em todos os atributos), e as diferenças médias com sinal são praticamente nulas (de −0,00019 a +0,0017 nas unidades
+# de cada atributo), sem viés sistemático relevante. O maior erro relativo foi de 0,71% em uma leitura baixa de `Light`;
+# nos demais atributos, ficou abaixo de 0,26%.
+#
+# **Empates e representação binária.** Havia 417 empates textuais em `Temperature`, 1.684 em `Humidity`, 428 em
+# `Light`, 1.491 em `CO2` e nenhum em `HumidityRatio`. O `numpy.round` coincidiu com o arredondamento decimal
+# "meio-par" em todos os empates, exceto em 89 de `Humidity`, nos quais o `float64` armazenado não é um empate exato e
+# o resultado seguiu o valor binário; fora dos empates, não houve nenhuma divergência entre o arredondamento binário
+# e o decimal. A conversão exata do texto das fontes difere da base consolidada apenas em `HumidityRatio` (11.158
+# valores, diferença relativa máxima de 2,7 × 10⁻¹⁴), porque o conversor padrão do `read_csv` não garante o `float64`
+# mais próximo de textos com 17 algarismos; essa diferença é muitas ordens de grandeza menor que a regra de cinco casas.
+#
+# **Validações:** 12.417 registros, índices, ordem e colunas preservados; tipos `float64`; nenhum ausente ou infinito
+# introduzido; `Occupancy` e `date` idênticos à base consolidada; a regra é idempotente (aplicá-la novamente não altera
+# nenhum valor); e cada valor é exatamente o `float64` do número decimal com as casas adotadas. Nenhum zero novo foi
+# criado (`Light` mantém 7.612 zeros, e os demais atributos continuam sem zeros).
+#
+# **Impacto na qualidade dos dados (BLOCO 25.4):** as médias variaram no máximo 0,0017 °C (`Temperature`), os desvios
+# padrão no máximo 0,0004 °C, e a maior alteração na matriz de correlação de Pearson foi de 9,8 × 10⁻⁴. As correlações
+# com `Occupancy` ficaram praticamente iguais (`Light`: 0,9197 nas duas versões; `Temperature`: 0,5764 → 0,5765). A
+# mudança mais visível está na cardinalidade, sobretudo de `HumidityRatio` (6.220 → 250 valores distintos, redução de
+# 95,98%) e `Temperature` (444 → 50, redução de 88,74%); `Humidity` reduziu 37,52%, `CO2` 3,47% e `Light` 1,04%. Menos
+# valores distintos não significam melhor qualidade preditiva, e a resolução física dos sensores não foi confirmada. A
+# mudança também aparece no limite superior IQR
+# de `Temperature`, que passou de 23,6025 para 23,65 °C (461 → 447 potenciais outliers). O arredondamento fundiu 64
+# vetores de sensores originalmente distintos em 32 vetores, o que elevou as repetições de 571 para 603. Essas
+# variações descrevem o efeito da transformação, e não uma melhoria da qualidade dos dados.
+#
+# ### 28.3 — Investigação de duplicidades
 #
 # | Critério | Repetições | Registros envolvidos |
 # |---|---:|---:|
 # | Todas as colunas (inclui `date`) | 0 | 0 |
 # | Coluna `date` | 0 | — |
-# | Somente os cinco sensores | 571 | 1.032 |
-# | Sensores + `Occupancy` (sem `date`) | 571 | 1.032 |
+# | Somente os cinco sensores | 603 | 1.090 |
+# | Sensores + `Occupancy` (sem `date`) | 603 | 1.090 |
 #
 # | Indicador | Antes | Depois |
 # |---|---:|---:|
@@ -1733,46 +2365,52 @@ print("SHA-256:", hash_tratado)
 # | Classe ocupado | 3.021 | 3.021 |
 #
 # Não existem linhas integralmente duplicadas nem observações registradas no mesmo instante; por isso, nenhum registro
-# foi removido. As 571 repetições encontradas ao desconsiderar `date` correspondem a medições ambientais iguais em
-# instantes diferentes, distribuídas em 461 grupos de medições idênticas que envolvem 1.032 registros.
+# foi removido. As 603 repetições encontradas ao desconsiderar `date` correspondem a medições ambientais iguais em
+# instantes diferentes, distribuídas em 487 grupos de medições idênticas que envolvem 1.090 registros. Na precisão
+# original eram 571 repetições, 461 grupos e 1.032 registros; o acréscimo vem das 32 fusões de vetores causadas pelo
+# arredondamento (28.2).
 #
-# | Característica dos 1.032 registros envolvidos | Resultado |
+# | Característica dos 1.090 registros envolvidos | Resultado |
 # |---|---:|
-# | Desocupados (`Occupancy = 0`) | 1.028 |
-# | Ocupados (`Occupancy = 1`) | 4 |
-# | Com `Light` igual a zero | 987 |
-# | Intervalo entre a primeira e a última ocorrência de cada grupo | de 59 segundos a 9 dias e 6 horas (mediana de 6 minutos) |
+# | Desocupados (`Occupancy = 0`) | 1.084 |
+# | Ocupados (`Occupancy = 1`) | 6 |
+# | Com `Light` igual a zero | 1.043 |
+# | Intervalo entre a primeira e a última ocorrência de cada grupo | de 59 segundos a 9 dias, 6 horas e 37 minutos (mediana de 6 minutos) |
 #
-# Os três grupos exibidos como exemplo ocorreram na manhã de 14/02/2015, com o ambiente desocupado, com intervalos de
-# 8 minutos e 59 segundos, 13 minutos e 20 minutos e 1 segundo entre as leituras iguais; esses valores descrevem apenas
-# os exemplos e não o conjunto das repetições. Em nenhum caso a mesma combinação de medições aparece associada a classes
-# diferentes.
+# Os três grupos exibidos como exemplo ocorreram na madrugada e no início da manhã de 14/02/2015, com o ambiente
+# desocupado, com intervalos de 20 minutos e 1 segundo, 13 minutos e 8 minutos e 59 segundos entre as leituras iguais;
+# esses valores descrevem apenas os exemplos e não o conjunto das repetições. Em nenhum caso a mesma combinação de
+# medições aparece associada a classes diferentes, nem antes nem depois do arredondamento.
 #
 # As repetições concentram-se em registros desocupados e sem iluminação, situação em que as condições do ambiente
 # variam pouco. Isso é compatível com um ambiente estável e com a resolução de registro dos sensores, mas não comprova,
 # por si só, o funcionamento correto dos equipamentos. Como cada registro corresponde a um instante distinto, as
 # repetições foram mantidas: removê-las reduziria a amostra e alteraria a frequência real dessas condições.
 #
-# ### 28.3 — Tratamento de valores ausentes
+# ### 28.4 — Tratamento de valores ausentes
 #
 # **Base real:** 0 valores ausentes em todas as colunas, 0 registros afetados e 0 valores infinitos. Nenhuma imputação
 # foi aplicada. As 7.612 leituras de `Light` iguais a zero (61,30% da base) foram mantidas, pois representam ambientes
 # sem iluminação e não ausência de medição.
 #
-# **Simulação didática (cópia temporária `df_simulacao`):**
+# **Simulação didática (cópia temporária `df_simulacao`, calculada sobre a base tratada):**
 #
 # | Variável | Assimetria | Ausentes simulados | Estratégia | Valor imputado | Ausentes após | Erro absoluto médio |
 # |---|---:|---:|---|---:|---:|---:|
-# | Humidity | 0,3008 | 50 | Média | 28,918288 % | 0 | 3,1983 % |
-# | CO2 | 1,3851 | 50 | Mediana | 632,0 ppm | 0 | 192,6317 ppm |
+# | Humidity | 0,3008 | 50 | Média | 28,918101 % | 0 | 3,1982 % |
+# | CO2 | 1,3851 | 50 | Mediana | 632,0 ppm | 0 | 192,63 ppm |
 #
 # | Variável | Média | Mediana | Média − mediana | Diferença em desvios padrão | Assimetria |
 # |---|---:|---:|---:|---:|---:|
-# | Temperature | 21,094510 | 20,790000 | 0,304510 | 0,2935 | 1,1041 |
-# | Humidity | 28,917947 | 28,600000 | 0,317947 | 0,0771 | 0,3008 |
-# | Light | 138,125947 | 0,000000 | 138,125947 | 0,6284 | 1,3173 |
-# | CO2 | 745,644624 | 632,000000 | 113,644624 | 0,3833 | 1,3851 |
-# | HumidityRatio | 0,0044682086 | 0,0045113541 | −0,0000431455 | −0,0725 | −0,1458 |
+# | Temperature | 21,096183 | 20,800000 | 0,296183 | 0,2854 | 1,1015 |
+# | Humidity | 28,917759 | 28,600000 | 0,317759 | 0,0770 | 0,3008 |
+# | Light | 138,125900 | 0,000000 | 138,125900 | 0,6284 | 1,3173 |
+# | CO2 | 745,644455 | 632,000000 | 113,644455 | 0,3833 | 1,3851 |
+# | HumidityRatio | 0,0044682476 | 0,0045100000 | −0,0000417524 | −0,0701 | −0,1450 |
+#
+# A simulação usa as mesmas sementes e posições da versão anterior (sobre a precisão original: média de 28,918288 %,
+# erro de 3,1983 % e 192,6317 ppm); as diferenças decorrem apenas do arredondamento e não alteram a escolha das
+# estratégias.
 #
 # **Humidity (média):** a média e a mediana diferem em apenas 0,08 desvio padrão, a assimetria é baixa (0,3008) e o
 # histograma não apresenta cauda longa nem valores isolados. A distribuição, porém, não é normal nem perfeitamente
@@ -1785,9 +2423,9 @@ print("SHA-256:", hash_tratado)
 # (BLOCO 25). A média é deslocada por esses valores altos; a mediana, resistente a eles, representa melhor o valor
 # típico.
 #
-# `HumidityRatio` tem a menor assimetria absoluta (−0,1458), mas é uma grandeza derivada da temperatura e da umidade
+# `HumidityRatio` tem a menor assimetria absoluta (−0,1450), mas é uma grandeza derivada da temperatura e da umidade
 # relativa; `Humidity` foi escolhida por ser uma medição direta do sensor. `Temperature`, considerada inicialmente para
-# a média, foi descartada como exemplo por sua assimetria de 1,1041. `Light` não foi usada na simulação, pois 61,30% dos
+# a média, foi descartada como exemplo por sua assimetria de 1,1015. `Light` não foi usada na simulação, pois 61,30% dos
 # seus valores são zero e a mediana coincide com o mínimo.
 #
 # Os erros absolutos médios medem a distância entre o valor imputado e os valores reais ocultados nesta simulação
@@ -1795,7 +2433,7 @@ print("SHA-256:", hash_tratado)
 # semente fixa (42) e não alterou `df_tratado` (0 ausentes após a demonstração). Em um cenário real, a estatística de
 # imputação deve ser calculada apenas sobre o conjunto de treinamento.
 #
-# ### 28.4 — Adequação dos tipos de dados
+# ### 28.5 — Adequação dos tipos de dados
 #
 # | Coluna | Antes | Depois |
 # |---|---|---|
@@ -1807,32 +2445,37 @@ print("SHA-256:", hash_tratado)
 # unicidade. `Occupancy` contém apenas as classes 0 e 1. A coluna `date` de `df_consolidado` permaneceu como `str`. A
 # coluna temporal será mantida para rastreabilidade e excluída dos preditores na separação entre X e y.
 #
-# ### 28.5 — Preservação da precisão
+# ### 28.6 — Precisão armazenada
 #
-# Os valores armazenados mantêm a precisão completa do `float64`: o primeiro registro de `HumidityRatio`, exibido como
-# 0,004764, está armazenado como 0,0047641630241641. A conversão para `float32` introduziria erros relativos de até
-# aproximadamente 5,9 × 10⁻⁸; como não há justificativa de desempenho para essa redução, os tipos `float64` foram
-# preservados. Nenhum arredondamento foi aplicado e os valores numéricos permanecem idênticos aos da base consolidada.
-# As diferenças de escala serão tratadas pelo `StandardScaler`, exclusivamente para o KNN e somente após a divisão
-# treino/teste.
+# Desde o BLOCO 19.2, os atributos armazenam os valores arredondados pela regra decimal: o primeiro registro de
+# `HumidityRatio`, que na base consolidada é 0,0047641630241641, está armazenado como 0,00476. O BLOCO 23 confirmou que
+# os valores tratados são exatamente a base consolidada arredondada (`True`) e, portanto, diferentes da base sem
+# arredondamento (`False`): nenhuma outra perda de precisão foi introduzida. Os tipos `float64` foram mantidos; a
+# conversão para `float32` acrescentaria erros relativos de até aproximadamente 5,7 × 10⁻⁸, sem justificativa de
+# desempenho. As diferenças de escala serão tratadas pelo `StandardScaler`, exclusivamente para o KNN e somente após a
+# divisão treino/teste.
 #
-# ### 28.6 — Análise dos boxplots e outliers
+# ### 28.7 — Análise dos boxplots e outliers
 #
-# Evidência visual: `resultados/graficos/dp_01_boxplots.png`.
+# Evidência visual: `resultados/graficos/dp_01_boxplots.png` (base tratada).
 #
 # | Variável | Q1 | Q3 | IQR | Limite inferior | Limite superior | Abaixo | Acima | Total | Percentual | Ocupado entre os outliers |
 # |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-# | Temperature (°C) | 20,390000 | 21,675000 | 1,285000 | 18,462500 | 23,602500 | 0 | 461 | 461 | 3,71% | 44,69% |
-# | Humidity (%) | 25,390000 | 31,790000 | 6,400000 | 15,790000 | 41,390000 | 0 | 0 | 0 | 0,00% | — |
-# | Light (lux) | 0,000000 | 392,000000 | 392,000000 | -588,000000 | 980,000000 | 0 | 7 | 7 | 0,06% | 100,00% |
-# | CO2 (ppm) | 527,500000 | 857,000000 | 329,500000 | 33,250000 | 1.351,250000 | 0 | 992 | 992 | 7,99% | 30,95% |
-# | HumidityRatio (kg/kg) | 0,0039880226 | 0,0049417554 | 0,0009537328 | 0,0025574233 | 0,0063723546 | 0 | 0 | 0 | 0,00% | — |
+# | Temperature (°C) | 20,40 | 21,70 | 1,30 | 18,45 | 23,65 | 0 | 447 | 447 | 3,60% | 42,95% |
+# | Humidity (%) | 25,39 | 31,79 | 6,40 | 15,79 | 41,39 | 0 | 0 | 0 | 0,00% | — |
+# | Light (lux) | 0,0 | 392,0 | 392,0 | −588,0 | 980,0 | 0 | 7 | 7 | 0,06% | 100,00% |
+# | CO2 (ppm) | 527,5 | 857,0 | 329,5 | 33,25 | 1.351,25 | 0 | 992 | 992 | 7,99% | 30,95% |
+# | HumidityRatio (kg/kg) | 0,00399 | 0,00494 | 0,00095 | 0,002565 | 0,006365 | 0 | 0 | 0 | 0,00% | — |
 #
-# - `Temperature`: 461 potenciais outliers, todos acima de 23,60 °C, coerentes com a cauda à direita observada no
-#   histograma. Entre eles, 44,69% são registros ocupados, proporção superior aos 24,33% da base.
+# Na precisão original, `Temperature` tinha Q1 = 20,39, Q3 = 21,675, limite superior de 23,6025 °C e 461 potenciais
+# outliers (44,69% ocupados); os demais atributos tinham as mesmas contagens. A redução para 447 decorre do
+# arredondamento dos quartis e dos valores próximos ao limite, e não de uma mudança no ambiente.
+#
+# - `Temperature`: 447 potenciais outliers, todos acima de 23,65 °C, coerentes com a cauda à direita observada no
+#   histograma. Entre eles, 42,95% são registros ocupados, proporção superior aos 24,33% da base.
 # - `Humidity` e `HumidityRatio`: nenhum valor fora dos limites, em concordância com as distribuições sem caudas
 #   longas observadas na EDA.
-# - `Light`: apenas 7 valores acima de 980 lux (máximo de 1.697,25 lux), todos em registros ocupados. O limite inferior
+# - `Light`: apenas 7 valores acima de 980 lux (máximo de 1.697,2 lux), todos em registros ocupados. O limite inferior
 #   negativo resulta de Q1 = 0 e não tem significado físico; a concentração de leituras em zero aparece como a mediana
 #   coincidente com a base da caixa.
 # - `CO2`: 992 potenciais outliers (7,99%), todos acima de 1.351,25 ppm, refletindo a assimetria positiva. Entre eles,
@@ -1855,12 +2498,12 @@ print("SHA-256:", hash_tratado)
 # A plausibilidade física indica apenas que os valores são possíveis; ela não comprova a exatidão dos sensores.
 #
 # Como evidência descritiva secundária, os registros sinalizados apresentam proporções de ocupação superiores à da
-# base (44,69% em `Temperature`, 100% nos 7 casos de `Light` e 30,95% em `CO2`, contra 24,33%). Essa associação foi
+# base (42,95% em `Temperature`, 100% nos 7 casos de `Light` e 30,95% em `CO2`, contra 24,33%). Essa associação foi
 # observada na base completa, antes da divisão treino/teste, e não foi usada como fundamento da decisão. Os limites IQR
 # foram calculados com finalidade exploratória; caso venham a ser usados em alguma transformação do modelo, deverão ser
 # ajustados exclusivamente sobre o conjunto de treinamento.
 #
-# ### 28.7 — Validação da base tratada
+# ### 28.8 — Validação da base tratada
 #
 # | Indicador | Base consolidada | Base tratada | Diferença |
 # |---|---:|---:|---:|
@@ -1872,20 +2515,23 @@ print("SHA-256:", hash_tratado)
 # | Classe 0 | 9.396 | 9.396 | 0 |
 # | Classe 1 | 3.021 | 3.021 | 0 |
 #
-# Todas as verificações `assert` foram aprovadas, e os valores dos sensores e da variável alvo são idênticos aos da
-# base consolidada (`check_exact=True`). A base foi exportada para `dados/tratados/occupancy_tratado.csv` (846.701
-# bytes) e a recarga, com `date` convertida para `datetime`, reproduziu exatamente a base tratada. Como nenhum valor
-# foi alterado e a data foi exportada no mesmo formato textual, o arquivo tratado é idêntico, byte a byte, ao CSV
-# consolidado (mesmo SHA-256); a diferença entre as bases está na validação documentada e no tipo `datetime` adotado
-# em memória para a coluna temporal.
+# Todas as verificações `assert` foram aprovadas: os sensores são idênticos à base consolidada arredondada pela regra
+# decimal, e `Occupancy` e `date` são idênticos à base consolidada (`check_exact=True`). A base foi exportada para
+# `dados/tratados/occupancy_tratado.csv` (656.251 bytes, CRLF) a partir de uma cópia textual com a quantidade fixa de
+# casas de cada atributo (por exemplo, `23.7`, `26.27`, `585.2`, `749.2` e `0.00476` no primeiro registro). O texto
+# gravado foi conferido coluna a coluna, e a recarga com `float_precision="round_trip"`, com `date` convertida para
+# `datetime`, reproduziu exatamente a base tratada. **O arquivo tratado deixou de ser idêntico ao CSV consolidado**,
+# que permanece com a precisão original e SHA-256 inalterado como referência rastreável das fontes.
 #
-# ### 28.8 — Conclusão do Data Prep
+# ### 28.9 — Conclusão do Data Prep
 #
 # A preparação dos dados confirmou que a base consolidada não apresenta duplicatas integrais, timestamps repetidos,
-# valores ausentes, valores infinitos ou valores fisicamente implausíveis. As repetições de medições em instantes
-# diferentes e os potenciais outliers identificados pelo IQR foram investigados e mantidos, por representarem
-# condições ambientais legítimas e informativas para a ocupação. A base tratada preserva os 12.417 registros, a
-# proporção das classes (75,67% e 24,33%) e a precisão original dos dados.
+# valores ausentes, valores infinitos ou valores fisicamente implausíveis. A precisão decimal dos cinco atributos foi
+# padronizada por uma regra explícita, idempotente e auditada, com alterações sempre dentro de meia unidade da última
+# casa adotada e efeito pequeno nas estatísticas e correlações. As repetições de medições em instantes diferentes e os
+# potenciais outliers identificados pelo IQR foram investigados e mantidos, por representarem condições ambientais
+# legítimas e informativas para a ocupação. A base tratada preserva os 12.417 registros, a ordem, os timestamps e a
+# proporção das classes (75,67% e 24,33%); a precisão original permanece disponível na base consolidada.
 #
 # A próxima etapa é a Fase 3 — Feature Engineering, que criará uma nova variável numérica a partir de combinações
 # matemáticas das variáveis existentes. O escalonamento, a divisão treino/teste e a modelagem serão realizados nas
@@ -2239,10 +2885,13 @@ assert df_features["CO2_Light_Ratio"].dtype == "float64", "A variável derivada 
 recalculo_formula = df_tratado["CO2"] / (df_tratado["Light"] + 1)
 pd.testing.assert_series_equal(df_features["CO2_Light_Ratio"], recalculo_formula, check_exact=True, check_names=False)
 
-# Preservação da precisão numérica em relação à base consolidada
+# Atributos de origem com a regra decimal da Fase 2 (base consolidada arredondada)
 pd.testing.assert_frame_equal(
-    df_features[colunas_numericas], df_consolidado[colunas_numericas], check_exact=True
+    df_features[colunas_numericas], df_consolidado[colunas_numericas].round(casas_decimais), check_exact=True
 )
+# A variável derivada não é arredondada: precisão integral do float64 sobre os atributos tratados
+assert not df_features["CO2_Light_Ratio"].equals(df_features["CO2_Light_Ratio"].round(5)), \
+    "CO2_Light_Ratio não deveria estar arredondada."
 
 # Preservação das bases anteriores
 pd.testing.assert_frame_equal(df_tratado, df_tratado_recarregado, check_exact=True)
@@ -2254,21 +2903,37 @@ print("\nValidação da integridade concluída com sucesso!")
 # %% [markdown]
 # ### BLOCO 35 — Exportação e validação da base de Feature Engineering
 #
-# A exportação segue o padrão da Fase 2: `index=False`, coluna `date` no formato `%Y-%m-%d %H:%M:%S` e nenhuma
-# formatação das casas decimais. Após a recarga, `date` é convertida novamente para `datetime` e a equivalência é
+# A exportação segue o padrão da Fase 2: `index=False`, coluna `date` no formato `%Y-%m-%d %H:%M:%S` e os cinco
+# atributos tratados gravados com a quantidade fixa de casas da regra decimal, em uma cópia exclusiva para exportação.
+# `CO2_Light_Ratio` **não** segue a regra dos sensores: é gravada com a representação textual mais curta que reconstrói
+# exatamente o `float64` (precisão integral), porque é o valor usado pela modelagem; cinco casas decimais são usadas
+# apenas em tabelas de apresentação. Após a recarga, `date` é convertida novamente para `datetime` e a equivalência é
 # verificada com `check_exact=True`.
 #
 # **Precisão na leitura:** a divisão produz valores com até 17 algarismos significativos. O pandas grava cada valor com
 # a representação textual mais curta que reconstrói exatamente o `float64`, mas o conversor padrão de `read_csv`
 # (`float_precision="high"`) pode diferir do valor original no último bit. Por isso, a recarga utiliza
-# `float_precision="round_trip"`, que reconstrói exatamente os valores gravados. Nenhum arredondamento é aplicado e a
-# comparação permanece exata.
+# `float_precision="round_trip"`, que reconstrói exatamente os valores gravados. A variável derivada não é arredondada
+# e a comparação permanece exata.
 
 # %%
 # BLOCO 35 — Exportação e validação da base de Feature Engineering
 
-df_features.to_csv(caminho_features, index=False, date_format="%Y-%m-%d %H:%M:%S")
+formatar_para_exportacao(df_features, casas_decimais).to_csv(
+    caminho_features, index=False, date_format="%Y-%m-%d %H:%M:%S"
+)
 print("Base de Feature Engineering exportada:", caminho_features)
+
+# Conferência do conteúdo textual: atributos com casas fixas; variável derivada com precisão integral
+formato_texto_features, texto_features = conferir_texto_exportado(caminho_features, casas_decimais)
+formato_texto_features["CO2_Light_Ratio (reconstrução exata do texto)"] = bool(
+    (texto_features["CO2_Light_Ratio"].map(float).to_numpy() == df_features["CO2_Light_Ratio"].to_numpy()).all()
+)
+print("Formato textual por coluna:")
+print(formato_texto_features.to_string())
+assert formato_texto_features.all(), "O CSV de Feature Engineering não segue o formato definido."
+print("\nPrimeiras linhas do texto gravado:")
+print(texto_features.head(3).to_string(index=False))
 
 # Diagnóstico: divergências da nova variável com o conversor padrão de ponto flutuante
 recarga_padrao = pd.read_csv(caminho_features)
@@ -2322,9 +2987,10 @@ print("SHA-256:", hash_features)
 # com CO2 hipotético de 600 ppm, mostra essa sensibilidade: o índice passa de 600 (0 lux) para 300 (1 lux), 100 (5
 # lux) e cerca de 1,20 (500 lux).
 #
-# Na base real, porém, não há leituras de `Light` entre 0 e 4,67 lux: a menor luminosidade positiva é 4,67 lux.
-# Assim, a faixa de maior sensibilidade da fórmula não é ocupada por observações reais, e o salto do índice ocorre
-# entre o grupo `Light = 0` e as leituras positivas. Para `Light > 0`, o denominador é de pelo menos 5,67, e a
+# Na base tratada, porém, não há leituras de `Light` entre 0 e 4,7 lux: a menor luminosidade positiva é 4,7 lux (4,67
+# na precisão original). Assim, a faixa de maior sensibilidade da fórmula não é ocupada por observações reais, e o
+# salto do índice ocorre entre o grupo `Light = 0` e as leituras positivas. Para `Light > 0`, o denominador é de pelo
+# menos 5,7, e a
 # constante `+1` altera o índice, no máximo, em cerca de 18% em relação a `CO2 / Light`, influência que se reduz nas
 # luminosidades elevadas. A constante permanece arbitrária: outro valor modificaria a escala do índice nas leituras de
 # baixa luminosidade.
@@ -2335,30 +3001,35 @@ print("SHA-256:", hash_features)
 # |---|---:|
 # | Tipo | `float64` |
 # | Observações | 12.417 |
-# | Média | 426,134753 |
-# | Desvio padrão | 403,140840 |
-# | Mínimo | 0,560430 |
+# | Média | 426,134639 |
+# | Desvio padrão | 403,140847 |
+# | Mínimo | 0,560476 |
 # | Primeiro quartil (Q1) | 2,999126 |
 # | Mediana | 503,000000 |
-# | Terceiro quartil (Q3) | 596,333333 |
+# | Terceiro quartil (Q3) | 596,300000 |
 # | Máximo | 2.076,500000 |
-# | Amplitude | 2.075,939570 |
-# | Assimetria | 0,822262 |
-# | Zeros / distintos / ausentes / infinitos | 0 / 6.989 / 0 / 0 |
+# | Amplitude | 2.075,939524 |
+# | Assimetria | 0,822266 |
+# | Zeros / distintos / ausentes / infinitos | 0 / 6.928 / 0 / 0 |
+#
+# A variável foi recalculada com `CO2` e `Light` tratados, mantendo a precisão integral do `float64` (cinco casas
+# decimais são usadas somente em tabelas de apresentação). Na precisão original, a média era 426,134753, o Q3 596,333333,
+# o máximo do grupo com luz 263,294118 e havia 6.989 valores distintos; as diferenças são residuais e não mudam a
+# interpretação abaixo.
 #
 # Evidência visual: `resultados/graficos/fe_01_distribuicao_nova_variavel.png`.
 #
 # A distribuição não é contínua ao longo da amplitude: os valores formam dois agrupamentos separados. Os registros com
-# luz ocupam a faixa de 0,56 a 263,29, e os registros sem luz ocupam a faixa de 427,50 a 2.076,50. Não há nenhuma
-# observação entre 263,29 e 427,50. Por isso, a média (426,13) cai justamente nessa faixa vazia e não representa um
+# luz ocupam a faixa de 0,56 a 261,75, e os registros sem luz ocupam a faixa de 427,50 a 2.076,50. Não há nenhuma
+# observação entre 261,75 e 427,50. Por isso, a média (426,13) cai justamente nessa faixa vazia e não representa um
 # valor típico. O salto entre Q1 (3,00) e a mediana (503,00) indica a mesma separação.
 #
 # - **Escala linear:** os 50 intervalos somam 12.417 registros; 8 intervalos ficaram vazios. O primeiro intervalo (0,56
 #   a 42,08) concentra 4.558 registros, comprimindo quase todo o grupo com luz em uma única barra. O grupo sem luz
 #   reproduz a forma da distribuição de `CO2`, com maior concentração entre aproximadamente 500 e 600.
 # - **Escala logarítmica (somente visualização):** os 50 intervalos também somam 12.417 registros; 3 intervalos
-#   ficaram vazios, todos entre 208,00 e 401,39. O agrupamento com luz fica visível, com maior concentração entre 1,77
-#   e 2,46 (1.430 registros em dois intervalos). O intervalo de maior frequência (473,09 a 557,60, com 2.527 registros)
+#   ficaram vazios, todos entre 208,01 e 401,40. O agrupamento com luz fica visível, com maior concentração entre 1,77
+#   e 2,46 (1.430 registros em dois intervalos). O intervalo de maior frequência (473,10 a 557,61, com 2.527 registros)
 #   pertence ao grupo sem luz.
 #
 # A existência de dois agrupamentos decorre da estrutura da fórmula combinada com o excesso de zeros em `Light`, e
@@ -2369,14 +3040,14 @@ print("SHA-256:", hash_features)
 #
 # | Grupo | Registros | Percentual | Média | Mediana | Mínimo | Máximo |
 # |---|---:|---:|---:|---:|---:|---:|
-# | `Light = 0` | 7.612 | 61,30% | 689,649896 | 569,333333 | 427,500000 | 2.076,500000 |
-# | `Light > 0` | 4.805 | 38,70% | 8,678507 | 2,299843 | 0,560430 | 263,294118 |
+# | `Light = 0` | 7.612 | 61,30% | 689,649764 | 569,300000 | 427,500000 | 2.076,500000 |
+# | `Light > 0` | 4.805 | 38,70% | 8,678422 | 2,299771 | 0,560476 | 261,754386 |
 #
 # Nos 7.612 registros com `Light = 0`, a comparação exata confirmou que `CO2_Light_Ratio` é igual a `CO2` (`True`).
 # Nesses casos, a nova variável não acrescenta nenhuma diferença em relação ao sensor original: ela repete o valor
 # de CO2. A transformação só modifica efetivamente os 4.805 registros com luminosidade positiva, cujo índice é baixo
 # (mediana de 2,30; 75% abaixo de 4,55). Como o menor valor do grupo sem luz (427,50) é maior que o maior valor do
-# grupo com luz (263,29), o índice separa completamente os dois grupos de luminosidade. Essa separação, porém, já está
+# grupo com luz (261,75), o índice separa completamente os dois grupos de luminosidade. Essa separação, porém, já está
 # disponível na própria variável `Light`.
 #
 # ### 36.5 — Correlação e possível redundância
@@ -2408,8 +3079,8 @@ print("SHA-256:", hash_features)
 # - **Redundância no KNN:** como o índice repete parte da informação de `CO2` e `Light`, incluí-lo junto aos sensores
 #   originais aumenta o peso dessa informação no cálculo da distância. Isso pode ajudar ou prejudicar a classificação.
 # - **Árvore de Decisão:** a árvore divide os dados por limiares em um atributo de cada vez, e os limiares não dependem
-#   da escala. Por isso, o escalonamento não é necessário. Qualquer limiar entre 263,29 e 427,50 no índice separa os
-#   mesmos registros que um limiar em `Light` entre 0 e 4,67 lux, o que mostra que, nesse ponto, a árvore não ganha
+#   da escala. Por isso, o escalonamento não é necessário. Qualquer limiar entre 261,75 e 427,50 no índice separa os
+#   mesmos registros que um limiar em `Light` entre 0 e 4,7 lux, o que mostra que, nesse ponto, a árvore não ganha
 #   informação nova.
 # - **Sem garantia de melhoria:** a contribuição da variável será verificada apenas pelo desempenho dos modelos nas
 #   fases seguintes.
@@ -2457,11 +3128,15 @@ print("SHA-256:", hash_features)
 # A coluna derivada coincide exatamente com o recálculo independente da fórmula, e `df_tratado` e `df_consolidado`
 # foram preservados.
 #
-# A base foi exportada para `dados/features/occupancy_features.csv` (990.635 bytes). Na recarga com o conversor padrão
-# do pandas, 850 valores da nova variável divergiram no último bit (diferença relativa máxima de 2,43 × 10⁻¹⁶), embora
-# o texto gravado no arquivo represente exatamente cada valor. A leitura com `float_precision="round_trip"` reconstruiu
-# todos os valores, e a comparação com `check_exact=True` foi aprovada sem arredondamento e sem tolerância. Nenhum
-# registro foi excluído.
+# Os cinco atributos de origem coincidem exatamente com a base consolidada arredondada pela regra decimal, e a variável
+# derivada não foi arredondada.
+#
+# A base foi exportada para `dados/features/occupancy_features.csv` (787.706 bytes, CRLF), com os cinco atributos no
+# formato textual de casas fixas da Fase 2 e `CO2_Light_Ratio` com a representação mais curta que reconstrói exatamente
+# cada `float64`; o formato de todas as colunas foi conferido no texto gravado. Na recarga com o conversor padrão do
+# pandas, 801 valores da nova variável divergiram no último bit (diferença relativa máxima de 2,45 × 10⁻¹⁶), embora o
+# texto gravado represente exatamente cada valor. A leitura com `float_precision="round_trip"` reconstruiu todos os
+# valores, e a comparação com `check_exact=True` foi aprovada sem tolerância. Nenhum registro foi excluído.
 #
 # **Limitações:** a constante `+1` é arbitrária; o índice é muito sensível à luminosidade próxima de zero, embora essa
 # faixa não esteja ocupada na base atual; há redundância parcial com `CO2` e `Light`; o índice não tem interpretação
@@ -2748,6 +3423,37 @@ print("Repetição com test_size=0.2, random_state=42 e stratify=y: índices e v
 
 del X_train_repeticao, X_test_repeticao, y_train_repeticao, y_test_repeticao
 
+# Comparação com os índices da versão anterior à regra decimal (referência histórica preservada no repositório)
+referencia_historica = pd.read_csv(caminho_referencia_historica, float_precision="round_trip")
+assert set(referencia_historica["versao"]) == {"anterior_precisao_integral"}, "Referência histórica inesperada."
+
+
+def sha256_indices(valores):
+    """Assinatura SHA-256 de uma sequência de índices ou posições (ordem preservada)."""
+    return hashlib.sha256(np.ascontiguousarray(np.asarray(valores, dtype=np.int64)).tobytes()).hexdigest()
+
+
+def valor_texto_historico(secao, metrica, configuracao=None):
+    filtro = (referencia_historica["secao"] == secao) & (referencia_historica["metrica"] == metrica)
+    if configuracao is not None:
+        filtro &= referencia_historica["configuracao"] == configuracao
+    selecionado = referencia_historica.loc[filtro, "valor_texto"]
+    assert len(selecionado) == 1, f"Referência histórica ausente ou duplicada: {secao}/{metrica}/{configuracao}."
+    return selecionado.iloc[0]
+
+
+comparacao_indices_split = pd.DataFrame({
+    "SHA-256 atual (16 caracteres)": [sha256_indices(X_train.index)[:16], sha256_indices(X_test.index)[:16]],
+    "Idêntico à versão anterior": [
+        sha256_indices(X_train.index) == valor_texto_historico("indices", "sha256_indices_treino"),
+        sha256_indices(X_test.index) == valor_texto_historico("indices", "sha256_indices_teste"),
+    ],
+}, index=["Índices de treino (ordem do split)", "Índices de teste (ordem do split)"])
+print("\nComparação com o split da versão anterior à padronização decimal:")
+print(comparacao_indices_split.to_string())
+assert comparacao_indices_split["Idêntico à versão anterior"].all(), "O split difere da versão anterior."
+print("O split depende apenas de y, do tamanho da base e da semente; a regra decimal não o alterou.")
+
 # %% [markdown]
 # ### BLOCO 44 — Auditoria da proximidade temporal entre treino e teste
 #
@@ -3009,6 +3715,11 @@ print(tabela_resumo_fase4.to_string())
 # preditores. A concatenação dos dois conjuntos, reordenada pelo índice original, reconstruiu `X` e `y` exatamente
 # (`check_exact=True`), e `df_features` permaneceu inalterada. A repetição da divisão com os mesmos parâmetros
 # produziu os mesmos índices e valores nos quatro conjuntos, nas versões testadas.
+#
+# **Revisão da precisão decimal:** os atributos de `X` passaram a conter os valores tratados da Fase 2, mas a divisão
+# estratificada depende apenas de `y`, do tamanho da base e da semente. As assinaturas SHA-256 dos índices de treino e
+# de teste, na ordem gerada pelo split, são idênticas às da versão anterior (`True`, BLOCO 43); as distribuições das
+# classes e toda a auditoria temporal do BLOCO 44 permanecem iguais, pois timestamps, índices e classes não mudaram.
 #
 # ### 47.5 — Dependência temporal entre os conjuntos
 #
@@ -3851,12 +4562,16 @@ print(tabela_resumo_fase5.to_string())
 #
 # | Atributo (treino, 9.933 registros) | Unidade | Mínimo | Máximo | Média | Desvio padrão (ddof=0) |
 # |---|---|---:|---:|---:|---:|
-# | Temperature | °C | 19,50 | 24,41 | 21,09 | 1,04 |
-# | Humidity | % | 21,87 | 39,50 | 28,92 | 4,13 |
+# | Temperature | °C | 19,50 | 24,40 | 21,10 | 1,04 |
+# | Humidity | % | 21,86 | 39,50 | 28,92 | 4,13 |
 # | Light | lux | 0,00 | 1.581,00 | 137,87 | 219,17 |
 # | CO2 | ppm | 427,50 | 2.076,50 | 746,50 | 297,49 |
 # | HumidityRatio | kg/kg | 0,00327 | 0,00577 | 0,00447 | 0,000595 |
 # | CO2_Light_Ratio | índice | 0,56 | 2.076,50 | 426,77 | 404,49 |
+#
+# Os valores descrevem os atributos tratados (regra decimal da Fase 2). Com duas casas, as estatísticas coincidem com
+# as da precisão original, exceto o máximo de `Temperature` (24,41 → 24,40), o mínimo de `Humidity` (21,87 → 21,86) e a
+# média de `Temperature` (21,09 → 21,10).
 #
 # Numericamente, o maior desvio padrão (`CO2_Light_Ratio`, 404,49) é cerca de 679 mil vezes o menor
 # (`HumidityRatio`, 0,000595). Essa razão não compara grandezas físicas — as unidades são diferentes — e não indica
@@ -3878,20 +4593,22 @@ print(tabela_resumo_fase5.to_string())
 #
 # | Registro | Atributo | Valor original | Média aprendida | Fator de escala | Valor padronizado |
 # |---|---|---:|---:|---:|---:|
-# | 10164 (16/02/2015 19:46:59) | CO2 | 760,6666667 | 746,49934 | 297,4853061 | 0,0476236 |
-# | 10164 | HumidityRatio | 0,0045977054 | 0,0044683535 | 0,0005953432 | 0,2172728 |
-# | 986 (03/02/2015 06:45:00) | CO2 | 436,8 | 746,49934 | 297,4853061 | −1,0410576 |
-# | 986 | HumidityRatio | 0,0033523233 | 0,0044683535 | 0,0005953432 | −1,8745996 |
+# | 10164 (16/02/2015 19:46:59) | CO2 | 760,7 | 746,49908 | 297,4853080 | 0,0477365 |
+# | 10164 | HumidityRatio | 0,0046 | 0,0044684265 | 0,0005952746 | 0,2210300 |
+# | 986 (03/02/2015 06:45:00) | CO2 | 436,8 | 746,49908 | 297,4853080 | −1,0410567 |
+# | 986 | HumidityRatio | 0,00335 | 0,0044684265 | 0,0005952746 | −1,8788411 |
 #
-# O cálculo manual coincidiu exatamente com o `StandardScaler` nos quatro casos (diferença 0), e a fórmula recalculada
-# para todos os valores reproduziu os 59.598 valores do treino e os 14.904 do teste sem nenhuma diferença. O registro
-# 986 tem `CO2` 1,04 desvio padrão abaixo da média e `HumidityRatio` 1,87 abaixo: depois da padronização, as duas
+# Na precisão original, a média aprendida de `CO2` era 746,49934 e o fator de escala 297,4853061; o `HumidityRatio` do
+# registro 10164 era 0,0045977054 e passou a 0,0046 (0.00460 no CSV tratado). O cálculo manual coincidiu exatamente com
+# o `StandardScaler` nos quatro casos (diferença 0), e a fórmula recalculada para todos os valores reproduziu os 59.598
+# valores do treino e os 14.904 do teste sem nenhuma diferença. O registro
+# 986 tem `CO2` 1,04 desvio padrão abaixo da média e `HumidityRatio` 1,88 abaixo: depois da padronização, as duas
 # medições, antes separadas por seis ordens de grandeza, passam a ser expressas na mesma escala.
 #
 # ### 60.3 — Resultados do treinamento padronizado
 #
-# Nos seis atributos, a média do treino padronizado ficou entre 3,0 × 10⁻¹⁷ (`Light`) e 2,5 × 10⁻¹⁵ em valor absoluto
-# (`Temperature`), e o desvio padrão populacional diferiu de 1 em no máximo 2,2 × 10⁻¹⁶ (`CO2`). Esses resíduos não são
+# Nos seis atributos, a média do treino padronizado ficou entre 2,4 × 10⁻¹⁷ (`Light`) e 1,1 × 10⁻¹⁵ em valor absoluto
+# (`HumidityRatio`), e o desvio padrão populacional não diferiu de 1 na precisão calculada. Esses resíduos não são
 # zero porque a média é calculada com somas de números `float64`, cuja precisão relativa é de cerca de 2,2 × 10⁻¹⁶;
 # somar quase 10 mil valores acumula erros dessa ordem. Eles estão muito abaixo da tolerância de `1e-10` e confirmam
 # média 0 e desvio padrão 1, como esperado para o conjunto em que o scaler foi ajustado.
@@ -3900,11 +4617,11 @@ print(tabela_resumo_fase5.to_string())
 #
 # | Atributo | Média do teste padronizado | Desvio padrão do teste padronizado |
 # |---|---:|---:|
-# | Temperature | 0,0001 | 1,0027 |
+# | Temperature | −0,0008 | 1,0027 |
 # | Humidity | −0,0014 | 0,9988 |
 # | Light | 0,0059 | 1,0141 |
 # | CO2 | −0,0144 | 0,9830 |
-# | HumidityRatio | −0,0012 | 1,0011 |
+# | HumidityRatio | −0,0015 | 1,0012 |
 # | CO2_Light_Ratio | −0,0079 | 0,9830 |
 #
 # O teste foi transformado com a média e o desvio padrão do **treino**; por isso, suas estatísticas mostram quanto a
@@ -3918,22 +4635,26 @@ print(tabela_resumo_fase5.to_string())
 #
 # | Atributo | Contribuição média antes | Contribuição média depois | Pares em que domina (antes → depois) |
 # |---|---:|---:|---:|
-# | Temperature | 0,02% | 16,63% | 0 → 165 |
-# | Humidity | 1,00% | 20,76% | 10 → 235 |
+# | Temperature | 0,02% | 16,70% | 0 → 164 |
+# | Humidity | 1,00% | 20,73% | 10 → 237 |
 # | Light | 15,95% | 13,63% | 109 → 192 |
-# | CO2 | 34,31% | 14,27% | 509 → 153 |
-# | HumidityRatio | < 0,0001% | 20,08% | 0 → 154 |
-# | CO2_Light_Ratio | 48,72% | 14,64% | 372 → 101 |
+# | CO2 | 34,31% | 14,24% | 509 → 152 |
+# | HumidityRatio | < 0,0001% | 20,07% | 0 → 153 |
+# | CO2_Light_Ratio | 48,72% | 14,63% | 372 → 102 |
+#
+# Os pares sorteados são os mesmos da versão anterior (mesmas posições em `X_train` e semente 42). As contribuições
+# variaram no máximo 0,07 p.p. em relação à precisão original (por exemplo, `Temperature` depois da padronização:
+# 16,63% → 16,70%); a conclusão não muda.
 #
 # Nos 1.000 pares de treino sorteados (nenhum com distância zero, portanto nenhum excluído das contribuições; as
 # contribuições de cada par somaram 100% com desvio máximo de 4,3 × 10⁻¹⁴), `CO2_Light_Ratio` e `CO2` respondiam
 # juntos por 83,03% do quadrado da distância antes da padronização, e `CO2` ou `CO2_Light_Ratio` era o maior termo em
 # 881 pares. `Temperature` (0,02%) e `HumidityRatio` (menos de 0,0001%) praticamente não participavam: na prática, um
 # KNN sem escalonamento ignoraria esses atributos. Depois da padronização, as contribuições médias ficaram entre
-# 13,63% e 20,76%, e todos os atributos passaram a dominar uma parte dos pares.
+# 13,63% e 20,73%, e todos os atributos passaram a dominar uma parte dos pares.
 #
 # As contribuições não ficaram iguais (16,67% cada): a padronização iguala a variância, e não a importância. `Humidity`
-# e `HumidityRatio`, fortemente correlacionadas (0,89 na EDA), somam 40,84% das distâncias padronizadas, e a umidade
+# e `HumidityRatio`, fortemente correlacionadas (0,89 na EDA), somam 40,80% das distâncias padronizadas, e a umidade
 # passa a ter um peso conjunto maior. As distâncias absolutas (média de 603,13 em unidades mistas e de 3,15 em desvios
 # padrão) pertencem a escalas diferentes e não são comparáveis. Esta análise não mede desempenho: nenhum KNN foi
 # treinado, e o efeito na acurácia será avaliado na Fase 6.
@@ -3961,7 +4682,7 @@ print(tabela_resumo_fase5.to_string())
 # | Dados na Fase 6 | `Pipeline` com `StandardScaler` e `KNeighborsClassifier`, recebendo `X_train` original | `X_train` e `X_test` originais, sem escalonamento |
 #
 # A árvore compara `Light` apenas com limiares de `Light` e `Temperature` apenas com limiares de `Temperature`; a
-# diferença entre 0 a 1.581 lux e 19,50 a 24,41 °C não interfere, pois os atributos nunca são somados.
+# diferença entre 0 a 1.581 lux e 19,50 a 24,40 °C não interfere, pois os atributos nunca são somados.
 #
 # ### 60.8 — Limitações do StandardScaler
 #
@@ -3978,9 +4699,13 @@ print(tabela_resumo_fase5.to_string())
 #
 # `X_train`, `X_test`, `y_train`, `y_test`, `X`, `y`, `rastreio_temporal` e `df_features` permaneceram idênticos às
 # referências (`check_exact=True`). `X_train_scaled` (9.933 × 6) e `X_test_scaled` (2.484 × 6) mantêm os índices, a
-# ordem e o tipo `float64` dos atributos, sem ausentes nem infinitos. A transformação inversa reconstruiu 93,01% dos
-# valores do treino e 93,06% dos do teste de forma binariamente idêntica; nos demais, o maior erro absoluto foi de
-# 4,5 × 10⁻¹³ e o maior erro relativo, de 1,5 × 10⁻¹³, ambos em `CO2_Light_Ratio`, cujos menores valores (0,56)
+# ordem e o tipo `float64` dos atributos, sem ausentes nem infinitos. A transformação inversa reconstruiu 92,82% dos
+# valores do treino e 92,91% dos do teste de forma **binariamente idêntica** (igualdade exata de bits; 100% em
+# `Temperature` e `Humidity`, cerca de 62% em `CO2_Light_Ratio`); **100% dos valores** foram reconstruídos dentro da
+# tolerância do BLOCO 55, e o maior erro equivale a menos de 0,6 ulp da maior magnitude de cada atributo, isto é,
+# arredondamento de ponto flutuante nas operações de subtração, divisão, multiplicação e soma, e não um erro relevante.
+# Nos valores não idênticos, o maior erro absoluto foi de
+# 2,3 × 10⁻¹³ (`CO2` e `CO2_Light_Ratio`) e o maior erro relativo, de 1,1 × 10⁻¹³, em `CO2_Light_Ratio`, cujos menores valores (0,56)
 # convivem com média de 426,77 — diferenças de arredondamento, dentro da tolerância relativa à magnitude de cada
 # atributo.
 #
@@ -4238,6 +4963,15 @@ rotulos_folds = set(X_train.index[todas_validacoes])
 assert rotulos_folds == set(X_train.index) and rotulos_folds.isdisjoint(X_test.index), "Teste presente nos folds."
 
 print(tabela_folds.round(4).to_string())
+
+# Os folds devem ser exatamente os mesmos da versão anterior à padronização decimal
+folds_identicos_historico = [
+    sha256_indices(posicoes_validacao) == valor_texto_historico("indices", "sha256_posicoes_validacao",
+                                                                f"fold {numero_fold}")
+    for numero_fold, (_, posicoes_validacao) in enumerate(folds_cv, start=1)
+]
+print("\nFolds idênticos aos da versão anterior (posições de validação, SHA-256):", folds_identicos_historico)
+assert all(folds_identicos_historico), "Os folds diferem da versão anterior."
 print(f"\nMaior desvio da % de classe 1 na validação em relação ao treino oficial: "
       f"{(tabela_folds['Validação % classe 1'] - y_train.mean() * 100).abs().max():.4f} p.p.")
 print("Registros de validação somados:", int(tabela_folds["Validação"].sum()), "| registros do teste nos folds: 0")
@@ -5412,25 +6146,28 @@ print("\nModelos em memória para a Fase 7: modelo_knn_final e modelo_arvore_fin
 # %% [markdown]
 # ## BLOCO 79 — Interpretação e conclusão do ajuste de hiperparâmetros
 #
+# Os resultados abaixo referem-se aos dados com a precisão decimal padronizada na Fase 2. A comparação com a versão
+# anterior (precisão integral) está nos BLOCOS 103 a 108.
+#
 # ### 79.1 — Funcionamento do KNN
 #
-# Todas as configurações ficaram entre 99,10% e 99,16% de acurácia média de validação, isto é, entre 16,6 e 17,8 erros
-# por fold de cerca de 1.987 registros. As diferenças entre os valores de K (no máximo 0,06 p.p., cerca de 1 registro
-# por fold) são menores que o desvio padrão entre folds (0,16 a 0,24 p.p.) e não demonstram superioridade de nenhum K.
-# O padrão esperado aparece na acurácia de treino: ela cai de 99,57% (K = 3) para 99,16% (K = 11), porque com poucos
-# vizinhos o próprio registro e seus vizinhos imediatos pesam mais na votação. Com K maior, a diferença entre treino e
-# validação diminui (0,42 p.p. com K = 3; 0,06 p.p. com K = 11), mas a validação não melhora e a variabilidade entre
-# folds cresce (0,24 p.p. com K = 9 e 11). Não houve sinal de underfitting: mesmo K = 11 mantém 99,10% na validação.
+# Todas as configurações ficaram entre 99,08% e 99,17% de acurácia média de validação, isto é, entre 16,4 e 18,2 erros
+# por fold de cerca de 1.987 registros. As diferenças entre os valores de K (no máximo 0,09 p.p., menos de 2 registros
+# por fold) são menores ou da ordem do desvio padrão entre folds (0,18 a 0,22 p.p.) e não demonstram superioridade de
+# nenhum K. O padrão esperado aparece na acurácia de treino: ela cai de 99,54% (K = 3) para 99,14% (K = 11), porque com
+# poucos vizinhos o próprio registro e seus vizinhos imediatos pesam mais na votação. Com K maior, a diferença entre
+# treino e validação diminui (0,37 p.p. com K = 3; 0,05 p.p. com K = 9 e 11), mas a validação não melhora. Não houve
+# sinal de underfitting: mesmo K = 11 mantém 99,08% na validação.
 #
 # ### 79.2 — Funcionamento da Árvore de Decisão
 #
 # A profundidade controla a complexidade de forma visível. Com `max_depth` = 3 e 5, as árvores atingem exatamente o
-# limite (7,8 e 19,2 folhas em média) e ficam entre 99,05% e 99,09% de validação. Com 10 e None, a acurácia de treino
-# sobe para 99,74% e 100%, enquanto a validação cai para 98,87% e 98,85% (cerca de 22 erros por fold, contra 18 com
-# profundidade 5). Sem limite, as árvores alcançaram profundidade efetiva de 15 a 17 nos folds (92 folhas em média): o
-# limite `None` não significa profundidade infinita, mas crescimento até separar completamente os registros de treino.
+# limite (8,0 e 19,8 folhas em média) e ficam entre 99,05% e 99,07% de validação. Com 10 e None, a acurácia de treino
+# sobe para 99,73% e 100%, enquanto a validação cai para 98,99% e 98,96% (cerca de 20 a 21 erros por fold, contra 18
+# com profundidade 5). Sem limite, as árvores alcançaram profundidade efetiva de 15 a 18 nos folds (92 folhas em média):
+# o limite `None` não significa profundidade infinita, mas crescimento até separar completamente os registros de treino.
 # Na árvore final de profundidade 5, a importância de `Light` por redução de impureza (`feature_importances_`, que soma
-# 100% entre os seis atributos) é de 98,87%: quase toda a redução da impureza de Gini nas divisões desta árvore ocorre
+# 100% entre os seis atributos) é de 98,92%: quase toda a redução da impureza de Gini nas divisões desta árvore ocorre
 # em divisões por luminosidade. Essa medida descreve a estrutura da árvore ajustada neste treino; não é uma
 # probabilidade de ocupação, não é o percentual de acertos devido ao atributo, não indica relação causal e não vale
 # automaticamente para outros ambientes. Ela é coerente com a forte associação entre `Light` e ocupação (BLOCO 17).
@@ -5441,97 +6178,114 @@ print("\nModelos em memória para a Fase 7: modelo_knn_final e modelo_arvore_fin
 # `CO2_Light_Ratio` = 424,43), diferente da média da validação do fold (436,15) e da média do treino oficial usada na
 # Fase 5 (426,77). O BLOCO 77 repetiu a verificação para os 25 Pipelines da validação cruzada (5 valores de K × 5 folds):
 # cada scaler viu apenas a parte de ajuste do seu fold. O Pipeline sempre recebeu dados na escala original, sem
-# escalonamento duplicado, e o scaler da Fase 5 não foi reutilizado nem alterado.
+# escalonamento duplicado, e o scaler da Fase 5 não foi reutilizado nem alterado. Os folds são idênticos aos da versão
+# anterior (assinaturas SHA-256 conferidas no BLOCO 64).
 #
 # ### 79.4 — Seleção dos hiperparâmetros
 #
-# Pelo critério definido no BLOCO 68, foram selecionados **K = 5** (99,16% de acurácia média de validação, F1 da classe
-# ocupada de 98,30% e balanced accuracy de 99,10%) e **`max_depth` = 5** (99,09%, 98,15% e 99,01%). Não houve empate
-# numérico. As margens são muito pequenas: K = 5 supera K = 3 e K = 7 em 0,02 p.p. (cerca de 0,4 registro por fold), e
-# `max_depth` = 5 supera `max_depth` = 3 em 0,04 p.p. (cerca de 0,8 registro por fold). As métricas complementares não
-# apontam na mesma direção em todos os casos: a maior balanced accuracy do KNN foi a de K = 7 (99,20%), e a da árvore foi
-# a de `max_depth` = 3 (99,11%). As configurações selecionadas são, portanto, escolhas válidas pelo critério
-# pré-definido, mas não configurações comprovadamente superiores às vizinhas.
+# Pelo critério definido no BLOCO 68, foram selecionados **K = 3** (99,17% de acurácia média de validação, F1 da classe
+# ocupada de 98,31% e balanced accuracy de 98,98%) e **`max_depth` = 5** (99,07%, 98,11% e 98,97%). Não houve empate
+# numérico. As margens são muito pequenas: K = 3 supera K = 5 em 0,01 p.p. Nos cinco folds, K = 3 acertou 1.976, 1.965,
+# 1.975, 1.968 e 1.967 registros (9.851 de 9.933) e K = 5 acertou 1.976, 1.969, 1.970, 1.964 e 1.971 (9.850): **a
+# diferença é de exatamente um registro**. O critério usa a média não ponderada das acurácias dos folds (99,174448% contra
+# 99,164382%), que difere ligeiramente da acurácia agregada de todas as previsões (99,174469% e 99,164401%), porque os
+# folds têm 1.986 ou 1.987 registros; as duas formas levam à mesma ordem. A diferença não demonstra superioridade
+# robusta de K = 3. `max_depth` = 5 supera `max_depth` = 3 em 0,02 p.p. (cerca de 0,4 registro
+# por fold). As métricas complementares não apontam na mesma direção: a maior balanced accuracy do KNN foi a de K = 7
+# (99,16%), e K = 3 teve a menor balanced accuracy entre os valores de K; na árvore, a maior foi a de `max_depth` = 3
+# (99,11%). As configurações selecionadas são, portanto, escolhas válidas pelo critério pré-definido, mas não
+# configurações comprovadamente superiores às vizinhas.
+#
+# **Mudança em relação à versão anterior:** com a precisão integral, o mesmo critério havia selecionado K = 5 (99,1644%
+# contra 99,1443% de K = 3). Com os dados arredondados, K = 5 manteve exatamente a mesma acurácia média (99,1644%), e K = 3
+# passou a 99,1744%, uma diferença equivalente a um registro em 9.933. A mudança decorre da regra decimal, aplicada sem
+# consultar o teste, e não altera a natureza da conclusão: os valores de K são praticamente equivalentes.
 #
 # ### 79.5 — Overfitting, underfitting e estabilidade
 #
 # **Overfitting** (alta acurácia no treino acompanhada de queda na avaliação), considerando a validação cruzada e a
 # tabela de treino e teste exigida pelo enunciado (BLOCO 73):
 #
-# - **Árvore com `max_depth=None`:** 100% no treino, com queda para 98,85% na validação cruzada (1,15 p.p.) e para
-#   99,36% no teste (0,64 p.p.). É o caso mais claro de memorização: a árvore separa todos os registros de treino.
-# - **Árvore com `max_depth=10`:** 99,70% no treino oficial, 98,87% na validação (0,87 p.p.) e 99,07% no teste
-#   (0,62 p.p.); mesmo padrão, um pouco menos intenso.
-# - **KNN com K = 3:** sinal leve, com 0,42 p.p. de diferença na validação cruzada e 0,22 p.p. no teste.
+# - **Árvore com `max_depth=None`:** 100% no treino, com queda para 98,96% na validação cruzada (1,04 p.p.) e para
+#   99,24% no teste (0,76 p.p.). É o caso mais claro de memorização: a árvore separa todos os registros de treino.
+# - **Árvore com `max_depth=10`:** 99,66% no treino oficial, 98,99% na validação (0,73 p.p.) e 99,11% no teste
+#   (0,54 p.p.); mesmo padrão, um pouco menos intenso.
+# - **KNN com K = 3:** diferença de 0,37 p.p. entre treino e validação cruzada, a maior entre os KNN, mas sem queda no
+#   teste (99,57% no treino oficial e 99,56% no teste); o sinal de sobreajuste é leve e restrito à validação cruzada.
 #
-# As quedas são pequenas em valor absoluto porque a tarefa é quase separável pela luminosidade, mas são consistentes nos
-# dois protocolos. No teste, a árvore sem limite obteve acurácia maior que a de profundidade 5 (99,36% contra 99,03%,
-# uma diferença de 8 registros), o oposto da validação cruzada. Esse resultado não muda a seleção e é compatível com a
-# proximidade temporal: 96,10% dos registros de teste têm um registro quase idêntico no treino, o que favorece modelos
-# que memorizam. A árvore com `max_depth=3` teve a menor acurácia de teste (98,63%) e a menor acurácia de treino entre as
+# As quedas são pequenas em valor absoluto porque a tarefa é quase separável pela luminosidade. No teste, a árvore sem
+# limite obteve acurácia maior que a de profundidade 5 (99,24% contra 99,03%, uma diferença de 5 registros), o oposto da
+# validação cruzada; K = 3 e K = 5 empataram no teste (99,56%). Esses resultados não mudam a seleção. Uma interpretação
+# possível, não demonstrada isoladamente, envolve a proximidade temporal: 96,10% dos registros de teste têm um registro
+# de treino a até 61 segundos, o que limita a leitura do teste como estimativa de generalização e pode beneficiar modelos
+# que exploram padrões locais. A árvore com `max_depth=3` teve a menor acurácia de teste (98,63%) e a menor acurácia de treino entre as
 # árvores, mas a diferença entre treino e validação foi de apenas 0,13 p.p.: é o indício mais próximo de underfitting,
 # ainda que muito discreto. Nenhuma configuração apresentou underfitting acentuado.
 #
-# **Estabilidade:** entre as configurações selecionadas, o **KNN com K = 5** foi o mais estável entre treino e teste
-# (99,44% e 99,40%, diferença de 0,04 p.p.) e também na validação temporal (BLOCO 79.8). Na validação cruzada, as menores
-# diferenças entre treino e validação foram as do KNN com K = 9 e 11 (0,07 e 0,06 p.p.) e da árvore com profundidade 3
-# (0,13 p.p.); os menores desvios padrão de acurácia entre folds foram os da árvore sem limite e do KNN com K = 3
-# (0,16 p.p.), que, no entanto, apresentam as maiores diferenças entre treino e validação dentro de cada modelo.
+# **Estabilidade:** entre as configurações selecionadas, o **KNN com K = 3** foi o mais estável entre treino e teste
+# (99,57% e 99,56%, diferença de 0,01 p.p.) e degradou menos na validação temporal (BLOCO 79.8). Na validação cruzada,
+# as menores diferenças entre treino e validação foram as do KNN com K = 9 e 11 (0,05 p.p.) e da árvore com
+# profundidade 3 (0,13 p.p.); o menor desvio padrão de acurácia entre folds foi o da árvore com profundidade 5
+# (0,14 p.p.).
 #
 # ### 79.6 — Avaliação da CO2_Light_Ratio
 #
 # No KNN, as métricas com 5 e com 6 atributos foram **idênticas em todos os folds e em todos os valores de K**. A nova
-# coluna altera o conjunto de vizinhos de parte dos registros, mas, no recorte verificado (somente o fold 1, com K = 5),
-# isso ocorreu em 16,36% das validações sem mudar nenhum voto majoritário (0 previsões diferentes em 1.987); nos demais
-# folds e valores de K, a igualdade das métricas foi verificada, mas não a dos vizinhos. Na árvore, a configuração com
-# 6 atributos foi igual ou ligeiramente pior: −0,01 p.p. de acurácia com profundidade 3 e 5 (1 registro em um único
-# fold), −0,08 p.p. com 10 e −0,03 p.p. com None; em nenhuma profundidade a média melhorou. A importância da variável
-# por redução de impureza na árvore final é de 0,11%.
+# coluna altera o conjunto de vizinhos de parte dos registros, mas, no recorte verificado (somente o fold 1, com K = 3),
+# isso ocorreu em 10,92% das validações sem mudar nenhum voto majoritário (0 previsões diferentes em 1.987); nos demais
+# folds e valores de K, a igualdade das métricas foi verificada, mas não a dos vizinhos. Na árvore, as diferenças médias
+# foram de 0,00 p.p. com profundidade 3, +0,01 p.p. com 5 (favorável aos 6 atributos), −0,01 p.p. com 10 e −0,06 p.p.
+# com None, todas da ordem de um registro por fold ou menos e menores que a variação entre folds. A importância da
+# variável por redução de impureza na árvore final é de 0,11%.
 #
-# **A inclusão da variável derivada não demonstrou ganho preditivo nas configurações e nos protocolos avaliados.** Uma
-# explicação compatível com os resultados é a redundância com `Light` e `CO2` (com `Light = 0`, o índice é igual a
-# `CO2`; BLOCO 36), mas isso não foi testado isoladamente, e o resultado não se generaliza para outros modelos,
-# ambientes ou conjuntos de dados. A variável permanece nos modelos principais por exigência do fluxo do projeto, não
-# por desempenho comprovado.
+# **A inclusão da variável derivada não demonstrou ganho preditivo nas configurações e nos protocolos avaliados:** a
+# única diferença favorável (+0,01 p.p. na árvore de profundidade 5) equivale a um registro em todos os folds e não é
+# distinguível do ruído entre folds. Uma explicação compatível com os resultados é a redundância com `Light` e `CO2`
+# (com `Light = 0`, o índice é igual a `CO2`; BLOCO 36), mas isso não foi testado isoladamente, e o resultado não se
+# generaliza para outros modelos, ambientes ou conjuntos de dados. A variável permanece nos modelos principais por
+# exigência do fluxo do projeto, não por desempenho comprovado.
 #
 # ### 79.7 — Dependência temporal na validação cruzada
 #
 # Em média, 87,18% dos registros de validação dos folds (86,11% a 87,81% por fold) têm um registro da parte de ajuste a
 # até 61 segundos, e 96,74% a até 120 segundos (mediana de 60 segundos). A proximidade é um pouco menor que a do teste
 # oficial (96,10% a até 61 segundos), porque a parte de ajuste de cada fold contém menos registros, mas continua muito
-# alta. A validação cruzada aleatória, portanto, mede principalmente a capacidade de reconhecer condições quase
-# idênticas às já vistas cerca de um minuto antes ou depois, e não a capacidade de generalizar para outros períodos.
+# alta. Esses valores dependem apenas dos índices e dos timestamps e são iguais aos da versão anterior. A validação
+# cruzada aleatória, portanto, mede principalmente a capacidade de reconhecer condições quase idênticas às já vistas
+# cerca de um minuto antes ou depois, e não a capacidade de generalizar para outros períodos.
 #
 # ### 79.8 — Validação temporal complementar
 #
 # Com janelas cronológicas e um intervalo de 60 registros (72 a 82 minutos reais), nenhum registro de validação teve
 # registro de ajuste a até 61 segundos. Os resultados das configurações selecionadas foram:
 #
-# | Fold | Validação | KNN (K = 5): acurácia | Árvore (profundidade 5): acurácia |
+# | Fold | Validação | KNN (K = 3): acurácia | Árvore (profundidade 5): acurácia |
 # |---|---|---:|---:|
-# | 1 | 04/02 a 12/02 (atravessa a lacuna) | 98,13% | 95,53% |
+# | 1 | 04/02 a 12/02 (atravessa a lacuna) | 96,92% | 93,35% |
 # | 2 | 12/02 a 14/02 | 98,37% | 99,15% |
-# | 3 | 14/02 a 15/02 (sábado e domingo, sem ocupação) | 80,24% | 45,86% |
+# | 3 | 14/02 a 15/02 (sábado e domingo, sem ocupação) | 80,06% | 45,86% |
 # | 4 | 15/02 a 16/02 | 99,46% | 98,43% |
 # | 5 | 16/02 a 18/02 | 98,31% | 99,58% |
 #
-# Nas quatro janelas com as duas classes, a balanced accuracy média foi de 98,74% (KNN) e 97,22% (árvore), próxima da
-# validação aleatória (99,10% e 99,01%). A diferença decisiva está no fold 3: a janela de validação cobre o fim de
-# semana, quando ninguém ocupou a sala, e o treino daquela divisão tinha apenas 55 registros de fim de semana (madrugada
-# de sábado). Dos 1.655 registros da janela, 982 têm `Light = 0` e 673 (40,66%) têm luminosidade positiva sem
-# ocupação — possivelmente luz natural, hipótese não verificável com os dados. Como a janela não tem registros
-# ocupados, todos os erros são previsões incorretas de ocupação:
+# A média dos 5 folds foi de 94,62% (KNN) e 87,27% (árvore). Nas quatro janelas com as duas classes, a balanced accuracy
+# média foi de 98,16% (KNN) e 96,71% (árvore), abaixo da validação aleatória (98,98% e 98,97%). A diferença decisiva
+# está no fold 3: a janela de validação cobre o fim de semana, quando ninguém ocupou a sala, e o treino daquela divisão
+# tinha apenas 55 registros de fim de semana (madrugada de sábado). Dos 1.655 registros da janela, 982 têm `Light = 0` e
+# 673 (40,66%) têm luminosidade positiva sem ocupação — possivelmente luz natural, hipótese não verificável com os
+# dados. Como a janela não tem registros ocupados, todos os erros são previsões incorretas de ocupação:
 #
 # | Modelo | Erros | Com `Light = 0` | Com `Light > 0` | Acurácia na janela |
 # |---|---:|---:|---:|---:|
-# | KNN (K = 5) | 327 | 0 | 327 (48,59% dos 673) | 80,24% |
+# | KNN (K = 3) | 330 | 0 | 330 (49,03% dos 673) | 80,06% |
 # | Árvore (profundidade 5) | 896 | 405 | 491 (72,96% dos 673) | 45,86% |
 #
-# Os erros do KNN concentram-se nos registros iluminados (mediana de 163 lux). Os da árvore ocorrem nos dois grupos:
+# Os erros do KNN concentram-se nos registros iluminados (mediana de 161,8 lux). Os da árvore ocorrem nos dois grupos:
 # 405 registros escuros também foram classificados como ocupados, por divisões que, abaixo do limiar de `Light`, usam
 # outros atributos (a mediana de 7 lux refere-se ao conjunto dos 896 erros). Prever sempre "desocupado" teria acertado
 # 100% da janela. Quando o treino passa a incluir o fim de semana (folds 4 e 5), as duas acurácias voltam a ficar
-# acima de 98%.
+# acima de 98%. Em relação à versão anterior, só o fold 1 mudou de forma perceptível (KNN 98,13% → 96,92%, também por
+# causa da troca de K = 5 para K = 3; árvore 95,53% → 93,35%), e o fold 3 passou de 327 para 330 erros no KNN; a
+# árvore manteve exatamente os 896 erros.
 #
 # A comparação é descritiva: os protocolos usam treinos de tamanhos diferentes (1.598 a 8.218 registros na temporal,
 # contra 7.946 na aleatória), janelas com composições distintas e uma única sequência temporal; a diferença não pode ser
@@ -5545,12 +6299,12 @@ print("\nModelos em memória para a Fase 7: modelo_knn_final e modelo_arvore_fin
 #   as acurácias próximas de 99% são otimistas como estimativa para outros períodos (BLOCOS 44, 70 e 71).
 # - **Seleção pela validação cruzada:** as mesmas validações escolheram os hiperparâmetros e compararam os atributos;
 #   o valor da configuração escolhida tende a ser ligeiramente otimista, e as diferenças entre configurações são da
-#   ordem de um registro por fold.
+#   ordem de um registro por fold. A troca de K = 5 por K = 3 na revisão ilustra essa fragilidade.
 # - **Consulta ao teste:** exigida pelo enunciado na Fase 6; a seleção foi congelada antes, mas o teste deixa de ser
-#   inédito para a Fase 7.
+#   inédito para a Fase 7. Além disso, o teste já havia sido consultado na versão anterior à regra decimal.
 # - **Desequilíbrio:** 24,33% de ocupados; a acurácia sozinha pode esconder erros na classe minoritária, por isso F1 e
 #   balanced accuracy foram acompanhados.
-# - **Redundância e dependência de `Light`:** a árvore concentra em `Light` quase toda a redução de impureza (98,87%),
+# - **Redundância e dependência de `Light`:** a árvore concentra em `Light` quase toda a redução de impureza (98,92%),
 #   e a variável derivada não demonstrou ganho preditivo nas configurações e nos protocolos avaliados. Em automação
 #   predial, a luz natural e o próprio acionamento da iluminação afetam o sensor, com risco de realimentação (BLOCO 17).
 # - **Composição da base:** a EDA e a escolha da variável derivada usaram a base completa; a base tem dois segmentos,
@@ -5558,8 +6312,2057 @@ print("\nModelos em memória para a Fase 7: modelo_knn_final e modelo_arvore_fin
 #
 # ### 79.10 — Preparação para a Fase 7
 #
-# Ficam em memória `modelo_knn_final` (Pipeline com `StandardScaler` e KNN com K = 5, ajustado nos 9.933 registros do
+# Ficam em memória `modelo_knn_final` (Pipeline com `StandardScaler` e KNN com K = 3, ajustado nos 9.933 registros do
 # treino) e `modelo_arvore_final` (Árvore de Decisão com `max_depth=5`, profundidade efetiva 5, 37 nós e 19 folhas). A
 # Fase 7 deverá apresentar a acurácia final dos dois modelos no teste, compará-los e justificar a escolha, complementando
 # a análise com o baseline da classe majoritária (`DummyClassifier`), a matriz de confusão, a precision, o recall, o
 # F1-score e a balanced accuracy, sem alterar os hiperparâmetros selecionados.
+
+# %% [markdown]
+# # FASE 7 — Avaliação dos Modelos e Veredito Final
+# ## BLOCO 80 — Contextualização da avaliação
+#
+# ### Requisitos do enunciado e materiais do curso
+#
+# | Fonte | Exigência ou conteúdo |
+# |---|---|
+# | Enunciado, Fase 7 (p. 5) | Calcular e exibir a acurácia final do melhor KNN e da melhor Árvore de Decisão **exclusivamente com os dados de teste** |
+# | Enunciado, Fase 7 (p. 5) | Comparar os resultados numéricos e escrever uma conclusão técnica justificando qual modelo apresentou desempenho superior e deve ser adotado pelo sistema de automação predial |
+# | Rubrica, critério 10 (p. 9) | Pontuação total: calcular as acurácias no teste, comparar os modelos e justificar a decisão final; calcular sem comparar é pontuação parcial |
+# | Enunciado, contexto (p. 2) | Automação predial na Indústria 4.0: desligamento automático de iluminação e climatização em salas desocupadas |
+# | MUS01, slides 52 e 80 a 86 | Acurácia e matriz de confusão na avaliação de classificadores |
+# | MUS01, slides 90 e 91 | Precision e recall e a escolha do erro mais custoso para o negócio |
+# | MUS01, slides 95 e 96 | Paradoxo da acurácia em bases desbalanceadas |
+# | Atividade semanal (`trabalho_semanal_analise_preditiva.py`) | Importa `accuracy_score`, `classification_report` e `confusion_matrix` para a avaliação |
+#
+# São **complementos metodológicos deste projeto**, e não exigências do enunciado: o baseline `DummyClassifier`, as
+# métricas além da acurácia, a comparação pareada com o teste de McNemar, a investigação dos erros, os cenários de
+# custo, a revisão temporal e a avaliação no `datatraining.txt`.
+#
+# ### Conceitos
+#
+# - **Finalidade:** estimar como os modelos selecionados se comportam em registros não usados no ajuste e decidir qual
+#   é mais adequado à aplicação.
+# - **Treino, validação cruzada e teste:** o treino ajusta o modelo; a validação cruzada (Fase 6) comparou
+#   configurações dentro do treino; o teste avalia os modelos finais em registros separados desde a Fase 4.
+# - **Matriz de confusão (classificação binária, classe positiva = ocupado):** TN (desocupado previsto como
+#   desocupado), FP (desocupado previsto como ocupado), FN (ocupado previsto como desocupado) e TP (ocupado previsto
+#   como ocupado).
+# - **Métricas:** acurácia = (TP + TN) / total; precision = TP / (TP + FP); recall = TP / (TP + FN); especificidade =
+#   TN / (TN + FP); F1 = 2 × precision × recall / (precision + recall); balanced accuracy = (recall + especificidade) / 2.
+# - **Baseline e limitação da acurácia:** com 75,67% de registros desocupados, prever sempre "desocupado" já alcança
+#   uma acurácia alta sem detectar nenhuma ocupação. Por isso, os erros de cada classe são analisados separadamente.
+# - **Erros na automação:** um falso positivo mantém luz e climatização ligadas sem ninguém (desperdício); um falso
+#   negativo desliga o ambiente com pessoas presentes (desconforto ou risco).
+# - **Generalização:** a dependência temporal medida nas Fases 4 e 6 torna o teste otimista; por isso, os resultados
+#   são confrontados com a validação temporal e com o `datatraining.txt`.
+#
+# ### Condições desta fase
+#
+# - O conjunto de teste **já foi consultado na Fase 6** (BLOCO 73), por exigência do enunciado; a seleção de K = 3 e
+#   `max_depth` = 5 foi registrada antes dessa consulta. Além disso, o teste e o `datatraining.txt` já haviam sido
+#   avaliados na versão anterior à padronização decimal (BLOCO 103).
+# - As configurações não são alteradas nesta fase, e os modelos principais não são reajustados: `modelo_knn_final` e
+#   `modelo_arvore_final` vêm da execução sequencial da Fase 6.
+# - A avaliação aprofunda os resultados dos modelos já selecionados; nenhuma métrica desta fase é usada para
+#   otimizar novamente os classificadores.
+
+# %% [markdown]
+# ### BLOCO 81 — Verificação dos modelos selecionados e dos conjuntos
+#
+# Confere os hiperparâmetros, os atributos e o estado ajustado dos dois modelos e as assinaturas dos oito conjuntos de
+# referência da Fase 6. A função `assinatura_modelo` calcula o SHA-256 dos hiperparâmetros e dos atributos aprendidos
+# (parâmetros do scaler e dados de referência do KNN; estrutura e limiares da árvore), sem serializar os objetos. Essas
+# assinaturas são conferidas depois de cada etapa de previsão.
+
+# %%
+# BLOCO 81 — Verificação dos modelos selecionados e dos conjuntos
+
+# Modelos produzidos pela execução sequencial da Fase 6 (nenhum novo ajuste nesta fase)
+check_is_fitted(modelo_knn_final)
+check_is_fitted(modelo_arvore_final)
+knn_avaliado = modelo_knn_final.named_steps["knn"]
+scaler_avaliado = modelo_knn_final.named_steps["scaler"]
+assert list(modelo_knn_final.named_steps) == ["scaler", "knn"], "Etapas do Pipeline alteradas."
+assert (knn_avaliado.n_neighbors, knn_avaliado.weights, knn_avaliado.effective_metric_) == (k_selecionado, "uniform",
+                                                                                       "euclidean")
+assert (modelo_arvore_final.max_depth, modelo_arvore_final.criterion, modelo_arvore_final.random_state) == (
+    profundidade_selecionada, "gini", 42)
+assert repr(selecao_hiperparametros) == registro_selecao, "Seleção da Fase 6 alterada."
+for modelo_final in [modelo_knn_final, modelo_arvore_final]:
+    assert list(modelo_final.feature_names_in_) == atributos_preditores, "Atributos dos modelos alterados."
+
+# Conjuntos oficiais (sem novo split) e assinaturas da Fase 6
+assert X_train.shape == (9933, 6) and X_test.shape == (2484, 6) and len(y_train) == 9933 and len(y_test) == 2484
+assert y_train.value_counts().sort_index().tolist() == [7516, 2417]
+assert y_test.value_counts().sort_index().tolist() == [1880, 604]
+for nome, estrutura in estruturas_fase6.items():
+    assert assinatura_integridade(estrutura) == assinaturas_fase6[nome], f"{nome} alterado antes da Fase 7."
+
+
+def assinatura_modelo(modelo):
+    """SHA-256 dos hiperparâmetros e dos atributos aprendidos (sem serializar o objeto)."""
+    if isinstance(modelo, Pipeline):
+        escala, vizinhos = modelo.named_steps["scaler"], modelo.named_steps["knn"]
+        partes = [escala.mean_, escala.var_, escala.scale_, np.asarray(escala.n_samples_seen_),
+                  vizinhos._fit_X, vizinhos._y, vizinhos.classes_]
+    elif isinstance(modelo, DecisionTreeClassifier):
+        estrutura = modelo.tree_
+        partes = [estrutura.feature, estrutura.threshold, estrutura.value, estrutura.children_left,
+                  estrutura.children_right, modelo.classes_]
+    else:
+        partes = [modelo.classes_, np.asarray(modelo.class_prior_)]
+    resumo = hashlib.sha256(repr(sorted(modelo.get_params().items())).encode("utf-8"))
+    for parte in partes:
+        resumo.update(np.ascontiguousarray(parte).tobytes())
+    return resumo.hexdigest()
+
+
+assinaturas_modelos_fase7 = {"KNN": assinatura_modelo(modelo_knn_final),
+                             "Árvore de Decisão": assinatura_modelo(modelo_arvore_final)}
+
+tabela_modelos_fase7 = pd.DataFrame({
+    "Configuração": [f"Pipeline(StandardScaler, KNN): n_neighbors={knn_avaliado.n_neighbors}, "
+                     f"weights='{knn_avaliado.weights}', metric='{knn_avaliado.effective_metric_}'",
+                     f"DecisionTreeClassifier: max_depth={modelo_arvore_final.max_depth}, "
+                     f"criterion='{modelo_arvore_final.criterion}', random_state={modelo_arvore_final.random_state}"],
+    "Registros de ajuste": [knn_avaliado.n_samples_fit_, int(modelo_arvore_final.tree_.n_node_samples[0])],
+    "Escalonamento": ["Dentro do Pipeline (ajustado no treino)", "Nenhum"],
+    "Assinatura (16 caracteres)": [assinatura[:16] for assinatura in assinaturas_modelos_fase7.values()],
+}, index=pd.Index(assinaturas_modelos_fase7.keys(), name="Modelo"))
+print(tabela_modelos_fase7.to_string())
+print("\nConjuntos oficiais e modelos verificados; nenhum ajuste será feito nos modelos principais nesta fase.")
+
+# %% [markdown]
+# ### BLOCO 82 — Baseline com DummyClassifier
+#
+# `DummyClassifier(strategy="most_frequent")` é ajustado somente com `X_train` e `y_train` e prevê sempre a classe
+# majoritária do treino. Sua acurácia no teste é um resultado calculado neste conjunto e não se confunde com a
+# referência descritiva de 75,6705% do BLOCO 39, que é a proporção de desocupados na base completa.
+
+# %%
+# BLOCO 82 — Baseline com DummyClassifier
+
+modelo_baseline = DummyClassifier(strategy="most_frequent").fit(X_train, y_train)
+assert modelo_baseline.classes_[np.argmax(modelo_baseline.class_prior_)] == 0, "Classe majoritária diferente de 0."
+assinaturas_modelos_fase7["DummyClassifier"] = assinatura_modelo(modelo_baseline)
+
+y_pred_baseline = pd.Series(modelo_baseline.predict(X_test), index=X_test.index, name="previsao_baseline")
+acuracia_treino_baseline = accuracy_score(y_train, modelo_baseline.predict(X_train))
+acuracia_teste_baseline = accuracy_score(y_test, y_pred_baseline)
+
+print("Classe prevista para todos os registros:", int(np.unique(y_pred_baseline)[0]), "(0 = desocupado)")
+print("Proporções aprendidas no treino (class_prior_):", dict(zip(modelo_baseline.classes_.tolist(),
+                                                                  modelo_baseline.class_prior_.round(6))))
+print(f"Acurácia no treino: {acuracia_treino_baseline:.6%} | no teste: {acuracia_teste_baseline:.6%}")
+print(f"Referência descritiva da base completa (BLOCO 39, não é resultado de modelo): {acuracia_referencia:.4%}")
+
+# %% [markdown]
+# ### BLOCO 83 — Previsões dos classificadores no teste oficial
+#
+# `modelo_knn_final.predict(X_test)` recebe `X_test` original: o `StandardScaler` interno do Pipeline aplica apenas
+# `transform` com os parâmetros aprendidos no treino. A Árvore usa os mesmos atributos sem escalonamento. As acurácias
+# devem reproduzir exatamente as do BLOCO 73.
+
+# %%
+# BLOCO 83 — Previsões dos classificadores no teste oficial
+
+# O Pipeline recebe X_test original: o scaler interno aplica apenas transform com os parâmetros do treino
+y_pred_knn = pd.Series(modelo_knn_final.predict(X_test), index=X_test.index, name="previsao_knn")
+y_pred_arvore = pd.Series(modelo_arvore_final.predict(X_test), index=X_test.index, name="previsao_arvore")
+
+for previsoes in [y_pred_baseline, y_pred_knn, y_pred_arvore]:
+    assert len(previsoes) == 2484 and previsoes.index.equals(y_test.index), "Previsões desalinhadas do teste."
+    assert previsoes.notna().all() and set(previsoes.unique()).issubset({0, 1}), "Previsão inválida."
+pd.testing.assert_series_equal(y_test, y_test_referencia, check_exact=True)
+
+# Correspondência com as acurácias da Fase 6 (BLOCO 73)
+acuracia_teste_knn = accuracy_score(y_test, y_pred_knn)
+acuracia_teste_arvore = accuracy_score(y_test, y_pred_arvore)
+assert acuracia_teste_knn == tabela_treino_teste.loc[("KNN", f"n_neighbors={k_selecionado}"), "Acurácia teste"]
+assert acuracia_teste_arvore == tabela_treino_teste.loc[
+    ("Árvore de Decisão", f"max_depth={profundidade_selecionada}"), "Acurácia teste"]
+for nome, modelo_final in [("KNN", modelo_knn_final), ("Árvore de Decisão", modelo_arvore_final)]:
+    assert assinatura_modelo(modelo_final) == assinaturas_modelos_fase7[nome], f"{nome} alterado pela previsão."
+
+print(f"Acurácia no teste — KNN: {acuracia_teste_knn!r} | Árvore: {acuracia_teste_arvore!r}")
+print("Idênticas às acurácias registradas na Fase 6: True | modelos inalterados: True")
+
+# %% [markdown]
+# ### BLOCO 84 — Matrizes de confusão
+#
+# Matrizes com ordem explícita `labels=[0, 1]`: linhas = classe real, colunas = classe prevista. Cada matriz é
+# conferida por contagem direta e pela relação entre a diagonal principal e a acurácia.
+
+# %%
+# BLOCO 84 — Matrizes de confusão
+
+previsoes_teste_modelos = {"DummyClassifier": y_pred_baseline, "KNN": y_pred_knn, "Árvore de Decisão": y_pred_arvore}
+matrizes_confusao = {}
+for nome, previsoes in previsoes_teste_modelos.items():
+    matriz = confusion_matrix(y_test, previsoes, labels=[0, 1])
+    # Conferência independente por contagem direta
+    contagem = np.array([[((y_test == real) & (previsoes == prevista)).sum() for prevista in (0, 1)]
+                         for real in (0, 1)])
+    assert np.array_equal(matriz, contagem), f"Matriz divergente da contagem direta ({nome})."
+    assert matriz.sum() == 2484 and matriz[0].sum() == 1880 and matriz[1].sum() == 604
+    assert np.trace(matriz) / matriz.sum() == accuracy_score(y_test, previsoes)
+    matrizes_confusao[nome] = matriz
+    print(f"\n{nome}:")
+    print(pd.DataFrame(matriz, index=["Realmente desocupado (0)", "Realmente ocupado (1)"],
+                       columns=["Previsto desocupado (0)", "Previsto ocupado (1)"]).to_string())
+
+tabela_acertos = pd.DataFrame({
+    nome: {"TN": int(matriz[0, 0]), "FP": int(matriz[0, 1]), "FN": int(matriz[1, 0]), "TP": int(matriz[1, 1]),
+           "Acertos": int(np.trace(matriz)), "Erros": int(matriz.sum() - np.trace(matriz))}
+    for nome, matriz in matrizes_confusao.items()
+}).T
+print("\n" + tabela_acertos.to_string())
+
+# %% [markdown]
+# ### BLOCO 85 — Métricas completas de classificação
+#
+# Métricas do scikit-learn com classe positiva 1 (ocupado), conferidas pelas fórmulas da matriz de confusão. Quando um
+# denominador é zero, a métrica é **indefinida** e aparece como `NaN` (`zero_division=np.nan`), e não como um resultado
+# medido. Observações sobre o baseline: a precision da classe ocupada é indefinida (TP + FP = 0); o F1 é 0, pois o
+# scikit-learn o calcula como 2TP / (2TP + FP + FN), forma equivalente à média harmônica quando precision e recall estão
+# definidas; e as médias macro de precision excluem a classe cujo valor é indefinido.
+
+# %%
+# BLOCO 85 — Métricas completas de classificação
+
+
+def razao(numerador, denominador):
+    """Divisão com denominador zero tratado explicitamente como indefinido (NaN)."""
+    return numerador / denominador if denominador > 0 else np.nan
+
+
+def calcular_metricas(y_real, y_previsto):
+    """Métricas do scikit-learn (classe positiva = 1) conferidas pelas fórmulas da matriz de confusão."""
+    tn, fp, fn, tp = confusion_matrix(y_real, y_previsto, labels=[0, 1]).ravel()
+    metricas = {
+        "accuracy": accuracy_score(y_real, y_previsto),
+        "balanced_accuracy": balanced_accuracy_score(y_real, y_previsto),
+        "precision_ocupado": precision_score(y_real, y_previsto, pos_label=1, zero_division=np.nan),
+        "recall_ocupado": recall_score(y_real, y_previsto, pos_label=1, zero_division=np.nan),
+        "f1_ocupado": f1_score(y_real, y_previsto, pos_label=1, zero_division=np.nan),
+        "especificidade": recall_score(y_real, y_previsto, pos_label=0, zero_division=np.nan),
+        "taxa_falsos_positivos": razao(fp, fp + tn),
+        "taxa_falsos_negativos": razao(fn, fn + tp),
+        "precision_macro": precision_score(y_real, y_previsto, average="macro", zero_division=np.nan),
+        "recall_macro": recall_score(y_real, y_previsto, average="macro", zero_division=np.nan),
+        "f1_macro": f1_score(y_real, y_previsto, average="macro", zero_division=np.nan),
+        "f1_ponderado": f1_score(y_real, y_previsto, average="weighted", zero_division=np.nan),
+    }
+    # Conferência pelas fórmulas (NaN apenas quando o denominador é zero)
+    precisao = razao(tp, tp + fp)
+    sensibilidade = razao(tp, tp + fn)
+    especificidade = razao(tn, tn + fp)
+    formulas = {
+        "accuracy": razao(tp + tn, tp + tn + fp + fn),
+        "precision_ocupado": precisao,
+        "recall_ocupado": sensibilidade,
+        "especificidade": especificidade,
+        # Forma equivalente a 2 × P × R / (P + R) quando P e R estão definidas; permanece definida se TP + FP = 0
+        "f1_ocupado": razao(2 * tp, 2 * tp + fp + fn),
+        "balanced_accuracy": (sensibilidade + especificidade) / 2,
+    }
+    if not (np.isnan(precisao) or np.isnan(sensibilidade)) and precisao + sensibilidade > 0:
+        assert np.isclose(2 * precisao * sensibilidade / (precisao + sensibilidade), formulas["f1_ocupado"],
+                          rtol=1e-12, atol=0), "F1 diferente da média harmônica."
+    for chave, valor in formulas.items():
+        assert (np.isnan(valor) and np.isnan(metricas[chave])) or np.isclose(valor, metricas[chave], rtol=1e-12,
+                                                                             atol=0), f"Fórmula divergente: {chave}."
+    return {**metricas, "TN": int(tn), "FP": int(fp), "FN": int(fn), "TP": int(tp)}
+
+
+metricas_teste = {nome: calcular_metricas(y_test, previsoes) for nome, previsoes in previsoes_teste_modelos.items()}
+tabela_metricas_teste = pd.DataFrame(metricas_teste)
+colunas_percentuais = [indice for indice in tabela_metricas_teste.index if indice not in ("TN", "FP", "FN", "TP")]
+print("Métricas no teste oficial (classe positiva = 1, ocupado; NaN = indefinida por denominador zero):")
+print(tabela_metricas_teste.loc[colunas_percentuais].map(
+    lambda valor: "indefinida" if pd.isna(valor) else f"{valor:.6%}").to_string())
+print(tabela_metricas_teste.loc[["TN", "FP", "FN", "TP"]].astype(int).to_string())
+
+diferenca_knn_arvore = (tabela_metricas_teste.loc[colunas_percentuais, "KNN"]
+                        - tabela_metricas_teste.loc[colunas_percentuais, "Árvore de Decisão"]) * 100
+print("\nDiferença KNN − Árvore (pontos percentuais):")
+print(diferenca_knn_arvore.round(4).to_string())
+
+print("\nObservação: no DummyClassifier, a precision da classe ocupada é indefinida (nenhuma previsão positiva:")
+print("TP + FP = 0); o F1 é 0, pois o scikit-learn o calcula como 2TP / (2TP + FP + FN) = 0 / 604. As médias macro")
+print("de precision do scikit-learn com zero_division=np.nan excluem a classe cuja precision é indefinida.")
+
+for nome, previsoes in previsoes_teste_modelos.items():
+    print(f"\nRelatório de classificação — {nome}:")
+    print(classification_report(y_test, previsoes, labels=[0, 1], target_names=["0 — Desocupado", "1 — Ocupado"],
+                                digits=4, zero_division=np.nan))
+
+# %% [markdown]
+# ### BLOCO 86 — Comparação pareada dos erros
+#
+# Os dois modelos são avaliados nos mesmos 2.484 registros. A tabela de contingência separa os registros que ambos
+# acertam, que ambos erram e que só um dos modelos acerta. O teste exato de McNemar (binomial sobre os pares
+# discordantes, `scipy.stats.binomtest`) avalia a hipótese de que os dois modelos erram com a mesma frequência. Como os
+# registros do teste são vizinhos temporais dependentes entre si, o pressuposto de independência não se sustenta, e o
+# p-valor é apenas **exploratório**.
+
+# %%
+# BLOCO 86 — Comparação pareada dos erros (KNN × Árvore)
+
+acerto_knn = y_pred_knn.eq(y_test)
+acerto_arvore = y_pred_arvore.eq(y_test)
+tabela_pareada = pd.crosstab(acerto_knn.map({True: "KNN acerta", False: "KNN erra"}),
+                             acerto_arvore.map({True: "Árvore acerta", False: "Árvore erra"}))
+tabela_pareada = tabela_pareada.loc[["KNN acerta", "KNN erra"], ["Árvore acerta", "Árvore erra"]]
+assert int(tabela_pareada.to_numpy().sum()) == 2484, "Contingência não soma 2.484."
+print(tabela_pareada.to_string())
+
+ambos_acertam = int((acerto_knn & acerto_arvore).sum())
+ambos_erram = int((~acerto_knn & ~acerto_arvore).sum())
+somente_knn_acerta = int((acerto_knn & ~acerto_arvore).sum())
+somente_arvore_acerta = int((~acerto_knn & acerto_arvore).sum())
+pares_discordantes = somente_knn_acerta + somente_arvore_acerta
+
+# Teste exato de McNemar (binomial sobre os pares discordantes; H0: os dois modelos erram com a mesma frequência)
+resultado_mcnemar = binomtest(somente_knn_acerta, n=pares_discordantes, p=0.5, alternative="two-sided")
+print(f"\nAmbos acertam: {ambos_acertam} | ambos erram: {ambos_erram} | só o KNN acerta: {somente_knn_acerta} | "
+      f"só a Árvore acerta: {somente_arvore_acerta}")
+print(f"Diferença de acertos: {somente_knn_acerta - somente_arvore_acerta} registros "
+      f"({(acuracia_teste_knn - acuracia_teste_arvore) * 100:.4f} p.p.)")
+print(f"McNemar exato (exploratório): {pares_discordantes} pares discordantes, p-valor = {resultado_mcnemar.pvalue:.6f}")
+
+# %% [markdown]
+# ### BLOCO 87 — Investigação descritiva dos erros no teste
+#
+# Associa cada previsão incorreta ao índice original, à data e aos atributos. A proximidade de transições de ocupação é
+# uma análise **exploratória posterior à avaliação**: o intervalo de 10 minutos foi definido antes da contagem; as
+# transições são as 74 mudanças de classe entre registros consecutivos do mesmo segmento (BLOCO 16.2), sem atravessar a
+# lacuna entre os segmentos. Os resultados descrevem associações e não são usados para criar regras ou alterar modelos.
+
+# %%
+# BLOCO 87 — Investigação descritiva dos erros no teste
+
+
+def tipo_erro(real, previsto):
+    return np.select([(real == 0) & (previsto == 1), (real == 1) & (previsto == 0)],
+                     ["Falso positivo", "Falso negativo"], default="Acerto")
+
+
+# Transições de ocupação na base completa, dentro de cada segmento (uso exploratório, após a avaliação)
+janela_transicao_min = 10  # definida antes da contagem: até 10 minutos de uma mudança de classe
+datas_base = rastreio_temporal["date"]
+mudanca_ocupacao = y.ne(y.shift()) & rastreio_temporal["segmento"].eq(rastreio_temporal["segmento"].shift())
+transicoes_ocupacao = rastreio_temporal.loc[mudanca_ocupacao]
+assert len(transicoes_ocupacao) == mudancas_validas, "Transições diferentes das registradas no BLOCO 16.2."
+
+distancia_transicao_min = pd.Series(np.inf, index=X_test.index)
+for segmento_id in rastreio_temporal["segmento"].unique():
+    tempos_transicao = np.sort(
+        transicoes_ocupacao.loc[transicoes_ocupacao["segmento"].eq(segmento_id), "date"].to_numpy()
+    )
+    rotulos_segmento = X_test.index[rastreio_temporal.loc[X_test.index, "segmento"].eq(segmento_id).to_numpy()]
+    if len(tempos_transicao) == 0:
+        continue
+    tempos = datas_base.loc[rotulos_segmento].to_numpy()
+    insercao = np.searchsorted(tempos_transicao, tempos)
+    anterior = np.where(insercao > 0, (tempos - tempos_transicao[np.clip(insercao - 1, 0, None)])
+                        / np.timedelta64(1, "m"), np.inf)
+    posterior = np.where(insercao < len(tempos_transicao),
+                         (tempos_transicao[np.clip(insercao, None, len(tempos_transicao) - 1)] - tempos)
+                         / np.timedelta64(1, "m"), np.inf)
+    distancia_transicao_min.loc[rotulos_segmento] = np.minimum(np.abs(anterior), np.abs(posterior))
+
+tabela_previsoes_teste = pd.DataFrame({
+    "indice_original": X_test.index,
+    "date": datas_base.loc[X_test.index].to_numpy(),
+    **{atributo: X_test[atributo].to_numpy() for atributo in atributos_preditores},
+    "occupancy_real": y_test.to_numpy(),
+    "previsao_baseline": y_pred_baseline.to_numpy(),
+    "previsao_knn": y_pred_knn.to_numpy(),
+    "previsao_arvore": y_pred_arvore.to_numpy(),
+}, index=X_test.index)
+tabela_previsoes_teste["erro_knn"] = tipo_erro(y_test.to_numpy(), y_pred_knn.to_numpy())
+tabela_previsoes_teste["erro_arvore"] = tipo_erro(y_test.to_numpy(), y_pred_arvore.to_numpy())
+tabela_previsoes_teste["minutos_ate_transicao"] = distancia_transicao_min.to_numpy()
+tabela_previsoes_teste = tabela_previsoes_teste.sort_values("indice_original").reset_index(drop=True)
+
+tabela_erros_teste = tabela_previsoes_teste.query("erro_knn != 'Acerto' or erro_arvore != 'Acerto'").copy()
+tabela_erros_teste["errado_em"] = np.select(
+    [tabela_erros_teste["erro_knn"].ne("Acerto") & tabela_erros_teste["erro_arvore"].ne("Acerto"),
+     tabela_erros_teste["erro_knn"].ne("Acerto")], ["Ambos", "Somente KNN"], default="Somente Árvore")
+assert len(tabela_erros_teste) == ambos_erram + somente_knn_acerta + somente_arvore_acerta
+
+print(f"Registros com erro em pelo menos um modelo: {len(tabela_erros_teste)}")
+print(tabela_erros_teste[["indice_original", "date", "Light", "CO2", "Temperature", "occupancy_real", "erro_knn",
+                          "erro_arvore", "minutos_ate_transicao"]].to_string(index=False))
+
+linhas_erros = []
+for nome, coluna in [("KNN", "erro_knn"), ("Árvore de Decisão", "erro_arvore")]:
+    erros = tabela_previsoes_teste[tabela_previsoes_teste[coluna].ne("Acerto")]
+    linhas_erros.append({
+        "Modelo": nome, "Erros": len(erros),
+        "Falsos positivos": int(erros[coluna].eq("Falso positivo").sum()),
+        "Falsos negativos": int(erros[coluna].eq("Falso negativo").sum()),
+        "Com Light = 0": int(erros["Light"].eq(0).sum()),
+        "Com Light > 0": int(erros["Light"].gt(0).sum()),
+        f"Até {janela_transicao_min} min de uma transição": int((erros["minutos_ate_transicao"]
+                                                                <= janela_transicao_min).sum()),
+        "Em fim de semana": int((erros["date"].dt.dayofweek >= 5).sum()),
+        "CO2 mediano (ppm)": erros["CO2"].median(),
+    })
+tabela_resumo_erros = pd.DataFrame(linhas_erros).set_index("Modelo")
+print("\n" + tabela_resumo_erros.to_string(float_format=lambda valor: f"{valor:.2f}"))
+
+proporcao_perto_transicao_teste = (tabela_previsoes_teste["minutos_ate_transicao"] <= janela_transicao_min).mean()
+print(f"\nReferência: registros do teste a até {janela_transicao_min} min de uma transição: "
+      f"{proporcao_perto_transicao_teste:.2%} (todos os 2.484)")
+print("Hora dos erros (KNN ∪ Árvore):", tabela_erros_teste["date"].dt.hour.value_counts().sort_index().to_dict())
+print("Dia dos erros:", tabela_erros_teste["date"].dt.strftime("%d/%m").value_counts().sort_index().to_dict())
+
+comparacao_fp_fn = tabela_erros_teste.assign(
+    tipo=np.where(tabela_erros_teste["occupancy_real"].eq(0), "Falso positivo (real 0)", "Falso negativo (real 1)")
+).groupby("tipo")[["Light", "CO2", "Temperature", "minutos_ate_transicao"]].median()
+print("\nMedianas por tipo de erro (registros com erro em ao menos um modelo):")
+print(comparacao_fp_fn.to_string(float_format=lambda valor: f"{valor:.2f}"))
+
+# %% [markdown]
+# ### BLOCO 88 — Impacto operacional e cenários hipotéticos de custo
+#
+# | Erro | Situação real | Consequências possíveis em uma aplicação hipotética |
+# |---|---|---|
+# | Falso positivo | Sala desocupada prevista como ocupada | Iluminação e climatização ligadas sem necessidade; consumo evitável |
+# | Falso negativo | Sala ocupada prevista como desocupada | Desligamento indevido de luz ou climatização; desconforto; riscos conforme o ambiente |
+#
+# Os cenários usam `Custo = FP × custo_FP + FN × custo_FN` em **unidades arbitrárias**. Eles mostram como a preferência
+# entre os modelos muda conforme o peso de cada erro, e não representam energia, kWh ou valores monetários.
+
+# %%
+# BLOCO 88 — Impacto operacional e cenários hipotéticos de custo
+
+cenarios_custo = {"Custos iguais (FP = 1, FN = 1)": (1, 1), "FN com peso 2 (FP = 1, FN = 2)": (1, 2),
+                  "FN com peso 5 (FP = 1, FN = 5)": (1, 5), "FP com peso 2 (FP = 2, FN = 1)": (2, 1)}
+tabela_custos = pd.DataFrame({
+    nome: {cenario: metricas_teste[nome]["FP"] * custo_fp + metricas_teste[nome]["FN"] * custo_fn
+           for cenario, (custo_fp, custo_fn) in cenarios_custo.items()}
+    for nome in ["DummyClassifier", "KNN", "Árvore de Decisão"]
+})
+print("Falsos positivos e falsos negativos no teste:")
+print(tabela_acertos.loc[:, ["FP", "FN"]].to_string())
+print("\nCusto relativo hipotético (unidades arbitrárias; não representa energia nem valores monetários):")
+print(tabela_custos.to_string())
+
+# %% [markdown]
+# ### BLOCO 89 — Revisão da generalização temporal
+#
+# Recupera os resultados da Fase 6 sem alterar o protocolo. Para detalhar o fold temporal 3 por grupo de luminosidade,
+# os modelos temporários daquele fold são reproduzidos com o mesmo protocolo da Fase 6 (modelos novos, ajustados apenas
+# na janela de treino do fold); os modelos finais não são usados nem alterados, e as acurácias devem coincidir com as do
+# BLOCO 71.
+
+# %%
+# BLOCO 89 — Revisão da generalização temporal (resultados da Fase 6)
+
+proximidade_teste_61 = tabela_proximidade.loc["Base completa", "Até 61 s (%)"]
+proximidade_cv = tabela_proximidade_folds.loc["Cinco folds (todas as validações)"]
+print(f"Teste oficial com vizinho de treino a até 61 s: {proximidade_teste_61:.4f}%")
+print(f"Validação cruzada: até 61 s = {proximidade_cv['Até 61 s (%)']:.4f}% | até 120 s = "
+      f"{proximidade_cv['Até 120 s (%)']:.4f}% | mediana = {proximidade_cv['Mediana (s)']:.0f} s")
+print("\nAcurácia por divisão temporal (BLOCO 71):")
+print(resultados_temporais.xs("acuracia", axis=1, level="metrica").to_string(float_format=lambda v: f"{v:.6f}"))
+
+# Reprodução do fold 3 com o protocolo da Fase 6 (modelos temporários do fold; os modelos finais não são usados)
+posicoes_treino_f3, posicoes_validacao_f3 = folds_temporais[2]
+X_validacao_f3 = X_train_cronologico.iloc[posicoes_validacao_f3]
+y_validacao_f3 = y_train_cronologico.iloc[posicoes_validacao_f3]
+luz_zero_f3 = X_validacao_f3["Light"].eq(0)
+linhas_fold3 = {"Registros": {"Light = 0": int(luz_zero_f3.sum()), "Light > 0": int((~luz_zero_f3).sum()),
+                              "Total": len(y_validacao_f3)}}
+for nome, fabrica in [("KNN", lambda: criar_pipeline_knn(k_selecionado)),
+                      ("Árvore de Decisão", lambda: criar_arvore(profundidade_selecionada))]:
+    previsto_f3 = fabrica().fit(X_train_cronologico.iloc[posicoes_treino_f3],
+                                y_train_cronologico.iloc[posicoes_treino_f3]).predict(X_validacao_f3)
+    erro_f3 = previsto_f3 != y_validacao_f3.to_numpy()
+    assert accuracy_score(y_validacao_f3, previsto_f3) == resultados_temporais.loc[3, (nome, "acuracia")]
+    assert (previsto_f3[erro_f3] == 1).all(), "Erro diferente de falso positivo na janela sem ocupação."
+    linhas_fold3[f"Erros {nome}"] = {"Light = 0": int((erro_f3 & luz_zero_f3.to_numpy()).sum()),
+                                     "Light > 0": int((erro_f3 & ~luz_zero_f3.to_numpy()).sum()),
+                                     "Total": int(erro_f3.sum())}
+tabela_fold3 = pd.DataFrame(linhas_fold3)
+assert int(y_validacao_f3.sum()) == 0, "A janela do fold 3 contém registros ocupados."
+print("\nFold temporal 3 (14 e 15/02, sem registros ocupados; todos os erros são falsos positivos):")
+print(tabela_fold3.to_string())
+
+# %% [markdown]
+# ### BLOCO 90 — Preparação da avaliação complementar no datatraining.txt
+#
+# `dados/brutos/datatraining.txt` é lido do disco (sem novo download), com a mesma leitura do BLOCO 05, e conferido pelo
+# SHA-256 documentado em `dados/README.md`. O arquivo **pertence à mesma coleta da UCI** e cobre um período
+# intermediário (04/02 a 10/02) entre os dois arquivos consolidados; não é um edifício independente, uma fonte externa
+# nem um período exclusivamente futuro. A inspeção diferencia linhas duplicadas (data, sensores e classe iguais) de
+# repetições do vetor de sensores em instantes diferentes, e nenhum registro é removido. A **mesma regra decimal** da
+# Fase 2 (`casas_decimais`, BLOCO 19.2) é aplicada aos cinco sensores antes de qualquer cálculo, como aconteceria com
+# registros novos em produção; o arquivo bruto não é alterado. O bloco verifica se o arredondamento aumenta as
+# coincidências de vetores de sensores com a base principal e com o treino oficial. A variável derivada é calculada com
+# a mesma fórmula da Fase 3, sobre os sensores arredondados, e apenas os seis atributos, na ordem oficial, são usados
+# como preditores. Nenhum scaler ou modelo é ajustado com essa base, e ela não orienta a escolha da regra decimal nem
+# dos hiperparâmetros.
+
+# %%
+# BLOCO 90 — Preparação da avaliação complementar no datatraining.txt
+
+sha256_datatraining_documentado = "b2c4d0ce2b9e4e453c476f7125ef31aeec2d1f5c7f5572d0e80de3df6521ab56"  # dados/README.md
+with open(caminho_datatraining, "rb") as arquivo:
+    assert hashlib.sha256(arquivo.read()).hexdigest() == sha256_datatraining_documentado, "datatraining.txt alterado."
+
+# Mesma leitura do BLOCO 05: a primeira coluna (identificador original da linha) vira o índice
+df_complementar = pd.read_csv(caminho_datatraining)
+df_complementar.index.name = "id_original"
+assert df_complementar.shape == (8143, 7), "datatraining.txt não tem 8.143 registros e 7 colunas."
+assert list(df_complementar.columns) == list(df1.columns), "Esquema diferente dos arquivos consolidados."
+df_complementar["date"] = pd.to_datetime(df_complementar["date"], format="%Y-%m-%d %H:%M:%S")
+
+colunas_sensores = ["Temperature", "Humidity", "Light", "CO2", "HumidityRatio"]
+assert all(pd.api.types.is_float_dtype(df_complementar[coluna]) for coluna in colunas_sensores)
+assert df_complementar.isna().sum().sum() == 0 and np.isinf(df_complementar[colunas_sensores]).sum().sum() == 0
+assert set(df_complementar["Occupancy"].unique()) == {0, 1} and (df_complementar["Light"] >= 0).all()
+assert df_complementar["date"].is_monotonic_increasing and df_complementar["date"].is_unique
+
+# Mesma regra decimal da Fase 2, aplicada somente aos cinco sensores (date, Occupancy e índices inalterados)
+df_complementar_original = df_complementar.copy(deep=True)
+df_complementar = df_complementar.round(casas_decimais)
+assert df_complementar.shape == (8143, 7) and df_complementar.index.equals(df_complementar_original.index)
+pd.testing.assert_series_equal(df_complementar["Occupancy"], df_complementar_original["Occupancy"], check_exact=True)
+pd.testing.assert_series_equal(df_complementar["date"], df_complementar_original["date"], check_exact=True)
+assert (df_complementar[colunas_sensores].dtypes == "float64").all()
+pd.testing.assert_frame_equal(df_complementar.round(casas_decimais), df_complementar, check_exact=True)
+for coluna, casas in casas_decimais.items():
+    alteracao = (df_complementar[coluna] - df_complementar_original[coluna]).abs()
+    assert (alteracao <= 0.5 * 10.0 ** (-casas) + 4 * np.finfo(np.float64).eps
+            * df_complementar_original[coluna].abs().max()).all(), f"Alteração acima do limite em {coluna}."
+print("Regra decimal aplicada ao datatraining.txt; valores modificados por atributo (%):",
+      {coluna: round((df_complementar[coluna] != df_complementar_original[coluna]).mean() * 100, 2)
+       for coluna in colunas_sensores})
+
+
+def contar_coincidencias(complementar, principal, treino):
+    """Repetições internas e vetores de sensores do datatraining.txt presentes na base principal e no treino."""
+    vetores_principal = set(map(tuple, principal[colunas_sensores].to_numpy()))
+    vetores_treino_oficial = set(map(tuple, treino[colunas_sensores].to_numpy()))
+    vetores = list(map(tuple, complementar[colunas_sensores].to_numpy()))
+    return {
+        "Repetições do vetor de sensores no arquivo": int(complementar.duplicated(subset=colunas_sensores).sum()),
+        "Vetores de sensores presentes na base principal": int(sum(v in vetores_principal for v in vetores)),
+        "Vetores de sensores presentes no treino oficial": int(sum(v in vetores_treino_oficial for v in vetores)),
+    }
+
+
+tabela_coincidencias_precisao = pd.DataFrame({
+    "Antes (precisão original)": contar_coincidencias(
+        df_complementar_original, df_consolidado, df_consolidado.loc[X_train.index]),
+    "Depois (regra decimal)": contar_coincidencias(df_complementar, df_features, X_train),
+})
+tabela_coincidencias_precisao["Diferença"] = (
+    tabela_coincidencias_precisao["Depois (regra decimal)"] - tabela_coincidencias_precisao["Antes (precisão original)"]
+)
+print("\nCoincidências de vetores de sensores antes e depois da regra decimal:")
+print(tabela_coincidencias_precisao.to_string())
+
+# Sobreposições com a base principal (datatest.txt + datatest2.txt), após a regra decimal
+chaves_linha = ["date"] + colunas_sensores + ["Occupancy"]
+datas_principais = set(df_features["date"])
+vetores_principais = set(map(tuple, df_features[colunas_sensores].to_numpy()))
+vetores_treino = set(map(tuple, X_train[colunas_sensores].to_numpy()))
+vetores_complementares = list(map(tuple, df_complementar[colunas_sensores].to_numpy()))
+linhas_principais = set(map(tuple, df_features[chaves_linha].astype(str).to_numpy()))
+
+intervalos_complementar = df_complementar["date"].diff().dropna()
+tabela_inspecao_complementar = pd.Series({
+    "Registros": len(df_complementar),
+    "Início": df_complementar["date"].min(),
+    "Fim": df_complementar["date"].max(),
+    "Maior intervalo entre registros": intervalos_complementar.max(),
+    "Ausentes / infinitos": 0,
+    "Classe 0 / Classe 1": f"{int((df_complementar['Occupancy'] == 0).sum())} / "
+                           f"{int((df_complementar['Occupancy'] == 1).sum())}",
+    "Ocupados (%)": round(df_complementar["Occupancy"].mean() * 100, 4),
+    "Registros em fim de semana": int((df_complementar["date"].dt.dayofweek >= 5).sum()),
+    "Linhas completas duplicadas no arquivo": int(df_complementar.duplicated(subset=chaves_linha).sum()),
+    "Repetições do vetor de sensores no arquivo": int(df_complementar.duplicated(subset=colunas_sensores).sum()),
+    "Timestamps em comum com a base principal": int(df_complementar["date"].isin(datas_principais).sum()),
+    "Linhas completas em comum com a base principal": int(sum(
+        linha in linhas_principais for linha in map(tuple, df_complementar[chaves_linha].astype(str).to_numpy()))),
+    "Vetores de sensores presentes na base principal": int(sum(v in vetores_principais for v in vetores_complementares)),
+    "Vetores de sensores presentes no treino oficial": int(sum(v in vetores_treino for v in vetores_complementares)),
+})
+print(tabela_inspecao_complementar.to_string())
+print("\nTipos:", df_complementar.dtypes.astype(str).to_dict())
+
+# Mesma engenharia de atributos da Fase 3 (fórmula inalterada) e mesma ordem de colunas
+df_complementar["CO2_Light_Ratio"] = df_complementar["CO2"] / (df_complementar["Light"] + 1)
+X_complementar = df_complementar[atributos_preditores].copy()
+y_complementar = df_complementar["Occupancy"].copy()
+assert list(X_complementar.columns) == atributos_preditores and X_complementar.notna().all().all()
+assert np.isfinite(X_complementar.to_numpy()).all()
+X_complementar_referencia = X_complementar.copy(deep=True)
+
+# Diferenças de distribuição em relação ao treino oficial (descritivas; nenhum ajuste é feito)
+tabela_distribuicao_complementar = pd.DataFrame({
+    "Treino oficial (média)": X_train.mean(), "datatraining.txt (média)": X_complementar.mean(),
+    "Treino oficial (mediana)": X_train.median(), "datatraining.txt (mediana)": X_complementar.median(),
+})
+print("\n" + tabela_distribuicao_complementar.to_string(float_format=lambda valor: f"{valor:.4f}"))
+luz_desocupado_treino = (X_train["Light"].gt(0) & y_train.eq(0)).sum() / y_train.eq(0).sum()
+luz_desocupado_complementar = (X_complementar["Light"].gt(0) & y_complementar.eq(0)).sum() / y_complementar.eq(0).sum()
+print(f"\nDesocupados com Light > 0 — treino oficial: {luz_desocupado_treino:.2%} | "
+      f"datatraining.txt: {luz_desocupado_complementar:.2%}")
+print(f"Ocupados — treino oficial: {y_train.mean():.2%} | datatraining.txt: {y_complementar.mean():.2%}")
+
+# %% [markdown]
+# ### BLOCO 91 — Avaliação complementar dos modelos
+#
+# Os três modelos já ajustados recebem os dados originais do `datatraining.txt` apenas com `predict` (nenhum `fit` ou
+# `fit_transform`). Calculam-se as mesmas métricas do teste, conferidas pelas matrizes de confusão, e um resumo
+# descritivo por dia. Essa avaliação não seleciona novamente K, `max_depth` ou atributos e não é uma validação
+# prospectiva.
+
+# %%
+# BLOCO 91 — Avaliação complementar dos modelos (sem nenhum ajuste nessa base)
+
+previsoes_complementares = {
+    "DummyClassifier": pd.Series(modelo_baseline.predict(X_complementar), index=X_complementar.index),
+    "KNN": pd.Series(modelo_knn_final.predict(X_complementar), index=X_complementar.index),
+    "Árvore de Decisão": pd.Series(modelo_arvore_final.predict(X_complementar), index=X_complementar.index),
+}
+for nome, modelo_avaliado in [("KNN", modelo_knn_final), ("Árvore de Decisão", modelo_arvore_final),
+                              ("DummyClassifier", modelo_baseline)]:
+    assert assinatura_modelo(modelo_avaliado) == assinaturas_modelos_fase7[nome], f"{nome} alterado."
+pd.testing.assert_frame_equal(X_complementar, X_complementar_referencia, check_exact=True)
+
+metricas_complementares = {nome: calcular_metricas(y_complementar, previsoes)
+                           for nome, previsoes in previsoes_complementares.items()}
+tabela_metricas_complementar = pd.DataFrame(metricas_complementares)
+for nome, previsoes in previsoes_complementares.items():
+    matriz = confusion_matrix(y_complementar, previsoes, labels=[0, 1])
+    assert matriz.sum() == 8143 and np.trace(matriz) / 8143 == metricas_complementares[nome]["accuracy"]
+    print(f"\n{nome} — matriz de confusão no datatraining.txt:")
+    print(pd.DataFrame(matriz, index=["Real 0", "Real 1"], columns=["Previsto 0", "Previsto 1"]).to_string())
+print("\nMétricas no datatraining.txt (8.143 registros; NaN = indefinida):")
+print(tabela_metricas_complementar.loc[colunas_percentuais].map(
+    lambda valor: "indefinida" if pd.isna(valor) else f"{valor:.6%}").to_string())
+print(tabela_metricas_complementar.loc[["TN", "FP", "FN", "TP"]].astype(int).to_string())
+
+# Resultados por dia (descritivo)
+dia_complementar = (df_complementar["date"].dt.strftime("%d/%m") + " ("
+                    + df_complementar["date"].dt.dayofweek.map(nomes_dias) + ")")
+linhas_dia = []
+for dia, indices_dia in df_complementar.groupby(dia_complementar, sort=False).groups.items():
+    y_dia = y_complementar.loc[indices_dia]
+    linha = {"Dia": dia, "Registros": len(indices_dia), "Ocupados": int(y_dia.sum()),
+             "Light > 0 (%)": X_complementar.loc[indices_dia, "Light"].gt(0).mean() * 100}
+    for nome in ["KNN", "Árvore de Decisão"]:
+        previsto_dia = previsoes_complementares[nome].loc[indices_dia]
+        linha[f"Acurácia {nome}"] = accuracy_score(y_dia, previsto_dia)
+        linha[f"FP {nome}"] = int(((previsto_dia == 1) & (y_dia == 0)).sum())
+        linha[f"FN {nome}"] = int(((previsto_dia == 0) & (y_dia == 1)).sum())
+    linhas_dia.append(linha)
+tabela_dias_complementar = pd.DataFrame(linhas_dia).set_index("Dia")
+print("\nResultados por dia no datatraining.txt:")
+print(tabela_dias_complementar.to_string(float_format=lambda valor: f"{valor:.4f}"))
+
+# Erros por grupo de luminosidade
+for nome in ["KNN", "Árvore de Decisão"]:
+    erro = previsoes_complementares[nome].ne(y_complementar)
+    print(f"{nome}: erros com Light = 0: {int((erro & X_complementar['Light'].eq(0)).sum())} | "
+          f"com Light > 0: {int((erro & X_complementar['Light'].gt(0)).sum())}")
+
+# %% [markdown]
+# ### BLOCO 92 — Comparação entre protocolos de avaliação
+#
+# Os cinco protocolos têm naturezas diferentes: o treino completo avalia os modelos nos próprios dados de ajuste; a
+# validação cruzada e a temporal são médias de modelos ajustados em partições do treino; o teste oficial e o
+# `datatraining.txt` avaliam os modelos finais em conjuntos completos. Os tamanhos, as composições e a proximidade
+# temporal diferem, e nenhum intervalo de confiança é calculado.
+
+# %%
+# BLOCO 92 — Comparação entre protocolos de avaliação
+
+metricas_treino_completo = {nome: calcular_metricas(y_train, modelo_avaliado.predict(X_train))
+                            for nome, modelo_avaliado in [("KNN", modelo_knn_final),
+                                                          ("Árvore de Decisão", modelo_arvore_final)]}
+linhas_protocolos = []
+for nome, rotulo, resumo in [("KNN", k_selecionado_rotulo, resumo_knn),
+                             ("Árvore de Decisão", profundidade_selecionada_rotulo, resumo_arvore)]:
+    temporal = registros_temporais.query("modelo == @nome and conjunto == 'validacao'")
+    protocolos_modelo = [
+        ("1. Treino completo", "Modelo final avaliado nos próprios dados de ajuste", "9.933 (os mesmos do ajuste)",
+         metricas_treino_completo[nome]["accuracy"], metricas_treino_completo[nome]["balanced_accuracy"],
+         metricas_treino_completo[nome]["f1_ocupado"]),
+        ("2. Validação cruzada estratificada", "Média de 5 folds; 5 modelos ajustados em partições do treino",
+         "5 × 1.986–1.987", resumo.loc[rotulo, "Acurácia validação (média)"],
+         resumo.loc[rotulo, "Balanced accuracy validação (média)"], resumo.loc[rotulo, "F1 ocupado validação (média)"]),
+        ("3. Teste oficial", "Modelo final; 20% sorteados da mesma sequência (96,10% com vizinho a até 61 s)",
+         "2.484", metricas_teste[nome]["accuracy"], metricas_teste[nome]["balanced_accuracy"],
+         metricas_teste[nome]["f1_ocupado"]),
+        ("4. Validação temporal complementar", "Média de 5 janelas cronológicas; treinos de 1.598 a 8.218 registros",
+         "5 × 1.655", temporal.query("metrica == 'acuracia'")["resultado"].mean(),
+         temporal.query("metrica == 'balanced_accuracy'")["resultado"].mean(),
+         temporal.query("metrica == 'f1_ocupado'")["resultado"].mean()),
+        ("5. datatraining.txt", "Modelo final; período intermediário da mesma coleta, fora da base consolidada",
+         "8.143", metricas_complementares[nome]["accuracy"], metricas_complementares[nome]["balanced_accuracy"],
+         metricas_complementares[nome]["f1_ocupado"]),
+    ]
+    for protocolo, natureza, registros, acuracia, balanceada, f1_ocupado in protocolos_modelo:
+        linhas_protocolos.append({"Modelo": nome, "Protocolo": protocolo, "Natureza": natureza,
+                                  "Registros avaliados": registros, "Acurácia": acuracia,
+                                  "Balanced accuracy": balanceada, "F1 ocupado": f1_ocupado})
+tabela_protocolos = pd.DataFrame(linhas_protocolos).set_index(["Modelo", "Protocolo"])
+print(tabela_protocolos.to_string(float_format=lambda valor: f"{valor:.4%}"))
+print("\nNa validação temporal, a acurácia é a média dos 5 folds; a balanced accuracy e o F1 são médias dos 4 folds")
+print("calculáveis (o fold 3 não tem registros ocupados). Os protocolos não são equivalentes nem independentes.")
+
+# %% [markdown]
+# ### BLOCO 93 — Variável derivada e importância dos atributos
+#
+# Recupera, sem novos treinamentos, a comparação de 5 e 6 atributos da Fase 6 e a importância por redução de impureza
+# (`feature_importances_`) da Árvore final.
+
+# %%
+# BLOCO 93 — Variável derivada e importância dos atributos (resultados da Fase 6)
+
+print("Comparação 5 × 6 atributos na validação cruzada (diferença média 6 − 5, em p.p., na acurácia):")
+print(resumo_feature_engineering.xs("acuracia", level="metrica")[["media_5", "media_6", "diferenca_media",
+                                                                  "folds_6_melhor", "folds_5_melhor", "folds_empate"]]
+      .to_string(float_format=lambda valor: f"{valor:.4f}"))
+print(f"\nKNN (K={k_selecionado}), recorte do fold 1: vizinhos diferentes em {vizinhos_diferentes:.2f}% das validações; "
+      f"previsões diferentes: {previsoes_diferentes}")
+print("\nImportância por redução de impureza na Árvore final (soma = 100%):")
+print((importancias_arvore * 100).round(4).to_string())
+
+# %% [markdown]
+# ### BLOCO 94 — Elementos do veredito técnico
+#
+# Reúne as evidências usadas no veredito: métricas no teste e no `datatraining.txt`, pior janela temporal,
+# armazenamento, tempo de previsão (informativo, varia entre execuções), interpretabilidade e necessidade de
+# padronização. As regras da Árvore final são exibidas com os limiares na escala original.
+
+# %%
+# BLOCO 94 — Elementos do veredito técnico
+
+# Tempo de previsão no datatraining.txt (informativo; varia entre execuções e não é exportado)
+tempos_previsao = {}
+for nome, modelo_avaliado in [("KNN", modelo_knn_final), ("Árvore de Decisão", modelo_arvore_final)]:
+    inicio = time.perf_counter()
+    modelo_avaliado.predict(X_complementar)
+    tempos_previsao[nome] = time.perf_counter() - inicio
+
+tabela_veredito = pd.DataFrame({
+    f"KNN (K={k_selecionado})": {
+        "Teste: acurácia": metricas_teste["KNN"]["accuracy"],
+        "Teste: balanced accuracy": metricas_teste["KNN"]["balanced_accuracy"],
+        "Teste: precision / recall (ocupado)":
+            f"{metricas_teste['KNN']['precision_ocupado']:.4%} / {metricas_teste['KNN']['recall_ocupado']:.4%}",
+        "Teste: FP / FN": f"{metricas_teste['KNN']['FP']} / {metricas_teste['KNN']['FN']}",
+        "datatraining.txt: acurácia": metricas_complementares["KNN"]["accuracy"],
+        "datatraining.txt: recall (ocupado)": metricas_complementares["KNN"]["recall_ocupado"],
+        "datatraining.txt: FP / FN":
+            f"{metricas_complementares['KNN']['FP']} / {metricas_complementares['KNN']['FN']}",
+        "Temporal: acurácia mínima (fold 3)": resultados_temporais.loc[3, ("KNN", "acuracia")],
+        "Armazenamento": f"{knn_avaliado.n_samples_fit_} registros × 6 atributos + 12 parâmetros do scaler",
+        "Previsão de 8.143 registros (s, informativo)": f"{tempos_previsao['KNN']:.4f}",
+        "Interpretabilidade": f"Baixa: decisão por votação de {k_selecionado} vizinhos",
+        "Padronização": "Obrigatória (Pipeline)",
+    },
+    f"Árvore (max_depth={profundidade_selecionada_rotulo})": {
+        "Teste: acurácia": metricas_teste["Árvore de Decisão"]["accuracy"],
+        "Teste: balanced accuracy": metricas_teste["Árvore de Decisão"]["balanced_accuracy"],
+        "Teste: precision / recall (ocupado)":
+            f"{metricas_teste['Árvore de Decisão']['precision_ocupado']:.4%} / "
+            f"{metricas_teste['Árvore de Decisão']['recall_ocupado']:.4%}",
+        "Teste: FP / FN": f"{metricas_teste['Árvore de Decisão']['FP']} / {metricas_teste['Árvore de Decisão']['FN']}",
+        "datatraining.txt: acurácia": metricas_complementares["Árvore de Decisão"]["accuracy"],
+        "datatraining.txt: recall (ocupado)": metricas_complementares["Árvore de Decisão"]["recall_ocupado"],
+        "datatraining.txt: FP / FN": f"{metricas_complementares['Árvore de Decisão']['FP']} / "
+                                     f"{metricas_complementares['Árvore de Decisão']['FN']}",
+        "Temporal: acurácia mínima (fold 3)": resultados_temporais.loc[3, ("Árvore de Decisão", "acuracia")],
+        "Armazenamento": f"{modelo_arvore_final.tree_.node_count} nós ({modelo_arvore_final.get_n_leaves()} folhas)",
+        "Previsão de 8.143 registros (s, informativo)": f"{tempos_previsao['Árvore de Decisão']:.4f}",
+        "Interpretabilidade": "Alta: regras explícitas do tipo atributo ≤ limiar",
+        "Padronização": "Desnecessária",
+    },
+})
+print(tabela_veredito.map(lambda valor: f"{valor:.4%}" if isinstance(valor, float) else valor).to_string())
+print("\nRegras da Árvore de Decisão final (limiares na escala original):")
+print(export_text(modelo_arvore_final, feature_names=atributos_preditores, decimals=3))
+
+# %% [markdown]
+# ### BLOCO 95 — Visualização das matrizes de confusão
+#
+# Cada célula mostra o tipo (TN, FP, FN, TP), a contagem absoluta e o percentual em relação à **classe real** (cada
+# linha soma 100%: denominadores de 1.880 desocupados e 604 ocupados). A mesma escala de cores, de 0% a 100%, é usada
+# nos três painéis.
+
+# %%
+# BLOCO 95 — Visualização das matrizes de confusão
+
+nomes_modelos = ["DummyClassifier", "KNN", "Árvore de Decisão"]
+titulos_modelos = {"DummyClassifier": "DummyClassifier (classe majoritária)", "KNN": f"KNN (K = {k_selecionado}, Pipeline)",
+                   "Árvore de Decisão": f"Árvore de Decisão (max_depth = {profundidade_selecionada_rotulo})"}
+rotulos_celulas = [["TN", "FP"], ["FN", "TP"]]
+
+fig, eixos = plt.subplots(1, 3, figsize=(19, 6.2), gridspec_kw={"wspace": 0.12})
+for eixo, nome in zip(eixos, nomes_modelos):
+    matriz = matrizes_confusao[nome]
+    percentual_linha = matriz / matriz.sum(axis=1, keepdims=True) * 100
+    imagem = eixo.imshow(percentual_linha, cmap="Blues", vmin=0, vmax=100)
+    for linha in range(2):
+        for coluna in range(2):
+            cor_texto = "white" if percentual_linha[linha, coluna] > 60 else "black"
+            eixo.text(coluna, linha,
+                      f"{rotulos_celulas[linha][coluna]}\n{formatar_inteiro(matriz[linha, coluna])}\n"
+                      f"({formatar_percentual(percentual_linha[linha, coluna])})",
+                      ha="center", va="center", fontsize=13, color=cor_texto)
+    eixo.set_xticks([0, 1], ["Previsto\ndesocupado (0)", "Previsto\nocupado (1)"])
+    eixo.set_yticks([0, 1], ["Realmente\ndesocupado (0)", "Realmente\nocupado (1)"] if eixo is eixos[0] else [])
+    eixo.grid(False)
+    acertos = int(np.trace(matriz))
+    eixo.set_title(f"{titulos_modelos[nome]}\n{formatar_inteiro(acertos)} acertos e "
+                   f"{formatar_inteiro(matriz.sum() - acertos)} erros em 2.484")
+barra_cor = fig.colorbar(imagem, ax=eixos, fraction=0.02, pad=0.02)
+barra_cor.set_label("Percentual da classe real (cada linha soma 100%)")
+fig.suptitle("Fase 7 — Matrizes de confusão no teste oficial (contagens e percentual por classe real: "
+             "1.880 desocupados e 604 ocupados)", fontsize=15)
+plt.savefig(caminho_grafico_matrizes, dpi=300, bbox_inches="tight")
+print("Figura salva em:", caminho_grafico_matrizes)
+plt.show()
+
+# %% [markdown]
+# ### BLOCO 96 — Visualização comparativa das métricas
+#
+# O primeiro painel usa a escala completa (0% a 100%) e identifica a precision indefinida do baseline. O segundo amplia o
+# eixo para 95% a 100% para mostrar as diferenças pequenas entre KNN e Árvore. O terceiro mostra falsos positivos e
+# falsos negativos, com o eixo cortado em 30 registros (os 604 falsos negativos do baseline aparecem indicados).
+
+# %%
+# BLOCO 96 — Visualização comparativa das métricas
+
+metricas_grafico_final = [("accuracy", "Acurácia"), ("balanced_accuracy", "Balanced\naccuracy"),
+                          ("precision_ocupado", "Precision\n(ocupado)"), ("recall_ocupado", "Recall\n(ocupado)"),
+                          ("f1_ocupado", "F1\n(ocupado)"), ("especificidade", "Especificidade")]
+cores_modelos = {"DummyClassifier": "#BBBBBB", "KNN": "#4C72B0", "Árvore de Decisão": "#55A868"}
+
+fig, (eixo_geral, eixo_ampliado, eixo_erros) = plt.subplots(
+    1, 3, figsize=(21, 6.8), gridspec_kw={"width_ratios": [1.5, 1.1, 0.8]})
+posicoes_metricas = np.arange(len(metricas_grafico_final))
+largura = 0.27
+for deslocamento, nome in zip([-largura, 0, largura], nomes_modelos):
+    valores = np.array([metricas_teste[nome][chave] for chave, _ in metricas_grafico_final]) * 100
+    barras = eixo_geral.bar(posicoes_metricas + deslocamento, np.nan_to_num(valores), width=largura,
+                            color=cores_modelos[nome], edgecolor="black", label=nome)
+    for posicao, valor in zip(posicoes_metricas + deslocamento, valores):
+        if np.isnan(valor):
+            eixo_geral.text(posicao, 3, "indefinida\n(TP + FP = 0)", ha="center", va="bottom", fontsize=8,
+                            rotation=90)
+        elif valor == 0:
+            eixo_geral.text(posicao, 1, "0%", ha="center", va="bottom", fontsize=8)
+eixo_geral.set_xticks(posicoes_metricas, [rotulo for _, rotulo in metricas_grafico_final])
+eixo_geral.set_ylim(0, 105)
+eixo_geral.set_ylabel("Valor no teste oficial (%)")
+formatar_eixo_percentual(eixo_geral, 0)
+eixo_geral.set_title("Métricas dos três modelos (escala completa, 0% a 100%)")
+eixo_geral.legend(loc="lower center", bbox_to_anchor=(0.5, -0.25), ncol=3, frameon=False)
+
+# Painel ampliado: somente KNN e Árvore, eixo de 95% a 100%
+for deslocamento, nome in zip([-0.18, 0.18], ["KNN", "Árvore de Decisão"]):
+    valores = np.array([metricas_teste[nome][chave] for chave, _ in metricas_grafico_final]) * 100
+    eixo_ampliado.bar(posicoes_metricas + deslocamento, valores, width=0.36, color=cores_modelos[nome],
+                      edgecolor="black", label=nome)
+    for posicao, valor in zip(posicoes_metricas + deslocamento, valores):
+        eixo_ampliado.text(posicao, valor + 0.05, formatar_decimal(valor, 2), ha="center", va="bottom", fontsize=8,
+                           rotation=90)
+eixo_ampliado.set_xticks(posicoes_metricas, [rotulo for _, rotulo in metricas_grafico_final], fontsize=9)
+eixo_ampliado.set_ylim(95, 100.9)
+eixo_ampliado.set_ylabel("Valor no teste oficial (eixo ampliado: 95% a 100%)")
+formatar_eixo_percentual(eixo_ampliado, 0)
+eixo_ampliado.set_title("KNN × Árvore (eixo ampliado)")
+eixo_ampliado.legend(loc="lower center", bbox_to_anchor=(0.5, -0.25), ncol=2, frameon=False)
+
+# Painel de erros: falsos positivos e falsos negativos
+posicoes_tipos = np.arange(2)
+limite_erros = 30
+for deslocamento, nome in zip([-largura, 0, largura], nomes_modelos):
+    valores = [metricas_teste[nome]["FP"], metricas_teste[nome]["FN"]]
+    eixo_erros.bar(posicoes_tipos + deslocamento, np.minimum(valores, limite_erros), width=largura,
+                   color=cores_modelos[nome], edgecolor="black", label=nome)
+    for posicao, valor in zip(posicoes_tipos + deslocamento, valores):
+        texto = f"{formatar_inteiro(valor)}\n(fora da\nescala)" if valor > limite_erros else formatar_inteiro(valor)
+        eixo_erros.text(posicao, min(valor, limite_erros) + 0.4, texto, ha="center", va="bottom", fontsize=9)
+eixo_erros.set_xticks(posicoes_tipos, ["Falsos positivos\n(desocupado → ocupado)", "Falsos negativos\n(ocupado → desocupado)"])
+eixo_erros.set_ylim(0, limite_erros + 9)
+eixo_erros.set_ylabel(f"Registros (eixo cortado em {limite_erros})")
+eixo_erros.set_title("Erros no teste oficial")
+eixo_erros.legend(loc="lower center", bbox_to_anchor=(0.5, -0.25), ncol=3, frameon=False, fontsize=9)
+
+fig.suptitle("Fase 7 — Comparação das métricas no teste oficial (2.484 registros; classe positiva = ocupado)",
+             fontsize=15)
+plt.tight_layout()
+plt.savefig(caminho_grafico_metricas, dpi=300, bbox_inches="tight")
+print("Figura salva em:", caminho_grafico_metricas)
+plt.show()
+
+# %% [markdown]
+# ### BLOCO 97 — Visualização dos erros
+#
+# Quatro painéis descritivos: erros compartilhados e exclusivos, tipos de erro, posição dos erros no espaço Light × CO2
+# e proporção de registros próximos de transições de ocupação. As associações não indicam causalidade.
+
+# %%
+# BLOCO 97 — Visualização dos erros
+
+fig, eixos = plt.subplots(2, 2, figsize=(18, 12.5))
+eixo_categorias, eixo_tipos, eixo_dispersao, eixo_transicao = eixos.ravel()
+
+# Painel 1 — Erros compartilhados e exclusivos
+categorias_erro = {"Ambos erram": ambos_erram, "Só o KNN erra": somente_arvore_acerta,
+                   "Só a Árvore erra": somente_knn_acerta}
+barras = eixo_categorias.bar(list(categorias_erro), list(categorias_erro.values()),
+                             color=["#C44E52", cores_modelos["KNN"], cores_modelos["Árvore de Decisão"]],
+                             edgecolor="black")
+for barra, valor in zip(barras, categorias_erro.values()):
+    eixo_categorias.text(barra.get_x() + barra.get_width() / 2, valor + 0.2, formatar_inteiro(valor), ha="center",
+                         fontsize=11)
+eixo_categorias.set_ylabel("Registros do teste")
+eixo_categorias.yaxis.set_major_locator(plt.MaxNLocator(integer=True))
+eixo_categorias.set_ylim(0, max(categorias_erro.values()) * 1.25)
+eixo_categorias.set_title(f"Erros compartilhados e exclusivos ({formatar_inteiro(ambos_acertam)} registros "
+                          f"acertados pelos dois)")
+
+# Painel 2 — Tipos de erro por modelo
+for posicao, (nome, coluna) in enumerate([("KNN", "erro_knn"), ("Árvore de Decisão", "erro_arvore")]):
+    falsos_positivos = tabela_resumo_erros.loc[nome, "Falsos positivos"]
+    falsos_negativos = tabela_resumo_erros.loc[nome, "Falsos negativos"]
+    eixo_tipos.bar(posicao, falsos_positivos, color="#DD8452", edgecolor="black",
+                   label="Falso positivo" if posicao == 0 else None)
+    eixo_tipos.bar(posicao, falsos_negativos, bottom=falsos_positivos, color="#8172B3", edgecolor="black",
+                   label="Falso negativo" if posicao == 0 else None)
+    eixo_tipos.text(posicao, falsos_positivos / 2, formatar_inteiro(falsos_positivos), ha="center", va="center",
+                    fontsize=11)
+    eixo_tipos.text(posicao, falsos_positivos + falsos_negativos / 2, formatar_inteiro(falsos_negativos),
+                    ha="center", va="center", fontsize=11, color="white")
+eixo_tipos.set_xticks([0, 1], ["KNN", "Árvore de Decisão"])
+eixo_tipos.set_ylabel("Erros no teste oficial")
+eixo_tipos.yaxis.set_major_locator(plt.MaxNLocator(integer=True))
+eixo_tipos.set_title("Tipos de erro (nenhum erro com Light = 0 em nenhum modelo)")
+eixo_tipos.legend(loc="upper left")
+
+# Painel 3 — Luminosidade e CO2 dos registros do teste, com os erros destacados
+eixo_dispersao.scatter(tabela_previsoes_teste["Light"], tabela_previsoes_teste["CO2"], s=6, color="lightgray",
+                       label="Registros do teste (acertos dos dois modelos)")
+estilos_erro = {"Ambos": ("X", "#C44E52"), "Somente KNN": ("o", cores_modelos["KNN"]),
+                "Somente Árvore": ("s", cores_modelos["Árvore de Decisão"])}
+for categoria, (marcador, cor) in estilos_erro.items():
+    selecao = tabela_erros_teste[tabela_erros_teste["errado_em"].eq(categoria)]
+    for real, preenchimento in [(0, cor), (1, "white")]:
+        parte = selecao[selecao["occupancy_real"].eq(real)]
+        eixo_dispersao.scatter(parte["Light"], parte["CO2"], marker=marcador, s=70, facecolor=preenchimento,
+                               edgecolor=cor, linewidth=1.8, zorder=3,
+                               label=f"{categoria} erra — real {'desocupado (FP)' if real == 0 else 'ocupado (FN)'}"
+                               if len(parte) else None)
+eixo_dispersao.set_xlabel("Light (lux)")
+eixo_dispersao.set_ylabel("CO2 (ppm)")
+eixo_dispersao.set_title("Erros no espaço Light × CO2 (preenchido = FP; vazado = FN)")
+eixo_dispersao.legend(loc="upper right", fontsize=8.5)
+
+# Painel 4 — Proximidade de transições de ocupação
+proporcoes_transicao = {
+    "Todos os registros\ndo teste": proporcao_perto_transicao_teste * 100,
+    "Erros do KNN": tabela_resumo_erros.loc["KNN", f"Até {janela_transicao_min} min de uma transição"]
+    / tabela_resumo_erros.loc["KNN", "Erros"] * 100,
+    "Erros da Árvore": tabela_resumo_erros.loc["Árvore de Decisão", f"Até {janela_transicao_min} min de uma transição"]
+    / tabela_resumo_erros.loc["Árvore de Decisão", "Erros"] * 100,
+}
+barras = eixo_transicao.bar(list(proporcoes_transicao), list(proporcoes_transicao.values()),
+                            color=["lightgray", cores_modelos["KNN"], cores_modelos["Árvore de Decisão"]],
+                            edgecolor="black")
+for barra, valor in zip(barras, proporcoes_transicao.values()):
+    eixo_transicao.text(barra.get_x() + barra.get_width() / 2, valor + 1, formatar_percentual(valor), ha="center",
+                        fontsize=11)
+eixo_transicao.set_ylim(0, 105)
+eixo_transicao.set_ylabel(f"Registros a até {janela_transicao_min} minutos de uma mudança de classe (%)")
+formatar_eixo_percentual(eixo_transicao, 0)
+eixo_transicao.set_title("Proximidade de transições de ocupação (análise exploratória)")
+
+fig.suptitle("Fase 7 — Investigação descritiva dos erros no teste oficial", fontsize=16)
+plt.tight_layout()
+plt.savefig(caminho_grafico_erros, dpi=300, bbox_inches="tight")
+print("Figura salva em:", caminho_grafico_erros)
+plt.show()
+
+# %% [markdown]
+# ### BLOCO 98 — Visualização da generalização
+#
+# Compara a acurácia nos cinco protocolos, as janelas temporais (com destaque para o fold 3), os resultados diários no
+# `datatraining.txt` e o desempenho por classe no teste e no `datatraining.txt`. A média temporal inclui o fold 3.
+
+# %%
+# BLOCO 98 — Visualização da generalização
+
+fig, eixos = plt.subplots(2, 2, figsize=(18, 12.5))
+eixo_protocolos, eixo_folds, eixo_dias, eixo_classes = eixos.ravel()
+
+# Painel 1 — Acurácia por protocolo
+rotulos_protocolos = ["Treino\ncompleto", "Validação\ncruzada (média)", "Teste\noficial",
+                      "Temporal\n(média de 5)", "datatraining.txt"]
+posicoes_protocolos = np.arange(len(rotulos_protocolos))
+for deslocamento, nome in zip([-0.18, 0.18], ["KNN", "Árvore de Decisão"]):
+    valores = tabela_protocolos.loc[nome, "Acurácia"].to_numpy() * 100
+    eixo_protocolos.bar(posicoes_protocolos + deslocamento, valores, width=0.36, color=cores_modelos[nome],
+                        edgecolor="black", label=nome)
+    for posicao, valor in zip(posicoes_protocolos + deslocamento, valores):
+        eixo_protocolos.text(posicao, valor + 0.3, formatar_decimal(valor, 2), ha="center", fontsize=9, rotation=90,
+                             va="bottom")
+eixo_protocolos.axhline(acuracia_teste_baseline * 100, color="gray", linestyle=":", linewidth=1.5,
+                        label="DummyClassifier no teste (75,68%)")
+eixo_protocolos.set_xticks(posicoes_protocolos, rotulos_protocolos)
+eixo_protocolos.set_ylim(70, 103)
+eixo_protocolos.set_ylabel("Acurácia (eixo de 70% a 103%)")
+formatar_eixo_percentual(eixo_protocolos, 0)
+eixo_protocolos.set_title("Acurácia por protocolo (protocolos não equivalentes)")
+eixo_protocolos.legend(loc="upper center", bbox_to_anchor=(0.5, -0.13), ncol=3, fontsize=9, frameon=False)
+
+# Painel 2 — Janelas temporais, com destaque para o fold 3
+for deslocamento, nome in zip([-0.18, 0.18], ["KNN", "Árvore de Decisão"]):
+    valores = resultados_temporais[(nome, "acuracia")].to_numpy() * 100
+    eixo_folds.bar(posicoes_temporais + deslocamento, valores, width=0.36, color=cores_modelos[nome],
+                   edgecolor="black", label=nome)
+    for posicao, valor in zip(posicoes_temporais + deslocamento, valores):
+        eixo_folds.text(posicao, valor + 1, formatar_decimal(valor, 1), ha="center", fontsize=9)
+eixo_folds.axvspan(2.55, 3.45, color="#C44E52", alpha=0.12, label="Fold 3: fim de semana sem ocupação")
+eixo_folds.set_xticks(posicoes_temporais, [f"Fold {numero}" for numero in posicoes_temporais])
+eixo_folds.set_ylim(0, 110)
+eixo_folds.set_ylabel("Acurácia na janela de validação (%)")
+formatar_eixo_percentual(eixo_folds, 0)
+eixo_folds.set_title(f"Validação temporal (Fase 6): fold 3 — KNN {int(tabela_fold3.loc['Total', 'Erros KNN'])} e "
+                     f"Árvore {int(tabela_fold3.loc['Total', 'Erros Árvore de Decisão'])} falsos positivos")
+eixo_folds.legend(loc="upper center", bbox_to_anchor=(0.5, -0.08), ncol=3, fontsize=9, frameon=False)
+
+# Painel 3 — datatraining.txt por dia
+posicoes_dias = np.arange(len(tabela_dias_complementar))
+for deslocamento, nome in zip([-0.18, 0.18], ["KNN", "Árvore de Decisão"]):
+    valores = tabela_dias_complementar[f"Acurácia {nome}"].to_numpy() * 100
+    eixo_dias.bar(posicoes_dias + deslocamento, valores, width=0.36, color=cores_modelos[nome], edgecolor="black",
+                  label=nome)
+    for posicao, valor in zip(posicoes_dias + deslocamento, valores):
+        eixo_dias.text(posicao, valor + 0.3, formatar_decimal(valor, 1), ha="center", fontsize=8.5, rotation=90,
+                       va="bottom")
+eixo_dias.set_xticks(posicoes_dias, [f"{dia}\n{formatar_inteiro(registros)} reg."
+                                     for dia, registros in tabela_dias_complementar["Registros"].items()], fontsize=9)
+eixo_dias.set_ylim(80, 103)
+eixo_dias.set_ylabel("Acurácia no dia (eixo de 80% a 103%)")
+formatar_eixo_percentual(eixo_dias, 0)
+eixo_dias.set_title("datatraining.txt por dia (07 e 08/02: fim de semana sem ocupação)")
+eixo_dias.legend(loc="upper center", bbox_to_anchor=(0.5, -0.13), ncol=2, fontsize=9, frameon=False)
+
+# Painel 4 — Recall e especificidade: teste oficial × datatraining.txt
+rotulos_classes = ["Recall (ocupado)\nteste", "Recall (ocupado)\ndatatraining", "Especificidade\nteste",
+                   "Especificidade\ndatatraining"]
+posicoes_classes = np.arange(len(rotulos_classes))
+for deslocamento, nome in zip([-0.18, 0.18], ["KNN", "Árvore de Decisão"]):
+    valores = np.array([metricas_teste[nome]["recall_ocupado"], metricas_complementares[nome]["recall_ocupado"],
+                        metricas_teste[nome]["especificidade"], metricas_complementares[nome]["especificidade"]]) * 100
+    eixo_classes.bar(posicoes_classes + deslocamento, valores, width=0.36, color=cores_modelos[nome],
+                     edgecolor="black", label=nome)
+    for posicao, valor in zip(posicoes_classes + deslocamento, valores):
+        eixo_classes.text(posicao, valor + 0.2, formatar_decimal(valor, 2), ha="center", fontsize=9, rotation=90,
+                          va="bottom")
+eixo_classes.set_xticks(posicoes_classes, rotulos_classes, fontsize=9)
+eixo_classes.set_ylim(90, 102.5)
+eixo_classes.set_ylabel("Valor (eixo de 90% a 102,5%)")
+formatar_eixo_percentual(eixo_classes, 0)
+eixo_classes.set_title("Desempenho por classe: teste oficial × datatraining.txt")
+eixo_classes.legend(loc="upper center", bbox_to_anchor=(0.5, -0.13), ncol=2, fontsize=9, frameon=False)
+
+fig.text(0.5, -0.035, "Validação cruzada e temporal: médias de modelos ajustados em partições do treino. Teste, treino "
+         "completo e datatraining.txt: modelos finais. A média temporal inclui o fold 3; datatraining.txt é um período "
+         "intermediário da mesma coleta, não uma validação externa.", ha="center", fontsize=10.5, wrap=True)
+fig.suptitle("Fase 7 — Generalização dos modelos selecionados em diferentes protocolos", fontsize=16)
+plt.tight_layout()
+plt.savefig(caminho_grafico_generalizacao, dpi=300, bbox_inches="tight")
+print("Figura salva em:", caminho_grafico_generalizacao)
+plt.show()
+
+# %% [markdown]
+# ### BLOCO 99 — Exportação dos resultados finais
+#
+# | Arquivo | Conteúdo |
+# |---|---|
+# | `metricas_avaliacao_final.csv` | Métricas dos três modelos no teste oficial, em formato longo, com observação das métricas indefinidas |
+# | `previsoes_teste.csv` | As 2.484 observações do teste: índice original, data, atributos, classe real, previsões, tipo de erro e distância até a transição mais próxima |
+# | `analise_erros_teste.csv` | Registros errados por pelo menos um dos modelos principais |
+# | `metricas_avaliacao_complementar.csv` | Métricas dos três modelos no `datatraining.txt` |
+# | `previsoes_avaliacao_complementar.csv` | As 8.143 observações do `datatraining.txt`, com o identificador original da linha |
+#
+# Sem arredondamento e sem tempos de execução; a recarga com `float_precision="round_trip"` é comparada com os dados em
+# memória.
+
+# %%
+# BLOCO 99 — Exportação dos resultados finais
+
+
+def tabela_metricas_longa(metricas_por_modelo, conjunto, registros):
+    linhas = []
+    for nome in nomes_modelos:
+        for metrica, valor in metricas_por_modelo[nome].items():
+            observacao = "medida"
+            if pd.isna(valor):
+                observacao = "indefinida: denominador zero (TP + FP = 0, nenhuma previsão positiva)"
+            elif nome == "DummyClassifier" and metrica == "precision_macro":
+                observacao = "média apenas da classe com precision definida (classe 1 indefinida)"
+            linhas.append({"conjunto": conjunto, "modelo": nome, "metrica": metrica, "valor": valor,
+                           "observacoes_avaliadas": registros, "observacao": observacao})
+    return pd.DataFrame(linhas)
+
+
+metricas_avaliacao_final = tabela_metricas_longa(metricas_teste, "teste_oficial", len(y_test))
+metricas_avaliacao_complementar = tabela_metricas_longa(metricas_complementares, "datatraining.txt",
+                                                        len(y_complementar))
+
+previsoes_teste_exportacao = tabela_previsoes_teste.copy()
+assert np.isfinite(previsoes_teste_exportacao["minutos_ate_transicao"]).all()
+previsoes_teste_exportacao["date"] = previsoes_teste_exportacao["date"].dt.strftime("%Y-%m-%d %H:%M:%S")
+analise_erros_exportacao = tabela_erros_teste.copy()
+analise_erros_exportacao["date"] = analise_erros_exportacao["date"].dt.strftime("%Y-%m-%d %H:%M:%S")
+
+previsoes_complementar_exportacao = pd.DataFrame({
+    "id_original": X_complementar.index,
+    "date": df_complementar["date"].dt.strftime("%Y-%m-%d %H:%M:%S").to_numpy(),
+    **{atributo: X_complementar[atributo].to_numpy() for atributo in atributos_preditores},
+    "occupancy_real": y_complementar.to_numpy(),
+    "previsao_baseline": previsoes_complementares["DummyClassifier"].to_numpy(),
+    "previsao_knn": previsoes_complementares["KNN"].to_numpy(),
+    "previsao_arvore": previsoes_complementares["Árvore de Decisão"].to_numpy(),
+    "erro_knn": tipo_erro(y_complementar.to_numpy(), previsoes_complementares["KNN"].to_numpy()),
+    "erro_arvore": tipo_erro(y_complementar.to_numpy(), previsoes_complementares["Árvore de Decisão"].to_numpy()),
+})
+
+exportacoes_fase7 = {
+    caminho_metricas_avaliacao_final: (metricas_avaliacao_final, ["modelo", "metrica"]),
+    caminho_previsoes_teste: (previsoes_teste_exportacao, ["indice_original"]),
+    caminho_analise_erros_teste: (analise_erros_exportacao, ["indice_original"]),
+    caminho_metricas_avaliacao_complementar: (metricas_avaliacao_complementar, ["modelo", "metrica"]),
+    caminho_previsoes_avaliacao_complementar: (previsoes_complementar_exportacao, ["id_original"]),
+}
+linhas_exportacao_fase7 = []
+for caminho, (tabela, chaves) in exportacoes_fase7.items():
+    assert not tabela.duplicated(subset=chaves).any(), f"Duplicidade em {caminho}."
+    tabela.to_csv(caminho, index=False)
+    recarregada = pd.read_csv(caminho, float_precision="round_trip", keep_default_na=False, na_values=[""])
+    pd.testing.assert_frame_equal(recarregada, tabela.reset_index(drop=True), check_exact=True, check_dtype=False)
+    with open(caminho, "rb") as arquivo:
+        linhas_exportacao_fase7.append({"Arquivo": caminho, "Linhas": len(tabela), "Colunas": tabela.shape[1],
+                                        "SHA-256": hashlib.sha256(arquivo.read()).hexdigest()})
+assert len(previsoes_teste_exportacao) == 2484 and len(previsoes_complementar_exportacao) == 8143
+tabela_exportacao_fase7 = pd.DataFrame(linhas_exportacao_fase7).set_index("Arquivo")
+print(tabela_exportacao_fase7.to_string())
+print("\nRecarga com float_precision='round_trip' idêntica aos resultados em memória: True")
+
+# %% [markdown]
+# ### BLOCO 100 — Auditoria final contra Data Leakage
+#
+# As verificações abaixo reduzem, mas não eliminam, os riscos metodológicos. Permanecem: a EDA feita na base completa; a
+# escolha da variável derivada após a exploração dos dados; a dependência temporal entre treino e teste; a consulta ao
+# teste na Fase 6 por exigência acadêmica; a seleção de hiperparâmetros pela própria validação cruzada; a avaliação
+# complementar proveniente da mesma coleta; e a ausência de validação em outros edifícios.
+
+# %%
+# BLOCO 100 — Auditoria final contra Data Leakage
+
+# Conjuntos, split e seleção
+for nome, estrutura in estruturas_fase6.items():
+    assert assinatura_integridade(estrutura) == assinaturas_fase6[nome], f"{nome} alterado na Fase 7."
+assert repr(selecao_hiperparametros) == registro_selecao
+pd.testing.assert_frame_equal(X, X_referencia, check_exact=True)
+pd.testing.assert_series_equal(y, y_referencia, check_exact=True)
+
+# Modelos principais e baseline: parâmetros e atributos aprendidos inalterados após todas as previsões
+for nome, modelo_avaliado in [("KNN", modelo_knn_final), ("Árvore de Decisão", modelo_arvore_final),
+                              ("DummyClassifier", modelo_baseline)]:
+    assert assinatura_modelo(modelo_avaliado) == assinaturas_modelos_fase7[nome], f"{nome} alterado."
+assert int(modelo_knn_final.named_steps["scaler"].n_samples_seen_) == len(X_train)
+assert modelo_baseline.n_features_in_ == 6 and np.allclose(modelo_baseline.class_prior_, y_train.value_counts(
+    normalize=True).sort_index().to_numpy())
+
+# Scaler da Fase 5 inalterado
+for nome_parametro in ["mean_", "var_", "scale_"]:
+    assert np.array_equal(getattr(scaler, nome_parametro), parametros_apos_ajuste[nome_parametro])
+
+# Previsões reproduzíveis e consistentes com as acurácias da Fase 6
+assert np.array_equal(modelo_knn_final.predict(X_test), y_pred_knn.to_numpy())
+assert np.array_equal(modelo_arvore_final.predict(X_test), y_pred_arvore.to_numpy())
+assert accuracy_score(y_test, y_pred_knn) == tabela_treino_teste.loc[("KNN", f"n_neighbors={k_selecionado}"),
+                                                                       "Acurácia teste"]
+
+# Base complementar sem ajuste e sem alteração
+pd.testing.assert_frame_equal(X_complementar, X_complementar_referencia, check_exact=True)
+with open(caminho_datatraining, "rb") as arquivo:
+    assert hashlib.sha256(arquivo.read()).hexdigest() == sha256_datatraining_documentado
+
+tabela_auditoria_fase7 = pd.Series({
+    "Split, folds, sementes e oito conjuntos de referência preservados": True,
+    f"K = {k_selecionado}, max_depth = {profundidade_selecionada_rotulo} e seis atributos preservados (registro_selecao)": True,
+    "Modelos principais sem novo ajuste na Fase 7 (assinaturas inalteradas)": True,
+    "DummyClassifier ajustado somente com X_train e y_train": True,
+    "Nenhum ajuste no datatraining.txt; arquivo bruto inalterado": True,
+    "Scaler da Fase 5 inalterado; Pipeline final com 9.933 registros de ajuste": True,
+    "Occupancy e date fora dos preditores": True,
+    "Erros e métricas da Fase 7 não usados para alterar modelos": True,
+    "Previsões reproduzem as acurácias da Fase 6": True,
+})
+print(tabela_auditoria_fase7.to_string())
+
+# %% [markdown]
+# ### BLOCO 101 — Resumo consolidado das sete fases
+#
+# Tabela construída a partir das variáveis calculadas ao longo do script.
+
+# %%
+# BLOCO 101 — Resumo consolidado das sete fases
+
+permanencia_classe = (1 - mudancas_validas / transicoes_validas) * 100
+correlacao_light = df_consolidado[["Light", "Occupancy"]].corr().iloc[0, 1]
+valores_conferidos_scaler = X_train_scaled.size + X_test_scaled.size
+tabela_sete_fases = pd.DataFrame([
+    ("Fase 1 — EDA", f"{formatar_inteiro(len(df_consolidado))} registros e 7 colunas; correlação de Light com "
+     f"Occupancy de {formatar_decimal(correlacao_light, 4)}; {formatar_percentual(permanencia_classe)} das "
+     "transições mantêm a classe (dependência temporal)", "eda_01 a eda_03"),
+    ("Fase 2 — Data Prep", f"{formatar_inteiro(len(df_tratado))} registros preservados; precisão decimal padronizada "
+     f"({', '.join(f'{coluna} {casas}' for coluna, casas in casas_decimais.items())}); 0 ausentes; imputação apenas "
+     "simulada; outliers mantidos por plausibilidade física",
+     "dp_01; prep_02; occupancy_tratado.csv; auditoria_precisao_decimal.csv"),
+    ("Fase 3 — Feature Engineering", "CO2_Light_Ratio = CO2 / (Light + 1); sem ausentes nem infinitos; índice "
+     "experimental, com redundância parcial com Light e CO2", "fe_01; occupancy_features.csv"),
+    ("Fase 4 — Train/Test Split", f"80/20 estratificado (random_state=42): {formatar_inteiro(len(X_train))} treino e "
+     f"{formatar_inteiro(len(X_test))} teste; {formatar_percentual(proximidade_teste_61)} do teste com vizinho de "
+     "treino a até 61 s", "split_01"),
+    ("Fase 5 — StandardScaler", f"Ajuste somente no treino; {formatar_inteiro(valores_conferidos_scaler)} valores "
+     f"conferidos; CO2 e CO2_Light_Ratio somavam {formatar_percentual(contribuicao_dois_maiores_antes.sum())} da "
+     "distância antes da padronização", "scaler_01"),
+    ("Fase 6 — Hiperparâmetros e Pipeline", f"K = {k_selecionado} e max_depth = {profundidade_selecionada} pela "
+     "validação cruzada; CO2_Light_Ratio sem ganho demonstrado; validação temporal com queda no fim de semana",
+     "modelagem_01 a 03; 3 CSVs"),
+    ("Fase 7 — Avaliação e veredito", f"Teste: KNN {formatar_percentual(acuracia_teste_knn * 100)}, Árvore "
+     f"{formatar_percentual(acuracia_teste_arvore * 100)}, baseline {formatar_percentual(acuracia_teste_baseline * 100)}; "
+     f"datatraining.txt: KNN {formatar_percentual(metricas_complementares['KNN']['accuracy'] * 100)}, Árvore "
+     f"{formatar_percentual(metricas_complementares['Árvore de Decisão']['accuracy'] * 100)}",
+     "avaliacao_01 a 04; 5 CSVs"),
+], columns=["Fase", "Principais resultados", "Artefatos"]).set_index("Fase")
+print(tabela_sete_fases.to_string())
+
+# %% [markdown]
+# ## BLOCO 102 — Interpretações e conclusões finais
+#
+# Todos os resultados desta seção foram recalculados com a precisão decimal padronizada na Fase 2. A comparação com a
+# versão anterior está nos BLOCOS 103 a 108.
+#
+# ### 102.1 — Atendimento ao objetivo do projeto
+#
+# Nas condições avaliadas, os dois classificadores identificam a ocupação com alta concordância: no teste oficial, o
+# KNN (K = 3) acertou 2.473 de 2.484 registros (99,56%) e a Árvore (`max_depth` = 5), 2.460 (99,03%), com recall da
+# classe ocupada de 99,50% e 99,34%. Esses valores, porém, são obtidos em registros sorteados da mesma sequência
+# temporal do treino (96,10% com vizinho a até 61 segundos) e não equivalem ao desempenho esperado em outros períodos
+# ou ambientes.
+#
+# ### 102.2 — Comparação com o baseline
+#
+# O `DummyClassifier` obteve 75,68% de acurácia no teste (75,67% no treino) sem detectar nenhuma ocupação: recall de 0%,
+# F1 de 0 e precision indefinida, com os 604 registros ocupados classificados como desocupados. Os dois modelos superam o
+# baseline em cerca de 23,3 a 23,9 p.p. de acurácia, mas o ganho relevante está na classe ocupada: o recall sobe de 0%
+# para mais de 99% e a balanced accuracy, de 50% para 99,54% (KNN) e 99,14% (Árvore). O valor de 75,68% é calculado no
+# teste e não se confunde com a referência descritiva de 75,6705% da base completa (BLOCO 39). O baseline não depende
+# dos atributos e é idêntico nas duas versões.
+#
+# ### 102.3 — Comparação dos classificadores no teste
+#
+# | Métrica (teste) | KNN (K = 3) | Árvore (`max_depth` = 5) | Diferença (KNN − Árvore) |
+# |---|---:|---:|---:|
+# | Acurácia | 99,56% | 99,03% | +0,52 p.p. |
+# | Balanced accuracy | 99,54% | 99,14% | +0,40 p.p. |
+# | Precision (ocupado) | 98,69% | 96,77% | +1,91 p.p. |
+# | Recall (ocupado) | 99,50% | 99,34% | +0,17 p.p. |
+# | F1 (ocupado) | 99,09% | 98,04% | +1,05 p.p. |
+# | Especificidade | 99,57% | 98,94% | +0,64 p.p. |
+# | Falsos positivos / falsos negativos | 8 / 3 | 20 / 4 | — |
+#
+# O KNN erra menos no total (11 contra 24), com menos da metade dos falsos positivos e um falso negativo a menos. Na
+# comparação pareada, os dois acertam 2.456 registros e erram 7 em comum; só o KNN acerta 17 registros, e só a Árvore
+# acerta 4. O teste de McNemar na variante **exata** (teste binomial bilateral sobre os 21 pares discordantes, 17 contra
+# 4, com p = 0,5; `scipy.stats.binomtest`) resultou em p = 0,0072. O valor é **exploratório**:
+# o teste supõe registros independentes, o que a dependência temporal viola, e o teste já havia sido consultado na
+# versão anterior (p = 0,0784). Ele indica uma vantagem consistente do KNN neste protocolo, e não uma superioridade
+# geral.
+#
+# Os erros do teste têm um padrão claro: **nenhum ocorre com `Light = 0`**, e a maioria está a até 10 minutos de uma
+# mudança de ocupação (os 11 erros do KNN e 20 dos 24 da Árvore, contra 7,09% dos registros do teste nessa condição).
+# Dos 28 registros com erro de pelo menos um modelo, 14 ocorrem entre 7 h e 9 h e 5 às 17 h, isto é, na chegada e na
+# saída. São, portanto, sobretudo erros de transição, em que luminosidade e CO2 ainda refletem a condição anterior, e não
+# erros em condições estáveis. Dois falsos positivos da Árvore ocorreram no fim de semana de 14 e 15/02.
+#
+# ### 102.4 — Generalização temporal
+#
+# A validação cruzada aleatória e o teste oficial compartilham vizinhos temporais com o treino (87,18% e 96,10% a até 61
+# segundos). Na validação temporal da Fase 6, sem essa proximidade, a acurácia média caiu para 94,62% (KNN) e 87,27%
+# (Árvore), principalmente por causa do fold 3: a janela de 14 e 15/02 não tem nenhum registro ocupado, e o treino
+# daquela divisão tinha apenas 55 registros de fim de semana.
+#
+# | Fold 3 (1.655 registros, todos desocupados) | Registros | Erros do KNN | Erros da Árvore |
+# |---|---:|---:|---:|
+# | `Light = 0` | 982 | 0 | 405 |
+# | `Light > 0` | 673 | 330 | 491 |
+# | Total | 1.655 | 330 (acurácia de 80,06%) | 896 (acurácia de 45,86%) |
+#
+# Todos esses erros são falsos positivos. A diferença entre os protocolos não pode ser atribuída apenas à ordem
+# temporal, porque os tamanhos de treino e as composições das janelas também diferem; ainda assim, ela mostra que o
+# desempenho depende de o treino conter condições semelhantes às avaliadas.
+#
+# ### 102.5 — Avaliação complementar no datatraining.txt
+#
+# O `datatraining.txt` tem 8.143 registros de 04/02 a 10/02 (1.729 ocupados, 21,23%), incluindo o fim de semana de 07 e
+# 08/02, e recebeu a mesma regra decimal da Fase 2 antes da previsão. Não há timestamps nem linhas completas em comum
+# com a base principal; apenas 3 vetores de sensores coincidem com registros do treino oficial (os mesmos 3 da precisão
+# original: o arredondamento não criou novas coincidências com o treino), e 880 vetores se repetem dentro do próprio
+# arquivo em instantes diferentes (867 na precisão original). A distribuição difere da do treino (CO2 médio de
+# 606,5 ppm contra 746,5 ppm; umidade média de 25,7% contra 28,9%).
+#
+# | Métrica (datatraining.txt) | DummyClassifier | KNN (K = 3) | Árvore (`max_depth` = 5) |
+# |---|---:|---:|---:|
+# | Acurácia | 78,77% | 95,71% | 98,13% |
+# | Balanced accuracy | 50,00% | 94,87% | 98,43% |
+# | Precision / recall (ocupado) | indefinida / 0% | 87,30% / 93,41% | 92,74% / 98,96% |
+# | Falsos positivos / falsos negativos | 0 / 1.729 | 235 / 114 | 134 / 18 |
+#
+# Nessa base, a ordem dos modelos se inverte: a Árvore erra 152 registros e o KNN, 349. A diferença é maior nos falsos
+# negativos (18 contra 114) e aparece em dias específicos: no sábado (07/02), o KNN acertou 88,68% (163 falsos
+# positivos) e a Árvore, 97,15% (41); na terça-feira (10/02), o KNN teve 43 falsos negativos, e a Árvore, nenhum. Também
+# aqui todos os erros ocorrem com luminosidade positiva. Como o arquivo pertence à mesma coleta e a um período
+# intermediário, já havia sido avaliado na versão anterior e não orientou nenhuma escolha, esse resultado é uma
+# avaliação complementar fora da base consolidada, e não uma validação externa independente.
+#
+# ### 102.6 — Feature Engineering
+#
+# A inclusão da variável derivada não demonstrou ganho preditivo nas configurações e nos protocolos avaliados. Na Fase
+# 6, o KNN teve métricas idênticas com 5 e 6 atributos, e a Árvore, diferenças de −0,06 a +0,01 p.p., todas da ordem de
+# um registro por fold ou menos; no recorte do fold 1 com K = 3, a variável alterou os vizinhos de 10,92% das validações
+# sem mudar nenhuma previsão. Na Árvore final, a importância por redução de impureza de `Light` é de 98,92%, e a de
+# `CO2_Light_Ratio`, de 0,11%. Essa importância descreve a estrutura da árvore ajustada: não é causal, não é
+# probabilidade de ocupação, não corresponde ao percentual de acertos, depende da estrutura dos atributos e do modelo e
+# não necessariamente se mantém em outros ambientes.
+#
+# ### 102.7 — Aplicação na Indústria 4.0
+#
+# Um classificador de ocupação alimentado por sensores ambientais poderia apoiar a automação da iluminação e da
+# climatização de salas técnicas e escritórios, o monitoramento do uso dos ambientes, a programação de limpeza e
+# manutenção e a gestão de recursos energéticos, integrado a um sistema de gestão predial. O projeto, porém, **não mediu
+# consumo de energia nem implantou o sistema**: não há estimativa de economia em kWh ou em valores monetários, e os
+# cenários de custo do BLOCO 88 usam unidades arbitrárias.
+#
+# ### 102.8 — Riscos operacionais
+#
+# Um **falso positivo** é um ambiente desocupado classificado como ocupado; um **falso negativo** é um ambiente ocupado
+# classificado como desocupado. Dependendo das regras de automação, falsos positivos podem manter iluminação e
+# climatização funcionando sem necessidade, e falsos negativos podem desligá-las com pessoas presentes, prejudicando
+# conforto, iluminação, climatização e, em alguns ambientes industriais, a segurança. Essas consequências são
+# **potenciais**: não foram medidas neste projeto, que não estima economia de energia, consumo em kWh, valores
+# financeiros, retorno sobre investimento nem redução de emissões. Nos
+# cenários hipotéticos do BLOCO 88, o KNN tem custo menor no teste em todos os pesos avaliados (11 contra 24 com custos
+# iguais; 23 contra 40 com falso negativo de peso 5), mas, no `datatraining.txt`, a Árvore tem custo menor com qualquer
+# um desses pesos, pois erra menos nos dois tipos.
+#
+# Há ainda um **ciclo de retroalimentação**: `Light` é a principal entrada dos modelos (a raiz da árvore é
+# `Light ≤ 388,15 lux`; 388,167 lux na precisão original), e a previsão controlaria a própria iluminação. Se o sistema
+# desligar a luz, a leitura cai e o modelo tende a continuar prevendo "desocupado", mesmo que alguém entre na sala; se a
+# luz permanecer ligada, o modelo tende a continuar prevendo "ocupado". A ação do sistema modificaria o atributo usado
+# para inferir a ocupação, e a luz natural (fim de semana com luminosidade positiva e sem ocupação) também interfere no
+# sensor. Esse efeito não está presente nos dados históricos, coletados sem controle automático, e exige validação em
+# operação antes de uma implantação real.
+#
+# ### 102.9 — Veredito final
+#
+# O enunciado (Fase 7, p. 5) pede a acurácia final do melhor KNN e da melhor Árvore **exclusivamente nos dados de teste**
+# e uma conclusão técnica sobre qual modelo apresentou desempenho superior e deve ser adotado pelo sistema de automação
+# predial. O veredito separa esse resultado acadêmico das considerações operacionais complementares.
+#
+# **Veredito acadêmico: KNN com K = 3 (Pipeline com `StandardScaler`).**
+#
+# | Evidência | KNN (K = 3) | Árvore (`max_depth` = 5) |
+# |---|---:|---:|
+# | Acurácia no teste oficial (critério do enunciado) | **99,56%** | 99,03% |
+# | Erros no teste oficial (FP / FN) | **11 (8 / 3)** | 24 (20 / 4) |
+# | Acurácia média na validação cruzada (seleção) | **99,17%** | 99,07% |
+# | Acurácia média na validação temporal (5 folds) | **94,62%** | 87,27% |
+#
+# O KNN foi superior no critério exigido e também nos dois protocolos internos ao treino, com menos falsos positivos e
+# menos falsos negativos no teste. As margens, porém, são pequenas: 13 registros em 2.484 no teste, e a escolha de K = 3
+# em vez de K = 5 decorreu de um único registro na validação cruzada. O McNemar exploratório (p = 0,0072) é coerente com
+# a vantagem no teste, mas não é confirmatório, pela dependência temporal e porque o teste já havia sido consultado.
+# **O resultado não indica superioridade universal do KNN**: ele vale para este conjunto de dados, este protocolo e
+# estas configurações.
+#
+# **Considerações operacionais complementares.** A Árvore de Decisão com `max_depth` = 5 permanece como **candidata
+# alternativa para avaliação operacional supervisionada**, e não como opção superior:
+#
+# - **A favor da Árvore:** no `datatraining.txt` (avaliação complementar de um período intermediário da mesma fonte, não
+#   usado no ajuste, mas já consultado na versão anterior), teve acurácia de 98,13% contra 95,71% e 18 contra 114 falsos
+#   negativos; suas regras são explícitas e auditáveis, sem padronização; e suas previsões no teste e no
+#   `datatraining.txt` foram as mesmas nas duas versões dos dados. Essa estabilidade em dois conjuntos não prova
+#   robustez em geral.
+# - **Contra a Árvore:** acurácia menor no teste oficial, na validação cruzada e na validação temporal; no fold 3 (fim de
+#   semana sem ocupação e com luminosidade positiva), errou 896 de 1.655 registros, contra 330 do KNN.
+# - **Interpretação dos protocolos:** a alta proximidade temporal entre treino e teste (96,10% dos registros de teste
+#   com vizinho de treino a até 61 segundos) limita a interpretação do teste como estimativa de generalização e pode
+#   beneficiar modelos que exploram padrões locais, como o KNN; essa proximidade, porém, não demonstra isoladamente um
+#   efeito causal sobre o desempenho de nenhum dos modelos. O `datatraining.txt`, por sua vez, é um único período, e
+#   seus resultados também não se generalizam automaticamente.
+#
+# **Nenhum dos modelos está suficientemente validado para implantação autônoma.** Os dois exigem validação operacional
+# adicional em outros períodos, ambientes e estações, com o sistema atuando sobre a iluminação (retroalimentação de
+# `Light`) e com medição real do consumo. Uma implantação piloto deveria funcionar como recomendação ou com confirmação
+# humana, monitoramento dos erros e regras de segurança (por exemplo, atrasos antes de desligar), comparando os dois
+# candidatos nas mesmas condições.
+#
+# ### 102.10 — Limitações
+#
+# - Base de uma única sala, de um único edifício, em fevereiro de 2015.
+# - Dependência temporal entre registros: o teste e a validação cruzada são otimistas.
+# - Desequilíbrio das classes (24,33% de ocupados na base consolidada).
+# - Redundância entre atributos e forte dependência de `Light`.
+# - Possível sensibilidade à luminosidade natural, sem variável que a identifique.
+# - Apenas um fim de semana na base consolidada (14 e 15/02).
+# - Seleção e comparação de atributos feitas com as mesmas validações; teste consultado na Fase 6.
+# - Regra decimal definida após a primeira avaliação completa: o teste oficial e o `datatraining.txt` já tinham sido
+#   consultados, e a revisão é uma análise de sensibilidade, não uma avaliação independente.
+# - Resolução física dos sensores não documentada; a regra decimal não representa a precisão real dos equipamentos.
+# - Avaliação complementar da mesma coleta; nenhum teste em outros edifícios.
+# - Nenhuma medição de energia e nenhuma implantação operacional.
+#
+# ### 102.11 — Trabalhos futuros
+#
+# Sem implementação neste projeto: coletar dados em outros ambientes e estações; validar em períodos futuros, com
+# separação temporal mais rigorosa entre treino e teste; investigar modelos sem `Light` ou com sensores adicionais
+# (movimento, acionamento de portas, consumo elétrico); testar a robustez a falhas e ruídos de sensores; obter a
+# resolução documentada dos sensores para fundamentar a precisão decimal; estimar os custos reais de falsos positivos e
+# negativos com os responsáveis pela operação; medir o consumo de energia antes e depois de uma implantação piloto; e
+# monitorar mudanças na distribuição dos dados ao longo do tempo.
+#
+# ### 102.12 — Encerramento do projeto analítico
+#
+# As sete fases analíticas estão implementadas e validadas no script: EDA, Data Prep (com a padronização da precisão
+# decimal), Feature Engineering, divisão treino/teste, padronização, ajuste de hiperparâmetros e avaliação final com
+# veredito. A revisão metodológica (BLOCOS 103 a 108) documenta o efeito da regra decimal. Permanecem como atividades de
+# entrega, fora desta fase: o versionamento da revisão, a geração do notebook único executado, a publicação na `main` e a
+# gravação do vídeo de apresentação.
+
+# %% [markdown]
+# # REVISÃO METODOLÓGICA — Sensibilidade à padronização da precisão decimal
+# ## BLOCO 103 — Contextualização da revisão
+#
+# A primeira versão completa das sete fases utilizou os atributos com a precisão original das fontes. Depois da
+# avaliação final, o estudante solicitou a padronização das casas decimais (BLOCO 19.1), e todas as fases foram
+# reprocessadas a partir dos dados brutos. Esta seção compara as duas versões.
+#
+# | Protocolo da revisão | Situação |
+# |---|---|
+# | Dados brutos, CSV consolidado, fórmula da variável derivada, split e folds | Preservados (índices conferidos por SHA-256 nos BLOCOS 43 e 64) |
+# | Grade de hiperparâmetros, critério de seleção e desempates | Os mesmos da Fase 6 (BLOCOS 63 e 68), sem nenhuma nova busca |
+# | Seleção dos hiperparâmetros | Refeita somente com a validação cruzada no treino revisado; podia mudar |
+# | Teste oficial e `datatraining.txt` | Reavaliados com a mesma transformação, apenas com `predict` |
+#
+# **Limitação central:** a regra decimal foi solicitada **depois** da primeira avaliação. O teste oficial e o
+# `datatraining.txt` já tinham sido consultados na versão anterior; por isso, a comparação abaixo é uma **análise de
+# sensibilidade posterior à avaliação**, e não uma nova evidência independente. A nova seleção ocorreu somente no
+# treino, mas isso não torna os conjuntos já consultados intocados. A regra não foi ajustada para favorecer nenhuma
+# métrica e permanece fixa, independentemente do efeito observado.
+#
+# **Origem dos valores anteriores:** `resultados/referencia_historica/resultados_versao_precisao_integral.csv`, um
+# conjunto compacto gerado uma única vez a partir da reexecução isolada do script anterior (SHA-256 `1209aab0…`, que
+# reproduziu byte a byte os 25 artefatos derivados daquela versão) e dos CSVs de resultados daquela versão; cada linha
+# traz a origem e o SHA-256 do artefato de origem. O script não depende de backups pessoais nem de caminhos absolutos.
+# Os valores anteriores são **históricos preservados**; os revisados são **recalculados nesta execução**; as diferenças
+# são calculadas aqui (revisado − anterior).
+#
+# Para separar o efeito do arredondamento do efeito de uma eventual mudança de hiperparâmetros, as configurações fixas
+# da versão anterior (K = 5 e `max_depth` = 5) também são reavaliadas nos dados revisados (BLOCO 105). Essa reavaliação
+# é descritiva: não é uma busca de hiperparâmetros e não altera a seleção.
+
+# %%
+# BLOCO 104 — Referência histórica da versão anterior
+
+referencia_historica_texto = referencia_historica.fillna({"modelo": "", "configuracao": "", "valor_texto": ""})
+print("Referência histórica:", caminho_referencia_historica, referencia_historica.shape)
+print("\nLinhas por seção:")
+print(referencia_historica_texto.groupby("secao").size().to_string())
+print("\nOrigens e SHA-256 dos artefatos de origem:")
+print(referencia_historica_texto.groupby(["origem", "sha256_origem"]).size().rename("linhas").to_string())
+
+
+def valor_historico(secao, metrica, modelo="", configuracao=""):
+    """Valor numérico preservado da versão anterior (exige exatamente uma linha correspondente)."""
+    filtro = ((referencia_historica_texto["secao"] == secao) & (referencia_historica_texto["metrica"] == metrica)
+              & (referencia_historica_texto["modelo"] == modelo)
+              & (referencia_historica_texto["configuracao"] == configuracao))
+    selecionado = referencia_historica_texto.loc[filtro]
+    assert len(selecionado) == 1, f"Referência ausente ou duplicada: {secao}/{modelo}/{configuracao}/{metrica}."
+    return float(selecionado["valor"].iloc[0]), selecionado["origem"].iloc[0]
+
+
+k_anterior = int(valor_historico("selecao", "n_neighbors_selecionado", "KNN")[0])
+profundidade_anterior = int(valor_historico("selecao", "max_depth_selecionado", "Árvore de Decisão")[0])
+print(f"\nHiperparâmetros selecionados — versão anterior: K = {k_anterior}, max_depth = {profundidade_anterior} | "
+      f"versão revisada: K = {k_selecionado}, max_depth = {profundidade_selecionada_rotulo}")
+
+# %% [markdown]
+# ### BLOCO 105 — Reavaliação descritiva das configurações fixas da versão anterior
+#
+# As configurações K = 5 (Pipeline com `StandardScaler`) e `max_depth` = 5 são ajustadas no treino oficial revisado e
+# avaliadas no teste oficial, no `datatraining.txt` e na validação temporal (mesmos folds do BLOCO 71). Quando a
+# configuração revisada selecionada coincide com a anterior, o resultado deve ser idêntico ao das Fases 6 e 7, o que é
+# conferido. Nenhum resultado deste bloco participa da seleção.
+
+# %%
+# BLOCO 105 — Configurações fixas da versão anterior avaliadas nos dados revisados
+
+configuracoes_fixas = {
+    "KNN": (lambda: criar_pipeline_knn(k_anterior), f"n_neighbors={k_anterior}"),
+    "Árvore de Decisão": (lambda: criar_arvore(profundidade_anterior), f"max_depth={profundidade_anterior}"),
+}
+resultados_fixos = {}
+for nome, (fabrica, rotulo_configuracao) in configuracoes_fixas.items():
+    modelo_fixo = fabrica().fit(X_train, y_train)
+    previsto_teste = modelo_fixo.predict(X_test)
+    previsto_complementar = modelo_fixo.predict(X_complementar)
+    acuracias_temporais, erros_fold3 = {}, {}
+    for numero_fold, (posicoes_treino, posicoes_validacao) in enumerate(folds_temporais, start=1):
+        estimador = fabrica().fit(X_train_cronologico.iloc[posicoes_treino], y_train_cronologico.iloc[posicoes_treino])
+        X_v = X_train_cronologico.iloc[posicoes_validacao]
+        y_v = y_train_cronologico.iloc[posicoes_validacao]
+        previsto_v = estimador.predict(X_v)
+        acuracias_temporais[numero_fold] = accuracy_score(y_v, previsto_v)
+        if numero_fold == 3:
+            erro_v = previsto_v != y_v.to_numpy()
+            erros_fold3 = {"Light = 0": int((erro_v & X_v["Light"].eq(0).to_numpy()).sum()),
+                           "Light > 0": int((erro_v & X_v["Light"].gt(0).to_numpy()).sum())}
+    resultados_fixos[nome] = {
+        "configuracao": rotulo_configuracao,
+        "teste": calcular_metricas(y_test, pd.Series(previsto_teste, index=y_test.index)),
+        "datatraining": calcular_metricas(y_complementar, pd.Series(previsto_complementar,
+                                                                    index=y_complementar.index)),
+        "temporal": pd.Series(acuracias_temporais),
+        "fold3": erros_fold3,
+    }
+    # Coerência com a tabela acadêmica do BLOCO 73 (mesma configuração e mesmos dados)
+    assert resultados_fixos[nome]["teste"]["accuracy"] == tabela_treino_teste.loc[(nome, rotulo_configuracao),
+                                                                                  "Acurácia teste"]
+
+# Quando a configuração fixa coincide com a selecionada, os resultados devem ser idênticos aos das Fases 6 e 7
+for nome, selecionado_igual in [("KNN", k_anterior == k_selecionado),
+                                ("Árvore de Decisão", profundidade_anterior == profundidade_selecionada)]:
+    if selecionado_igual:
+        assert resultados_fixos[nome]["teste"]["accuracy"] == metricas_teste[nome]["accuracy"]
+        assert resultados_fixos[nome]["datatraining"]["accuracy"] == metricas_complementares[nome]["accuracy"]
+        assert np.allclose(resultados_fixos[nome]["temporal"].to_numpy(),
+                           resultados_temporais[(nome, "acuracia")].to_numpy(), rtol=0, atol=0)
+
+tabela_configuracoes_fixas = pd.DataFrame({
+    f"{nome} ({resultado['configuracao']})": {
+        "Teste: acurácia": resultado["teste"]["accuracy"],
+        "Teste: FP / FN": f"{int(resultado['teste']['FP'])} / {int(resultado['teste']['FN'])}",
+        "datatraining.txt: acurácia": resultado["datatraining"]["accuracy"],
+        "datatraining.txt: FP / FN": f"{int(resultado['datatraining']['FP'])} / {int(resultado['datatraining']['FN'])}",
+        "Temporal: acurácia média (5 folds)": resultado["temporal"].mean(),
+        "Temporal: fold 3": resultado["temporal"][3],
+        "Fold 3: erros com Light = 0 / Light > 0": f"{resultado['fold3']['Light = 0']} / {resultado['fold3']['Light > 0']}",
+    }
+    for nome, resultado in resultados_fixos.items()
+})
+print("Configurações fixas da versão anterior, avaliadas nos dados revisados (descritivo, sem seleção):")
+print(tabela_configuracoes_fixas.to_string())
+
+# %% [markdown]
+# ### BLOCO 106 — Comparação integral entre a versão anterior e a revisada
+#
+# Cada linha compara um valor histórico preservado com o valor recalculado nesta execução. Proporções (acurácias,
+# taxas, F1 etc.) também têm a diferença expressa em pontos percentuais. São comparados: seleção, validação cruzada de
+# todas as configurações, comparação de 5 e 6 atributos, acurácias de treino e teste por configuração (BLOCO 73),
+# validação temporal, fold temporal 3, métricas finais no teste e no `datatraining.txt`, comparação pareada, parâmetros
+# do `StandardScaler`, contribuições para as distâncias, importâncias da árvore, configurações fixas e estatísticas da
+# variável derivada. O resultado é exportado em `resultados/modelagem/comparacao_precisao_decimal.csv`.
+
+# %%
+# BLOCO 106 — Comparação integral entre a versão anterior e a revisada
+
+linhas_comparacao_versoes = []
+
+
+def registrar_comparacao(secao, protocolo, modelo, configuracao, metrica, anterior, revisado, proporcao, origem,
+                         observacao=""):
+    diferenca = revisado - anterior if np.isfinite(anterior) and np.isfinite(revisado) else np.nan
+    linhas_comparacao_versoes.append({
+        "secao": secao, "protocolo": protocolo, "modelo": modelo, "configuracao": configuracao, "metrica": metrica,
+        "valor_anterior": anterior, "valor_revisado": revisado, "diferenca": diferenca,
+        "diferenca_pp": diferenca * 100 if proporcao else np.nan,
+        "origem_anterior": origem, "observacao": observacao,
+    })
+
+
+# Seleção de hiperparâmetros
+registrar_comparacao("selecao", rotulo_protocolo_cv, "KNN", "", "n_neighbors_selecionado", k_anterior,
+                     k_selecionado, False, valor_historico("selecao", "n_neighbors_selecionado", "KNN")[1])
+registrar_comparacao("selecao", rotulo_protocolo_cv, "Árvore de Decisão", "", "max_depth_selecionado",
+                     profundidade_anterior, profundidade_selecionada, False,
+                     valor_historico("selecao", "max_depth_selecionado", "Árvore de Decisão")[1])
+
+# Validação cruzada de todas as configurações (mesmos folds, mesma grade)
+mapa_metricas_cv = {
+    "Acurácia treino (média)": "acuracia_treino_media", "Acurácia treino (dp)": "acuracia_treino_dp",
+    "Acurácia validação (média)": "acuracia_validacao_media", "Acurácia validação (dp)": "acuracia_validacao_dp",
+    "F1 ocupado validação (média)": "f1_ocupado_validacao_media", "F1 ocupado validação (dp)": "f1_ocupado_validacao_dp",
+    "Balanced accuracy validação (média)": "balanced_accuracy_validacao_media",
+    "Balanced accuracy validação (dp)": "balanced_accuracy_validacao_dp",
+}
+for nome, resumo, hiperparametro in [("KNN", resumo_knn, "n_neighbors"),
+                                     ("Árvore de Decisão", resumo_arvore, "max_depth")]:
+    for rotulo, linha in resumo.iterrows():
+        for coluna, metrica in mapa_metricas_cv.items():
+            anterior, origem = valor_historico("validacao_cruzada", metrica, nome, f"{hiperparametro}={rotulo}")
+            registrar_comparacao("validacao_cruzada", rotulo_protocolo_cv, nome, f"{hiperparametro}={rotulo}", metrica,
+                                 anterior, linha[coluna], True, origem)
+
+# Comparação de 5 e 6 atributos (acurácia média de validação)
+for (nome, rotulo), linha in medias_acuracia.iterrows():
+    hiperparametro = "n_neighbors" if nome == "KNN" else "max_depth"
+    for coluna, metrica in [("media_5", "acuracia_validacao_media_5_atributos"),
+                            ("media_6", "acuracia_validacao_media_6_atributos")]:
+        anterior, origem = valor_historico("feature_engineering", metrica, nome, f"{hiperparametro}={rotulo}")
+        registrar_comparacao("feature_engineering", rotulo_protocolo_cv, nome, f"{hiperparametro}={rotulo}", metrica,
+                             anterior, linha[coluna], True, origem)
+
+# Acurácia de treino completo e de teste por configuração (BLOCO 73)
+for (nome, configuracao), linha in tabela_treino_teste.iterrows():
+    for coluna, metrica in [("Acurácia treino", "acuracia_treino"), ("Acurácia teste", "acuracia_teste")]:
+        anterior, origem = valor_historico("treino_teste_por_configuracao", metrica, nome, configuracao)
+        registrar_comparacao("treino_teste_por_configuracao", "treino oficial completo / teste oficial", nome,
+                             configuracao, metrica, anterior, linha[coluna], True, origem,
+                             "teste já consultado na versão anterior; descritivo")
+
+# Validação temporal das configurações selecionadas em cada versão
+for nome, hiperparametro, rotulo_anterior, rotulo_revisado in [
+        ("KNN", "n_neighbors", k_anterior, k_selecionado_rotulo),
+        ("Árvore de Decisão", "max_depth", profundidade_anterior, profundidade_selecionada_rotulo)]:
+    for numero_fold in resultados_temporais.index:
+        for metrica in ["acuracia", "f1_ocupado", "balanced_accuracy"]:
+            anterior, origem = valor_historico("validacao_temporal", metrica, nome,
+                                               f"{hiperparametro}={rotulo_anterior}; fold {numero_fold}")
+            registrar_comparacao("validacao_temporal", rotulo_protocolo_temporal, nome, f"fold {numero_fold}", metrica,
+                                 anterior, resultados_temporais.loc[numero_fold, (nome, metrica)], True, origem,
+                                 f"anterior: {hiperparametro}={rotulo_anterior}; revisado: {hiperparametro}={rotulo_revisado}")
+    acuracias_anteriores = [valor_historico("validacao_temporal", "acuracia", nome,
+                                            f"{hiperparametro}={rotulo_anterior}; fold {numero_fold}")[0]
+                            for numero_fold in resultados_temporais.index]
+    registrar_comparacao("validacao_temporal", rotulo_protocolo_temporal, nome, "média dos 5 folds", "acuracia",
+                         float(np.mean(acuracias_anteriores)), resultados_temporais[(nome, "acuracia")].mean(), True,
+                         origem, f"anterior: {hiperparametro}={rotulo_anterior}; revisado: {hiperparametro}={rotulo_revisado}")
+
+# Fold temporal 3 por grupo de luminosidade
+for grupo, linha in tabela_fold3.iterrows():
+    for coluna in tabela_fold3.columns:
+        anterior, origem = valor_historico("fold3_temporal", coluna, "", grupo)
+        registrar_comparacao("fold3_temporal", rotulo_protocolo_temporal, "", grupo, coluna, anterior, linha[coluna],
+                             False, origem)
+
+# Métricas finais dos modelos selecionados: teste oficial e datatraining.txt
+for secao, metricas_revisadas in [("teste_oficial", metricas_teste), ("datatraining", metricas_complementares)]:
+    for nome, metricas_modelo in metricas_revisadas.items():
+        for metrica, revisado in metricas_modelo.items():
+            anterior, origem = valor_historico(secao, metrica, nome, "selecionado")
+            observacao = ("indefinida nas duas versões (TP + FP = 0)" if np.isnan(anterior) and np.isnan(revisado)
+                          else "")
+            if nome == "KNN":
+                observacao = (observacao + "; " if observacao else "") + \
+                    f"anterior: K={k_anterior}; revisado: K={k_selecionado}"
+            registrar_comparacao(secao, secao, nome, "selecionado", metrica, anterior, revisado,
+                                 metrica not in ("TN", "FP", "FN", "TP"), origem, observacao)
+
+# Comparação pareada no teste e McNemar exploratório
+for (linha_rotulo, coluna_rotulo), revisado in tabela_pareada.stack().items():
+    anterior, origem = valor_historico("comparacao_pareada", "registros", "KNN × Árvore",
+                                       f"{linha_rotulo} / {coluna_rotulo}")
+    registrar_comparacao("comparacao_pareada", "teste oficial", "KNN × Árvore", f"{linha_rotulo} / {coluna_rotulo}",
+                         "registros", anterior, revisado, False, origem)
+anterior, origem = valor_historico("comparacao_pareada", "p_valor", "KNN × Árvore", "McNemar exato")
+registrar_comparacao("comparacao_pareada", "teste oficial", "KNN × Árvore", "McNemar exato", "p_valor", anterior,
+                     resultado_mcnemar.pvalue, False, origem, "exploratório: dependência temporal entre registros")
+
+# StandardScaler da Fase 5 e contribuições para as distâncias (mesmos 1.000 pares)
+for posicao, atributo in enumerate(atributos_preditores):
+    for nome_parametro in ["mean_", "var_", "scale_"]:
+        anterior, origem = valor_historico("standard_scaler", nome_parametro, "StandardScaler", atributo)
+        registrar_comparacao("standard_scaler", "fit_transform(X_train)", "StandardScaler", atributo, nome_parametro,
+                             anterior, parametros_apos_ajuste[nome_parametro][posicao], False, origem)
+for atributo, linha in tabela_contribuicoes.iterrows():
+    for coluna, metrica in [("Antes (%)", "contribuicao_media_antes_pct"), ("Depois (%)", "contribuicao_media_depois_pct")]:
+        anterior, origem = valor_historico("distancias", metrica, "", atributo)
+        registrar_comparacao("distancias", "1.000 pares de X_train (semente 42)", "", atributo, metrica, anterior,
+                             linha[coluna], False, origem, "valores em %")
+
+# Árvore final: importâncias e limiar da raiz
+for atributo, importancia in zip(atributos_preditores, modelo_arvore_final.feature_importances_):
+    anterior, origem = valor_historico("arvore_final", "importancia_impureza", "Árvore de Decisão", atributo)
+    registrar_comparacao("arvore_final", "treino oficial completo", "Árvore de Decisão", atributo,
+                         "importancia_impureza", anterior, importancia, True, origem)
+anterior, origem = valor_historico("arvore_final", "limiar", "Árvore de Decisão", "raiz")
+registrar_comparacao("arvore_final", "treino oficial completo", "Árvore de Decisão", "raiz", "limiar", anterior,
+                     modelo_arvore_final.tree_.threshold[0], False, origem,
+                     f"atributo da raiz revisado: {atributos_preditores[modelo_arvore_final.tree_.feature[0]]}")
+
+# Configurações fixas da versão anterior (K = 5 e max_depth = 5) nos dados revisados
+for nome, resultado in resultados_fixos.items():
+    for secao_origem, chave in [("teste_oficial", "teste"), ("datatraining", "datatraining")]:
+        for metrica in ["accuracy", "balanced_accuracy", "recall_ocupado", "precision_ocupado", "f1_ocupado",
+                        "FP", "FN"]:
+            anterior, origem = valor_historico(secao_origem, metrica, nome, "selecionado")
+            registrar_comparacao("configuracao_fixa", secao_origem, nome, resultado["configuracao"], metrica,
+                                 anterior, resultado[chave][metrica], metrica not in ("FP", "FN"), origem,
+                                 "mesma configuração nas duas versões; efeito isolado da regra decimal")
+    hiperparametro, valor = resultado["configuracao"].split("=")
+    for numero_fold, revisado in resultado["temporal"].items():
+        anterior, origem = valor_historico("validacao_temporal", "acuracia", nome,
+                                           f"{hiperparametro}={valor}; fold {numero_fold}")
+        registrar_comparacao("configuracao_fixa", rotulo_protocolo_temporal, nome, resultado["configuracao"],
+                             f"acuracia fold {numero_fold}", anterior, revisado, True, origem,
+                             "mesma configuração nas duas versões; efeito isolado da regra decimal")
+    for grupo, revisado in resultado["fold3"].items():
+        anterior, origem = valor_historico("fold3_temporal", f"Erros {nome}", "", grupo)
+        registrar_comparacao("configuracao_fixa", rotulo_protocolo_temporal, nome, resultado["configuracao"],
+                             f"erros fold 3 ({grupo})", anterior, revisado, False, origem,
+                             "mesma configuração nas duas versões; efeito isolado da regra decimal")
+
+# Estatísticas da variável derivada: recalculadas sobre a base consolidada (precisão original) e sobre a tratada
+razao_original = df_consolidado["CO2"] / (df_consolidado["Light"] + 1)
+for metrica, funcao in [("media", "mean"), ("mediana", "median"), ("variancia", "var"), ("desvio_padrao", "std"),
+                        ("minimo", "min"), ("maximo", "max"), ("assimetria", "skew"), ("valores_distintos", "nunique")]:
+    registrar_comparacao("feature_engineering_estatisticas", "base completa (12.417 registros)", "", "CO2_Light_Ratio",
+                         metrica, float(getattr(razao_original, funcao)()),
+                         float(getattr(df_features["CO2_Light_Ratio"], funcao)()), False,
+                         "recalculado da base consolidada nesta execução")
+for coluna in ["CO2", "Light"]:
+    for metodo in ["pearson", "spearman"]:
+        registrar_comparacao("feature_engineering_estatisticas", "base completa (12.417 registros)", "",
+                             "CO2_Light_Ratio", f"{metodo}_com_{coluna}",
+                             razao_original.corr(df_consolidado[coluna], method=metodo),
+                             df_features["CO2_Light_Ratio"].corr(df_features[coluna], method=metodo), False,
+                             "recalculado da base consolidada nesta execução")
+
+comparacao_precisao = pd.DataFrame(linhas_comparacao_versoes)
+assert not comparacao_precisao.duplicated(subset=["secao", "protocolo", "modelo", "configuracao", "metrica"]).any()
+comparacao_precisao.to_csv(caminho_comparacao_precisao, index=False)
+pd.testing.assert_frame_equal(pd.read_csv(caminho_comparacao_precisao, float_precision="round_trip").fillna(
+    {"modelo": "", "configuracao": "", "observacao": ""}), comparacao_precisao.fillna(
+    {"modelo": "", "configuracao": "", "observacao": ""}), check_exact=True, check_dtype=False)
+print("Comparação exportada:", caminho_comparacao_precisao, comparacao_precisao.shape)
+print("\nLinhas por seção:")
+print(comparacao_precisao.groupby("secao", sort=False).size().to_string())
+
+# Resumos para leitura
+colunas_exibicao = ["valor_anterior", "valor_revisado", "diferenca_pp"]
+print("\nValidação cruzada — acurácia média de validação (%):")
+print((comparacao_precisao.query("secao == 'validacao_cruzada' and metrica == 'acuracia_validacao_media'")
+       .set_index(["modelo", "configuracao"])[["valor_anterior", "valor_revisado"]] * 100)
+      .assign(diferenca_pp=lambda tabela: tabela["valor_revisado"] - tabela["valor_anterior"])
+      .to_string(float_format=lambda valor: f"{valor:.4f}"))
+print("\nModelos selecionados — teste oficial e datatraining.txt:")
+print(comparacao_precisao.query("secao in ['teste_oficial', 'datatraining'] and modelo != 'DummyClassifier' "
+                                "and metrica in ['accuracy', 'balanced_accuracy', 'recall_ocupado', "
+                                "'precision_ocupado', 'FP', 'FN']")
+      .set_index(["secao", "modelo", "metrica"])[["valor_anterior", "valor_revisado", "diferenca", "diferenca_pp"]]
+      .to_string(float_format=lambda valor: f"{valor:.6g}"))
+print("\nValidação temporal — acurácia por fold:")
+print(comparacao_precisao.query("secao == 'validacao_temporal' and metrica == 'acuracia'")
+      .set_index(["modelo", "configuracao"])[colunas_exibicao].to_string(float_format=lambda valor: f"{valor:.6g}"))
+print("\nConfigurações fixas (K = 5 e max_depth = 5) — efeito isolado da regra decimal:")
+print(comparacao_precisao.query("secao == 'configuracao_fixa'")
+      .set_index(["modelo", "protocolo", "metrica"])[["valor_anterior", "valor_revisado", "diferenca"]]
+      .to_string(float_format=lambda valor: f"{valor:.6g}"))
+print(f"\nMcNemar exploratório — p anterior: {valor_historico('comparacao_pareada', 'p_valor', 'KNN × Árvore', 'McNemar exato')[0]:.6f}"
+      f" | p revisado: {resultado_mcnemar.pvalue:.6f}")
+
+# %% [markdown]
+# ### BLOCO 107 — Visualização do impacto da precisão decimal
+#
+# A figura reúne: (1) a acurácia média de validação cruzada de todas as configurações; (2) a acurácia no teste oficial
+# por configuração (descritiva, BLOCO 73); (3) a acurácia por fold temporal dos modelos selecionados em cada versão;
+# (4) os falsos positivos e falsos negativos dos modelos selecionados no teste e no `datatraining.txt`; (5) as
+# diferenças das configurações fixas (efeito isolado da regra) e dos modelos selecionados em cada protocolo; e (6) a
+# diferença de acurácia entre KNN e Árvore em cada protocolo, nas duas versões. Os eixos ampliados informam a faixa.
+
+# %%
+# BLOCO 107 — Visualização do impacto da precisão decimal
+
+cor_anterior, cor_revisada = "#4C72B0", "#DD8452"
+fig, eixos_revisao = plt.subplots(2, 3, figsize=(22, 12))
+(eixo_cv, eixo_teste_config, eixo_temporal), (eixo_erros, eixo_efeito, eixo_diferenca) = eixos_revisao
+
+# Painéis 1 e 2 — Acurácia por configuração (validação cruzada e teste)
+configuracoes_ordem = [f"n_neighbors={k}" for k in resumo_knn.index] + [f"max_depth={p}" for p in resumo_arvore.index]
+rotulos_configuracoes = [f"K={k}" for k in resumo_knn.index] + [f"prof.={p}" for p in resumo_arvore.index]
+posicoes_configuracoes = np.arange(len(configuracoes_ordem))
+for eixo, secao, metrica, titulo in [
+        (eixo_cv, "validacao_cruzada", "acuracia_validacao_media", "Validação cruzada: acurácia média de validação"),
+        (eixo_teste_config, "treino_teste_por_configuracao", "acuracia_teste",
+         "Teste oficial por configuração (descritivo)")]:
+    dados_painel = comparacao_precisao.query("secao == @secao and metrica == @metrica").set_index("configuracao")
+    dados_painel = dados_painel.loc[configuracoes_ordem]
+    eixo.plot(posicoes_configuracoes, dados_painel["valor_anterior"] * 100, marker="o", color=cor_anterior,
+              linestyle="none", markersize=8, label="Versão anterior (precisão integral)")
+    eixo.plot(posicoes_configuracoes, dados_painel["valor_revisado"] * 100, marker="D", color=cor_revisada,
+              linestyle="none", markersize=7, label="Versão revisada (regra decimal)")
+    eixo.axvline(len(resumo_knn) - 0.5, color="gray", linewidth=0.8)
+    eixo.set_xticks(posicoes_configuracoes, rotulos_configuracoes, rotation=45)
+    valores_painel = np.concatenate([dados_painel["valor_anterior"], dados_painel["valor_revisado"]]) * 100
+    eixo.set_ylim(valores_painel.min() - 0.15, valores_painel.max() + 0.15)
+    eixo.set_ylabel(f"Acurácia (%) — eixo ampliado de {valores_painel.min() - 0.15:.2f} a "
+                    f"{valores_painel.max() + 0.15:.2f}".replace(".", ","))
+    eixo.set_title(titulo)
+    eixo.legend(loc="lower left", fontsize=9)
+for posicao, rotulo in enumerate(configuracoes_ordem):
+    if rotulo in (f"n_neighbors={k_selecionado_rotulo}", f"max_depth={profundidade_selecionada_rotulo}"):
+        eixo_cv.annotate("selecionado\n(revisado)", (posicao, comparacao_precisao.query(
+            "secao == 'validacao_cruzada' and metrica == 'acuracia_validacao_media' and configuracao == @rotulo")
+            ["valor_revisado"].iloc[0] * 100), xytext=(0, -38), textcoords="offset points", ha="center", fontsize=8,
+            color=cor_revisada, arrowprops={"arrowstyle": "->", "color": cor_revisada})
+    if rotulo in (f"n_neighbors={k_anterior}", f"max_depth={profundidade_anterior}"):
+        eixo_cv.annotate("selecionado\n(anterior)", (posicao, comparacao_precisao.query(
+            "secao == 'validacao_cruzada' and metrica == 'acuracia_validacao_media' and configuracao == @rotulo")
+            ["valor_anterior"].iloc[0] * 100), xytext=(0, 22), textcoords="offset points", ha="center", fontsize=8,
+            color=cor_anterior, arrowprops={"arrowstyle": "->", "color": cor_anterior})
+
+# Painel 3 — Validação temporal por fold (modelos selecionados em cada versão)
+temporal_comparado = comparacao_precisao.query("secao == 'validacao_temporal' and metrica == 'acuracia' "
+                                               "and configuracao != 'média dos 5 folds'")
+for nome, marcador in [("KNN", "o"), ("Árvore de Decisão", "s")]:
+    dados_modelo = temporal_comparado.query("modelo == @nome")
+    folds_numeros = dados_modelo["configuracao"].str.replace("fold ", "").astype(int)
+    rotulo_anterior = f"K={k_anterior}" if nome == "KNN" else f"prof.={profundidade_anterior}"
+    rotulo_revisado = f"K={k_selecionado}" if nome == "KNN" else f"prof.={profundidade_selecionada_rotulo}"
+    eixo_temporal.plot(folds_numeros, dados_modelo["valor_anterior"] * 100, marker=marcador, color=cor_anterior,
+                       linestyle="-" if nome == "KNN" else "--", label=f"{nome} anterior ({rotulo_anterior})")
+    eixo_temporal.plot(folds_numeros, dados_modelo["valor_revisado"] * 100, marker=marcador, color=cor_revisada,
+                       linestyle="-" if nome == "KNN" else "--", label=f"{nome} revisado ({rotulo_revisado})")
+eixo_temporal.set_xticks(range(1, 6))
+eixo_temporal.set_xlabel("Fold temporal (TimeSeriesSplit, gap = 60)")
+eixo_temporal.set_ylabel("Acurácia de validação (%)")
+eixo_temporal.set_ylim(40, 103)
+eixo_temporal.set_title("Validação temporal dos modelos selecionados")
+eixo_temporal.legend(loc="lower left", fontsize=8)
+
+# Painel 4 — Falsos positivos e falsos negativos dos modelos selecionados
+categorias_erros = [("teste_oficial", "KNN"), ("teste_oficial", "Árvore de Decisão"), ("datatraining", "KNN"),
+                    ("datatraining", "Árvore de Decisão")]
+rotulos_erros = ["Teste\nKNN", "Teste\nÁrvore", "datatraining\nKNN", "datatraining\nÁrvore"]
+posicoes_erros = np.arange(len(categorias_erros))
+for deslocamento, metrica, coluna_valor, cor, hachura, rotulo in [
+        (-0.3, "FP", "valor_anterior", cor_anterior, "", "FP anterior"),
+        (-0.1, "FP", "valor_revisado", cor_revisada, "", "FP revisado"),
+        (0.1, "FN", "valor_anterior", cor_anterior, "//", "FN anterior"),
+        (0.3, "FN", "valor_revisado", cor_revisada, "//", "FN revisado")]:
+    valores = [comparacao_precisao.query("secao == @secao and modelo == @nome and metrica == @metrica")
+               [coluna_valor].iloc[0] for secao, nome in categorias_erros]
+    barras = eixo_erros.bar(posicoes_erros + deslocamento, valores, width=0.2, color=cor, edgecolor="black",
+                            hatch=hachura, label=rotulo)
+    for barra, valor in zip(barras, valores):
+        eixo_erros.annotate(f"{int(valor)}", (barra.get_x() + barra.get_width() / 2, valor), ha="center",
+                            va="bottom", xytext=(0, 2), textcoords="offset points", fontsize=8)
+eixo_erros.set_xticks(posicoes_erros, rotulos_erros)
+eixo_erros.set_ylabel("Registros")
+eixo_erros.set_title(f"Erros dos modelos selecionados (anterior: K={k_anterior}; revisado: K={k_selecionado})")
+eixo_erros.legend(loc="upper left", fontsize=9, ncol=2)
+eixo_erros.set_ylim(0, comparacao_precisao.query("secao in ['teste_oficial', 'datatraining'] and modelo != "
+                                                 "'DummyClassifier' and metrica in ['FP', 'FN']")
+                    [["valor_anterior", "valor_revisado"]].to_numpy().max() * 1.2)
+
+# Painel 5 — Diferenças de acurácia (revisado − anterior, p.p.) por protocolo
+protocolos_efeito = ["Validação cruzada", "Teste oficial", "Temporal (média)", "datatraining.txt"]
+
+
+def diferencas_protocolo(nome, fixa):
+    if fixa:
+        configuracao = resultados_fixos[nome]["configuracao"]
+        cv = comparacao_precisao.query("secao == 'validacao_cruzada' and modelo == @nome and configuracao == "
+                                       "@configuracao and metrica == 'acuracia_validacao_media'")["diferenca_pp"].iloc[0]
+        teste = comparacao_precisao.query("secao == 'configuracao_fixa' and modelo == @nome and protocolo == "
+                                          "'teste_oficial' and metrica == 'accuracy'")["diferenca_pp"].iloc[0]
+        complementar = comparacao_precisao.query("secao == 'configuracao_fixa' and modelo == @nome and protocolo == "
+                                                 "'datatraining' and metrica == 'accuracy'")["diferenca_pp"].iloc[0]
+        mascara_temporal = ((comparacao_precisao["secao"] == "configuracao_fixa")
+                            & (comparacao_precisao["modelo"] == nome)
+                            & comparacao_precisao["metrica"].str.startswith("acuracia fold"))
+        temporal = comparacao_precisao.loc[mascara_temporal, "diferenca_pp"].mean()
+    else:
+        cv_anterior = comparacao_precisao.query(
+            "secao == 'validacao_cruzada' and modelo == @nome and metrica == 'acuracia_validacao_media'")
+        rotulo_anterior = f"n_neighbors={k_anterior}" if nome == "KNN" else f"max_depth={profundidade_anterior}"
+        rotulo_revisado = (f"n_neighbors={k_selecionado_rotulo}" if nome == "KNN"
+                           else f"max_depth={profundidade_selecionada_rotulo}")
+        cv = (cv_anterior.set_index("configuracao").loc[rotulo_revisado, "valor_revisado"]
+              - cv_anterior.set_index("configuracao").loc[rotulo_anterior, "valor_anterior"]) * 100
+        teste = comparacao_precisao.query("secao == 'teste_oficial' and modelo == @nome and metrica == 'accuracy'"
+                                          )["diferenca_pp"].iloc[0]
+        complementar = comparacao_precisao.query("secao == 'datatraining' and modelo == @nome and metrica == "
+                                                 "'accuracy'")["diferenca_pp"].iloc[0]
+        temporal = comparacao_precisao.query("secao == 'validacao_temporal' and modelo == @nome and configuracao == "
+                                             "'média dos 5 folds'")["diferenca_pp"].iloc[0]
+    return [cv, teste, temporal, complementar]
+
+
+series_efeito = [
+    (f"KNN fixo (K={k_anterior})", diferencas_protocolo("KNN", True), "#4C72B0", ""),
+    (f"KNN selecionado (K={k_anterior} → K={k_selecionado})", diferencas_protocolo("KNN", False), "#8172B3", "//"),
+    (f"Árvore fixa (prof.={profundidade_anterior})", diferencas_protocolo("Árvore de Decisão", True), "#55A868", ""),
+]
+posicoes_efeito = np.arange(len(protocolos_efeito))
+for indice_serie, (rotulo, valores, cor, hachura) in enumerate(series_efeito):
+    barras = eixo_efeito.bar(posicoes_efeito + (indice_serie - 1) * 0.26, valores, width=0.26, color=cor,
+                             edgecolor="black", hatch=hachura, label=rotulo)
+    for barra, valor in zip(barras, valores):
+        eixo_efeito.annotate(f"{round(valor, 2) + 0.0:+.2f}".replace(".", ","),
+                             (barra.get_x() + barra.get_width() / 2, valor),
+                             ha="center", va="bottom" if valor >= 0 else "top",
+                             xytext=(0, 2 if valor >= 0 else -2), textcoords="offset points", fontsize=8)
+eixo_efeito.axhline(0, color="black", linewidth=0.8)
+eixo_efeito.set_xticks(posicoes_efeito, protocolos_efeito)
+limite_efeito = max(abs(valor) for _, valores, _, _ in series_efeito for valor in valores) * 1.35 + 0.05
+eixo_efeito.set_ylim(-limite_efeito, limite_efeito)
+eixo_efeito.set_ylabel("Revisado − anterior (p.p. de acurácia)")
+eixo_efeito.set_title("Efeito da revisão: configuração fixa × seleção revisada")
+eixo_efeito.legend(loc="upper left", fontsize=8)
+
+# Painel 6 — Diferença de acurácia KNN − Árvore por protocolo, nas duas versões
+def diferenca_classificadores(coluna_valor):
+    cv_rotulos = ({"valor_anterior": (f"n_neighbors={k_anterior}", f"max_depth={profundidade_anterior}"),
+                   "valor_revisado": (f"n_neighbors={k_selecionado_rotulo}",
+                                      f"max_depth={profundidade_selecionada_rotulo}")}[coluna_valor])
+    cv = comparacao_precisao.query("secao == 'validacao_cruzada' and metrica == 'acuracia_validacao_media'"
+                                   ).set_index("configuracao")[coluna_valor]
+    resultado = [cv.loc[cv_rotulos[0]] - cv.loc[cv_rotulos[1]]]
+    for consulta in ["secao == 'teste_oficial' and metrica == 'accuracy'",
+                     "secao == 'validacao_temporal' and metrica == 'acuracia' and configuracao == 'média dos 5 folds'",
+                     "secao == 'datatraining' and metrica == 'accuracy'"]:
+        tabela = comparacao_precisao.query(consulta).set_index("modelo")[coluna_valor]
+        resultado.append(tabela.loc["KNN"] - tabela.loc["Árvore de Decisão"])
+    return np.array(resultado) * 100
+
+
+for deslocamento, coluna_valor, cor, rotulo in [(-0.18, "valor_anterior", cor_anterior, "Versão anterior"),
+                                                (0.18, "valor_revisado", cor_revisada, "Versão revisada")]:
+    valores = diferenca_classificadores(coluna_valor)
+    barras = eixo_diferenca.bar(posicoes_efeito + deslocamento, valores, width=0.36, color=cor, edgecolor="black",
+                                label=rotulo)
+    for barra, valor in zip(barras, valores):
+        eixo_diferenca.annotate(f"{valor:+.2f}".replace(".", ","), (barra.get_x() + barra.get_width() / 2, valor),
+                                ha="center", va="bottom" if valor >= 0 else "top",
+                                xytext=(0, 2 if valor >= 0 else -2), textcoords="offset points", fontsize=9)
+eixo_diferenca.axhline(0, color="black", linewidth=0.8)
+eixo_diferenca.set_xticks(posicoes_efeito, protocolos_efeito)
+limite_diferenca = np.abs(np.concatenate([diferenca_classificadores("valor_anterior"),
+                                          diferenca_classificadores("valor_revisado")])).max() * 1.25
+eixo_diferenca.set_ylim(-limite_diferenca, limite_diferenca)
+eixo_diferenca.set_ylabel("KNN − Árvore (p.p. de acurácia)")
+eixo_diferenca.set_title("Diferença entre os classificadores selecionados")
+eixo_diferenca.legend(loc="upper left", fontsize=9)
+
+plt.suptitle("Revisão da precisão decimal: versão anterior (precisão integral) × versão revisada", fontsize=16)
+plt.tight_layout()
+
+# Exportação antes da exibição
+plt.savefig(caminho_grafico_revisao, dpi=300, bbox_inches="tight")
+print("Figura salva em:", caminho_grafico_revisao)
+
+plt.show()
+
+# %% [markdown]
+# ## BLOCO 108 — Interpretação da revisão da precisão decimal
+#
+# ### 108.1 — O que foi preservado
+#
+# Os dados brutos, o ZIP da UCI e o CSV consolidado (precisão original) permaneceram inalterados. Os 12.417 registros,
+# a ordem, os índices, os timestamps e as classes foram preservados; o split (BLOCO 43) e os cinco folds da validação
+# cruzada (BLOCO 64) têm assinaturas SHA-256 idênticas às da versão anterior; as janelas temporais, a fórmula da
+# variável derivada, a grade de hiperparâmetros e o critério de seleção não mudaram. A proximidade temporal entre treino
+# e teste (96,10% a até 61 segundos) também é a mesma, porque depende apenas dos índices e dos timestamps.
+#
+# ### 108.2 — Efeito nos dados
+#
+# A regra alterou 56,74% dos valores de `Temperature`, 29,86% de `Humidity`, 6,89% de `Light`, 27,19% de `CO2` e 100% de
+# `HumidityRatio`, sempre dentro de meia unidade da última casa adotada. As médias, os desvios padrão, as assimetrias e
+# as correlações com `Occupancy` mudaram de forma residual (maior alteração na matriz de Pearson: 9,8 × 10⁻⁴). As
+# mudanças visíveis foram a cardinalidade (por exemplo, `HumidityRatio` de 6.220 para 250 valores distintos), 32 fusões
+# de vetores de sensores (571 → 603 repetições) e o limite IQR de `Temperature` (461 → 447 potenciais outliers). Na
+# variável derivada, a média passou de 426,134753 para 426,134639 e os valores distintos de 6.989 para 6.928. Os
+# parâmetros do `StandardScaler` variaram, no máximo, cerca de 0,002 °C na média de `Temperature`, e as contribuições
+# para as distâncias, no máximo 0,07 p.p.
+#
+# ### 108.3 — Efeito isolado da regra (configurações fixas K = 5 e `max_depth` = 5)
+#
+# | Protocolo | KNN K = 5: anterior → revisado | Árvore `max_depth` = 5: anterior → revisado |
+# |---|---:|---:|
+# | Validação cruzada (acurácia média) | 99,1644% → 99,1644% | 99,0939% → 99,0738% |
+# | Teste oficial (acurácia; FP / FN) | 99,40% (10 / 5) → 99,56% (8 / 3) | 99,03% (20 / 4) → 99,03% (20 / 4) |
+# | Validação temporal (média dos 5 folds) | 94,90% → 94,89% | 87,71% → 87,27% |
+# | `datatraining.txt` (acurácia; FP / FN) | 95,80% (237 / 105) → 95,94% (230 / 101) | 98,13% (134 / 18) → 98,13% (134 / 18) |
+#
+# Com os hiperparâmetros fixos, o arredondamento teve efeito pequeno: a Árvore produziu exatamente as mesmas previsões no
+# teste e no `datatraining.txt` (só mudou o fold temporal 1, de 95,53% para 93,35%, e −0,02 p.p. na validação cruzada),
+# e o KNN com K = 5 errou 4 registros a menos no teste (15 → 11) e 11 a menos no `datatraining.txt` (342 → 331).
+# Esses efeitos são da ordem de poucos
+# registros e não demonstram que o arredondamento melhore ou piore a qualidade preditiva em geral.
+#
+# ### 108.4 — Efeito da nova seleção
+#
+# A seleção do KNN mudou de K = 5 para K = 3 porque a acurácia média de validação de K = 3 subiu de 99,1443% para
+# 99,1744%, enquanto K = 5 ficou em 99,1644%: uma diferença de um registro entre 9.933. No teste oficial, K = 3 e K = 5
+# revisados empataram (99,56%; 8 falsos positivos e 3 falsos negativos). Fora do teste, a troca foi ligeiramente
+# desfavorável: no `datatraining.txt`, K = 3 teve 95,71% (235 / 114) contra 95,94% (230 / 101) de K = 5; na validação
+# temporal, 94,62% contra 94,89%. Ou seja, a nova seleção não trouxe ganho fora do teste; ela mostra a instabilidade de
+# escolher entre configurações praticamente equivalentes. A Árvore manteve `max_depth` = 5.
+#
+# ### 108.5 — Efeito no veredito
+#
+# | Aspecto | Versão anterior | Versão revisada |
+# |---|---|---|
+# | Hiperparâmetros selecionados | K = 5; `max_depth` = 5 | K = 3; `max_depth` = 5 |
+# | Teste oficial: acurácia KNN / Árvore | 99,40% / 99,03% (+9 registros para o KNN) | 99,56% / 99,03% (+13 registros para o KNN) |
+# | Teste oficial: FN KNN / Árvore | 5 / 4 | 3 / 4 |
+# | McNemar exploratório | p = 0,0784 | p = 0,0072 |
+# | `datatraining.txt`: acurácia KNN / Árvore | 95,80% / 98,13% | 95,71% / 98,13% |
+# | `datatraining.txt`: FN KNN / Árvore | 105 / 18 | 114 / 18 |
+# | Temporal: média KNN / Árvore | 94,90% / 87,71% | 94,62% / 87,27% |
+# | Fold 3: acurácia KNN / Árvore | 80,24% / 45,86% | 80,06% / 45,86% |
+# | Veredito acadêmico (critério do enunciado) | KNN (K = 5) superior no teste, mas Árvore indicada para adoção | **KNN com K = 3** |
+# | Consideração operacional | Árvore `max_depth` = 5, implantação supervisionada | Árvore `max_depth` = 5 como candidata alternativa para avaliação operacional supervisionada; ambos exigem validação adicional |
+#
+# A revisão **reforçou a vantagem do KNN no teste oficial** e manteve a vantagem da Árvore no `datatraining.txt`. A
+# conclusão foi reformulada (BLOCO 102.9): pelo critério do enunciado — acurácia no teste, com o KNN também à frente na
+# validação cruzada e na validação temporal — o vencedor acadêmico é o KNN com K = 3. A Árvore permanece apenas como
+# candidata alternativa para avaliação operacional supervisionada, pelo resultado no `datatraining.txt`, pelos menos
+# falsos negativos nesse período e pela interpretabilidade, sem ser apresentada como operacionalmente superior.
+# Nenhum dos modelos está suficientemente validado para operação autônoma.
+#
+# ### 108.6 — Limitações da revisão
+#
+# - A regra decimal foi solicitada após a primeira avaliação completa; o teste oficial e o `datatraining.txt` já tinham
+#   sido consultados. A comparação é uma análise de sensibilidade posterior, e não uma evidência independente.
+# - A regra não foi ajustada às métricas e permaneceu fixa; nenhuma outra quantidade de casas foi testada.
+# - A resolução física dos sensores não está documentada; a regra representa uma convenção de apresentação e
+#   governança dos dados, e não a precisão real dos equipamentos.
+# - O arredondamento é uma transformação com perda de informação; seus efeitos aqui foram pequenos, mas não
+#   necessariamente se repetem em outros conjuntos de dados ou modelos.
+# - As diferenças observadas entre as versões são da ordem de poucos registros e estão dentro da variabilidade entre
+#   folds; não devem ser lidas como relações causais entre a precisão decimal e o desempenho.
